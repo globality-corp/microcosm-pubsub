@@ -1,0 +1,110 @@
+"""
+Message encoding and decoding.
+
+"""
+from collections import defaultdict
+from json import dumps, loads
+
+from marshmallow import fields, Schema, ValidationError
+from microcosm.api import defaults
+
+
+class PubSubMessageSchema(Schema):
+    """
+    Base schema for messages, including a media type.
+
+    """
+    media_type = fields.Method(
+        # called by dump
+        serialize="serialize_media_type",
+        # called by load
+        deserialize="deserialize_media_type",
+        attribute="mediaType",
+        # need to set missing to non-None or marshmallow won't call the deserialize function
+        missing="application/vnd.globality.pubsub.default",
+    )
+
+    def serialize_media_type(self, message):
+        """
+        Fetch the media type from the message.
+
+        """
+        try:
+            return message["mediaType"]
+        except KeyError:
+            raise ValidationError("Message did not define a media type")
+
+    def deserialize_media_type(self, obj):
+        """
+        Return a custom media type.
+
+        """
+        raise NotImplementedError("deserialize_media_type must be defined for: {}".format(
+            self.__class__.__name__,
+        ))
+
+
+class MediaTypeSchema(Schema):
+    """
+    Custom schema for extracting media type.
+
+    """
+    mediaType = fields.String(required=True)
+
+
+class PubSubMessageCodec(object):
+    """
+    Message encoder/decoder.
+
+    """
+
+    def __init__(self, schema):
+        self.schema = schema
+
+    def encode(self, dct=None, **kwargs):
+        """
+        Encode a message.
+
+        Uses the appropriate codec to write JSON.
+
+        """
+        message = dct.copy() if dct else dict()
+        message.update(kwargs)
+        encoded = self.schema.load(message)
+        return dumps(encoded.data)
+
+    def decode(self, message):
+        """
+        Decode a message.
+
+        Uses the appropriate coded to read JSON.
+
+        """
+        dct = loads(message)
+        # we need to explicitly validate because dump() doesn't
+        self.schema.validate(dct)
+        decoded = self.schema.dump(dct)
+        return decoded.data
+
+
+@defaults(
+    default=PubSubMessageSchema,
+    strict=True,
+    mappings=dict(
+        _=MediaTypeSchema,
+    ),
+)
+def configure_pubsub_message_codecs(graph):
+    """
+    Configure a mapping from message types to codecs.
+
+    """
+    default_schema_cls = graph.config.pubsub_message_codecs.default
+    strict = graph.config.pubsub_message_codecs.strict
+
+    message_codecs = defaultdict(lambda: PubSubMessageCodec(default_schema_cls(strict=strict)))
+
+    for key, schema_cls in graph.config.pubsub_message_codecs.mappings.items():
+        message_codecs[key] = PubSubMessageCodec(schema_cls(strict=strict))
+
+    return message_codecs
