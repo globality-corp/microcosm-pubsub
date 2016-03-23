@@ -2,6 +2,8 @@
 Producer tests.
 
 """
+from json import loads
+
 from hamcrest import (
     assert_that,
     calling,
@@ -63,10 +65,12 @@ def test_produce_default_topic():
 
     message_id = graph.sns_producer.produce(FOO_MEDIA_TYPE, bar="baz")
 
-    graph.sns_producer.sns_client.publish.assert_called_with(
-        TopicArn='foo-topic',
-        Message='{"bar": "baz", "mediaType": "application/vnd.globality.pubsub.foo"}',
-    )
+    assert_that(graph.sns_producer.sns_client.publish.call_count, is_(equal_to(1)))
+    assert_that(graph.sns_producer.sns_client.publish.call_args[1]["TopicArn"], is_(equal_to(FOO_TOPIC)))
+    assert_that(loads(graph.sns_producer.sns_client.publish.call_args[1]["Message"]), is_(equal_to({
+        "bar": "baz",
+        "mediaType": "application/vnd.globality.pubsub.foo",
+    })))
     assert_that(message_id, is_(equal_to(MESSAGE_ID)))
 
 
@@ -95,8 +99,10 @@ def test_produce_custom_topic():
 
     message_id = graph.sns_producer.produce(FOO_MEDIA_TYPE, bar="baz")
 
-    graph.sns_producer.sns_client.publish.assert_called_with(
-        TopicArn='foo-topic',
-        Message='{"bar": "baz", "mediaType": "application/vnd.globality.pubsub.foo"}',
-    )
+    assert_that(graph.sns_producer.sns_client.publish.call_count, is_(equal_to(1)))
+    assert_that(graph.sns_producer.sns_client.publish.call_args[1]["TopicArn"], is_(equal_to(FOO_TOPIC)))
+    assert_that(loads(graph.sns_producer.sns_client.publish.call_args[1]["Message"]), is_(equal_to({
+        "bar": "baz",
+        "mediaType": "application/vnd.globality.pubsub.foo",
+    })))
     assert_that(message_id, is_(equal_to(MESSAGE_ID)))
