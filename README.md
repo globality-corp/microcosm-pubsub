@@ -32,6 +32,20 @@ To consume messages:
     sqs-consume --queue-url <queue-url>
 
 
+## Validation
+
+Messages use [marshmallow](http://marshmallow.readthedocs.org/en/latest/index.html) schemas for validation.
+
+Most schemas should extend the `microcosm_pubsub.codecs.PubSubMessageSchema` base and implement its
+`deserialize_media_type` function:
+
+    class ExampleSchema(PubSubMessageSchema):
+        message = fields.String(required=True)
+
+        def deserialize_media_type(self, obj):
+            return "application/vnd.globality.pubsub.example"
+
+
 ## Producing Messages
 
 The producer takes a media type and message content and returns a message id:
@@ -63,15 +77,55 @@ no exception is raised during processing:
             process(message.content)
 
 
-## Validation
+## Asynchronous Workers
 
-Messages use [marshmallow](http://marshmallow.readthedocs.org/en/latest/index.html) schemas for validation.
+The `ConsumerDaemon` base class supports creating asynchronous workers ("daemons") that consume
+messages and dispatch them to user-defined worker functions. Usage requires creating a subclass
+that defines the `name`, `schema_mappings`, and `handler_mappings` properties. Here's how:
 
-Most schemas should extend the `microcosm_pubsub.codecs.PubSubMessageSchema` base and implement its
-`deserialize_media_type` function:
 
-    class ExampleSchema(PubSubMessageSchema):
-        message = fields.String(required=True)
+Import the baseclass and one or more schemas:
 
-        def deserialize_media_type(self, obj):
-            return "application/vnd.globality.pubsub.example"
+    from microcosm_pubsub.daemon import ConsumerDaemon
+    from microcosm_pubsub.main import SimpleSchema
+
+
+Define a function that handles messages for each kind of schema:
+
+    def handle_simple(message):
+        print message
+        return True
+
+
+Subclass the `ConsumerDaemon` to provide mappings from each schema's media type to
+its schema class and handler function:
+
+    class SimpleConsumerDaemon(ConsumerDaemon):
+
+        @property
+        def name(self):
+            return "example"
+
+        @property
+        def handler_mappings(self):
+            return {
+                SimpleSchema.MEDIA_TYPE: handle_simple,
+            }
+
+        @property
+        def schema_mappings(self):
+            return {
+                SimpleSchema.MEDIA_TYPE: SimpleSchema,
+            }
+
+
+Declare a main function for the daemon either using `setuptools` entry points (preferred) or
+the usual boilerplate:
+
+    if __name__ == '__main__':
+        daemon = SimpleConsumerDaemon()
+        daemon.run()
+
+When running the daemon, pass the `--sns-queue-url` arguments and the usual `--testing`/`--debug` flags as appropriate:
+
+    python /path/to/simple_daemon.py --sns-queue-url <queue name> --debug
