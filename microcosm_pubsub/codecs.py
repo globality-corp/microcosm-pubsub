@@ -9,6 +9,9 @@ from marshmallow import fields, Schema, ValidationError
 from microcosm.api import defaults
 
 
+DEFAULT_MEDIA_TYPE = "application/vnd.globality.pubsub.default"
+
+
 class PubSubMessageSchema(Schema):
     """
     Base schema for messages, including a media type.
@@ -21,7 +24,7 @@ class PubSubMessageSchema(Schema):
         deserialize="deserialize_media_type",
         attribute="mediaType",
         # need to set missing to non-None or marshmallow won't call the deserialize function
-        missing="application/vnd.globality.pubsub.default",
+        missing=DEFAULT_MEDIA_TYPE,
     )
 
     def serialize_media_type(self, message):
@@ -38,10 +41,10 @@ class PubSubMessageSchema(Schema):
         """
         Return a custom media type.
 
+        Should be overridden in subclasses.
+
         """
-        raise NotImplementedError("deserialize_media_type must be defined for: {}".format(
-            self.__class__.__name__,
-        ))
+        return DEFAULT_MEDIA_TYPE
 
 
 class MediaTypeSchema(Schema):

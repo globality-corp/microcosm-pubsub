@@ -10,13 +10,10 @@ from microcosm_daemon.daemon import Daemon
 
 class ConsumerDaemon(Daemon):
 
-    @abstractproperty
-    def sqs_queue_url(self):
-        """
-        Define the SQS Queue URL.
-
-        """
-        pass
+    def make_arg_parser(self):
+        parser = super(ConsumerDaemon, self).make_arg_parser()
+        parser.add_argument("--sqs-queue-url", required=True)
+        return parser
 
     @abstractproperty
     def schema_mappings(self):
@@ -41,7 +38,7 @@ class ConsumerDaemon(Daemon):
                 "mappings": self.schema_mappings,
             },
             "sqs_consumer": {
-                "sqs_queue_url": self.sqs_queue_url,
+                "sqs_queue_url": self.args.sqs_queue_url,
             },
             "sqs_message_dispatcher": {
                 "mappings": self.handler_mappings,
