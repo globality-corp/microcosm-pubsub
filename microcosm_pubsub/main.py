@@ -15,10 +15,12 @@ class SimpleSchema(PubSubMessageSchema):
     A single schema that just sends a text string.
 
     """
+    MEDIA_TYPE = "application/vnd.globality.pubsub.simple"
+
     message = fields.String(required=True)
 
     def deserialize_media_type(self, obj):
-        return "application/vnd.globality.pubsub.simple"
+        return SimpleSchema.MEDIA_TYPE
 
 
 def produce():

@@ -41,7 +41,7 @@ class ConsumerDaemon(Daemon):
                 "mappings": self.schema_mappings,
             },
             "sqs_consumer": {
-                "sqs_queue_url": self.queue_url,
+                "sqs_queue_url": self.sqs_queue_url,
             },
             "sqs_message_dispatcher": {
                 "mappings": self.handler_mappings,
