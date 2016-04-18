@@ -59,7 +59,20 @@ class SQSMessageDispatcher(object):
     mappings=dict(),
 )
 def configure_sqs_message_dispatcher(graph):
+    """
+    Configure dispatching of SQS messages.
+
+    Requires a dictionary mapping from the message media type to a handler function; unmapped
+    messages will be ignored. This dictionary can either be defined using the `sqs_message_dispatcher.mappings`
+    configuration key (which is convenient for simple handlers) or, more likely, via a separate
+    `sqs_message_handlers` graph component (which is convenient of the handlers need other component collaborators).
+    """
+    try:
+        sqs_message_handlers = graph.sqs_message_handlers
+    except AttributeError:
+        sqs_message_handlers = graph.config.sqs_message_dispatcher.mappings
+
     return SQSMessageDispatcher(
         sqs_consumer=graph.sqs_consumer,
-        sqs_message_handlers=graph.config.sqs_message_dispatcher.mappings,
+        sqs_message_handlers=sqs_message_handlers,
     )
