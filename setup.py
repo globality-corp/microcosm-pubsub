@@ -29,6 +29,7 @@ setup(
         "console_scripts": [
             "sns-produce = microcosm_pubsub.main:produce",
             "sqs-consume = microcosm_pubsub.main:consume",
+            "simple-daemon = microcosm_pubsub.main:main",
         ],
         "microcosm.factories": [
             "pubsub_message_codecs = microcosm_pubsub.codecs:configure_pubsub_message_codecs",
