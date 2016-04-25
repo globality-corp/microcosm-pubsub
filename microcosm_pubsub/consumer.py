@@ -147,7 +147,7 @@ class SQSConsumer(object):
     # SQS will not return more than ten messages at a time
     limit=10,
     # SQS will only return a few messages at time unless long polling is enabled (>0)
-    wait_seconds=0,
+    wait_seconds=1,
 )
 def configure_sqs_consumer(graph):
     """

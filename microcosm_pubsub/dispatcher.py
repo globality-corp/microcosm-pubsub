@@ -6,6 +6,7 @@ from collections import namedtuple
 from logging import getLogger
 
 from microcosm.api import defaults
+from microcosm.errors import NotBoundError
 
 
 DispatchResult = namedtuple("DispatchResult", ["message_count", "error_count", "ignore_count"])
@@ -69,7 +70,7 @@ def configure_sqs_message_dispatcher(graph):
     """
     try:
         sqs_message_handlers = graph.sqs_message_handlers
-    except AttributeError:
+    except NotBoundError:
         sqs_message_handlers = graph.config.sqs_message_dispatcher.mappings
 
     return SQSMessageDispatcher(

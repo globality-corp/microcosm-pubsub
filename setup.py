@@ -2,7 +2,7 @@
 from setuptools import find_packages, setup
 
 project = "microcosm_pubsub"
-version = "0.4.0"
+version = "0.5.0"
 
 setup(
     name=project,
@@ -29,6 +29,7 @@ setup(
         "console_scripts": [
             "sns-produce = microcosm_pubsub.main:produce",
             "sqs-consume = microcosm_pubsub.main:consume",
+            "simple-daemon = microcosm_pubsub.main:main",
         ],
         "microcosm.factories": [
             "pubsub_message_codecs = microcosm_pubsub.codecs:configure_pubsub_message_codecs",
