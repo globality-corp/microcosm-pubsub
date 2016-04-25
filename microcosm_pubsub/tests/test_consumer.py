@@ -57,7 +57,7 @@ def test_consume():
     graph.sqs_consumer.sqs_client.receive_message.assert_called_with(
         QueueUrl='foo-queue-url',
         MaxNumberOfMessages=10,
-        WaitTimeSeconds=0,
+        WaitTimeSeconds=1,
     )
 
     # and response translated properly
