@@ -21,7 +21,7 @@ INVALID_UUID_STR = 'INVALID_UUID_STRING'
 
 class UUIDSchema(Schema):
     uuid_str = UUIDField()
-    uuid_uuid = UUIDField(use_uuidformat=True)
+    uuid_uuid = UUIDField()
 
 
 def test_uuid_load():

@@ -10,10 +10,6 @@ class UUIDField(Field):
     UUID valued field, as either a string or UUID object.
 
     """
-    def __init__(self, use_uuidformat=False, *args, **kwargs):
-        self.use_uuidformat = use_uuidformat
-        super(UUIDField, self).__init__(*args, **kwargs)
-
     def _serialize(self, value, attr, obj):
         """
         Serialize value as a uuid, either as a string or an UUID object.
@@ -21,7 +17,7 @@ class UUIDField(Field):
         if value is None:
             return None
 
-        if self.use_uuidformat:
+        if isinstance(value, UUID):
             return str(value)
         else:
             return value
@@ -36,7 +32,7 @@ class UUIDField(Field):
             return None
 
         try:
-            if self.use_uuidformat:
+            if isinstance(value, UUID):
                 return str(value)
             else:
                 return str(UUID(value))
