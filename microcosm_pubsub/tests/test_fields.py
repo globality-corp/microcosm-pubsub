@@ -40,7 +40,7 @@ def test_uuid_load():
 
 def test_invlalid_uuid_load():
     """
-
+    Desirializing of non-uuid formatted value should raise an erro.
     """
     schema = UUIDSchema()
     result = schema.load({
