@@ -12,7 +12,7 @@ class ConsumerDaemon(Daemon):
 
     def make_arg_parser(self):
         parser = super(ConsumerDaemon, self).make_arg_parser()
-        parser.add_argument("--sqs-queue-url", required=True)
+        parser.add_argument("--sqs-queue-url")
         return parser
 
     @abstractproperty
@@ -23,27 +23,37 @@ class ConsumerDaemon(Daemon):
         """
         pass
 
-    @abstractproperty
     def handler_mappings(self):
         """
         Define the PubSub message media-type to handler mappings.
 
+        This function is an alternative to configuring `graph.sqs_message_handlers` as
+        a graph component; it's useful for very simple mappings (e.g. that don't need access
+        to the graph.)
+
         """
-        pass
+        return {}
 
     @property
     def defaults(self):
-        return {
-            "pubsub_message_codecs":  {
-                "mappings": self.schema_mappings,
-            },
-            "sqs_consumer": {
-                "sqs_queue_url": self.args.sqs_queue_url,
-            },
-            "sqs_message_dispatcher": {
-                "mappings": self.handler_mappings,
-            },
-        }
+        dct = dict(
+            pubsub_message_codecs=dict(
+                mappings=self.schema_mappings,
+            ),
+        )
+        if self.handler_mappings:
+            dct.update(
+                sqs_message_dispatcher=dict(
+                    mappings=self.handler_mappings,
+                ),
+            )
+        if self.args.sqs_queue_url:
+            dct.update(
+                sqs_consumer=dict(
+                    sqs_queue_url=self.args.sqs_queue_url,
+                ),
+            )
+        return dct
 
     @property
     def components(self):
