@@ -51,7 +51,7 @@ class SQSMessageDispatcher(object):
         media_type = message["media_type"]
         sqs_message_handler = self.sqs_message_handlers.get(media_type)
         if sqs_message_handler is None:
-            logger.info("Skipping message with unsupported type: {}".format(media_type))
+            logger.debug("Skipping message with unsupported type: {}".format(media_type))
             return False
         return sqs_message_handler(message)
 
