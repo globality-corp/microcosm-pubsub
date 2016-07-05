@@ -126,6 +126,6 @@ the usual boilerplate:
         daemon = SimpleConsumerDaemon()
         daemon.run()
 
-When running the daemon, pass the `--sns-queue-url` arguments and the usual `--testing`/`--debug` flags as appropriate:
+When running the daemon, pass the `--sqs-queue-url` arguments and the usual `--testing`/`--debug` flags as appropriate:
 
-    python /path/to/simple_daemon.py --sns-queue-url <queue name> --debug
+    python /path/to/simple_daemon.py --sqs-queue-url <queue name> --debug
