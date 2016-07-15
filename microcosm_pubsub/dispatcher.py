@@ -48,7 +48,7 @@ class SQSMessageDispatcher(object):
         Handle a single message.
 
         """
-        media_type = message["media_type"]
+        media_type = message.get("media_type", "_")
         sqs_message_handler = self.sqs_message_handlers.get(media_type)
         if sqs_message_handler is None:
             logger.debug("Skipping message with unsupported type: {}".format(media_type))
