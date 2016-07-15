@@ -6,6 +6,7 @@ from json import loads
 from hashlib import md5
 
 from boto3 import client
+from marshmallow.exceptions import ValidationError
 from microcosm.api import defaults
 
 
@@ -72,7 +73,11 @@ class SQSMessage(object):
         Parse and validate the message.
 
         """
-        base_message = consumer.pubsub_message_codecs["_"].decode(message)
+        try:
+            base_message = consumer.pubsub_message_codecs["_"].decode(message)
+        except ValidationError:
+            return loads(message)
+
         media_type = base_message["mediaType"]
         content = consumer.pubsub_message_codecs[media_type].decode(message)
         return content
