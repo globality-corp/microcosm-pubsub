@@ -8,15 +8,18 @@ from hashlib import md5
 from boto3 import client
 from microcosm.api import defaults
 
+from microcosm_pubsub.codecs import MediaTypeSchema, PubSubMessageCodec
+
 
 class SQSMessage(object):
     """
     SQS message wrapper.
 
     """
-    def __init__(self, consumer, content, message_id, receipt_handle):
+    def __init__(self, consumer, content, media_type, message_id, receipt_handle):
         self.consumer = consumer
         self.content = content
+        self.media_type = media_type
         self.message_id = message_id
         self.receipt_handle = receipt_handle
 
@@ -43,56 +46,6 @@ class SQSMessage(object):
         else:
             self.nack()
 
-    @classmethod
-    def from_sqs(cls, consumer, sqs_message, validate_md5=False):
-        """
-        Create a message from SQS data.
-
-        """
-        message_id = sqs_message["MessageId"]
-        receipt_handle = sqs_message["ReceiptHandle"]
-        body = sqs_message["Body"]
-
-        if validate_md5:
-            cls.validate_body(sqs_message, body)
-
-        message = loads(body)["Message"]
-        content = cls.parse_content(consumer, message)
-
-        return cls(
-            consumer=consumer,
-            content=content,
-            message_id=message_id,
-            receipt_handle=receipt_handle,
-        )
-
-    @classmethod
-    def parse_content(cls, consumer, message):
-        """
-        Parse and validate the message.
-
-        """
-        base_message = consumer.pubsub_message_codecs["_"].decode(message)
-        media_type = base_message["mediaType"]
-        content = consumer.pubsub_message_codecs[media_type].decode(message)
-        return content
-
-    @classmethod
-    def validate_body(cls, sqs_message, body):
-        """
-        Validate the message body.
-
-        Just checks for tampering; schema validation occurs once we know the type of message.
-
-        """
-        expected_md5_of_body = sqs_message["MD5OfBody"]
-        actual_md5_of_body = md5(body).hexdigest()
-        if expected_md5_of_body != actual_md5_of_body:
-            raise Exception("MD5 validation failed. Expected: {} Actual: {}".format(
-                expected_md5_of_body,
-                actual_md5_of_body,
-            ))
-
 
 class SQSConsumer(object):
     """
@@ -113,7 +66,7 @@ class SQSConsumer(object):
         :returns: a list of `SQSMessage`
         """
         return [
-            SQSMessage.from_sqs(self, message)
+            self._from_sqs(message)
             for message in self.sqs_client.receive_message(
                 QueueUrl=self.sqs_queue_url,
                 MaxNumberOfMessages=self.limit,
@@ -141,6 +94,56 @@ class SQSConsumer(object):
 
         """
         pass
+
+    def _from_sqs(self, sqs_message, validate_md5=False):
+        """
+        Create an `SQSMessage` from SQS data.
+
+        """
+        message_id = sqs_message["MessageId"]
+        receipt_handle = sqs_message["ReceiptHandle"]
+        body = sqs_message["Body"]
+
+        if validate_md5:
+            self._validate_md5(sqs_message, body)
+
+        message = loads(body)["Message"]
+        media_type, content = self._parse_message_from_sqs(message)
+
+        return SQSMessage(
+            consumer=self,
+            content=content,
+            media_type=media_type,
+            message_id=message_id,
+            receipt_handle=receipt_handle,
+        )
+
+    def _parse_message_from_sqs(self, message):
+        """
+        Parse and validate SQS message content.
+
+        :returns: a media_type, content tuple
+
+        """
+        base_message = PubSubMessageCodec(MediaTypeSchema()).decode(message)
+        media_type = base_message["mediaType"]
+        content = self.pubsub_message_codecs[media_type].decode(message)
+        return media_type, content
+
+    def _validate_md5(self, sqs_message, body):
+        """
+        Validate the message body.
+
+        Just checks for tampering; schema validation occurs once we know the type of message.
+
+        """
+        expected_md5_of_body = sqs_message["MD5OfBody"]
+        actual_md5_of_body = md5(body).hexdigest()
+        if expected_md5_of_body != actual_md5_of_body:
+            raise Exception("MD5 validation failed. Expected: {} Actual: {}".format(
+                expected_md5_of_body,
+                actual_md5_of_body,
+            ))
 
 
 @defaults(
