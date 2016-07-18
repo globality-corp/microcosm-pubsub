@@ -21,7 +21,8 @@ PubSub with SNS/SQS
 
 ## CLI
 
-For testing purposes, the producer and consumer functions can be invoked from the CLI.
+For testing purposes, the producer and consumer functions can be invoked from the CLI. These test functions
+use a very simplistic schema and will not work for most real use cases.
 
 To produce messages:
 
@@ -66,8 +67,8 @@ The consumer returns a list of (possibly zero) messages:
 Messages should be explicitly acknowledged after processing:
 
     for message in messages:
-       process(message.content)
-       message.ack()
+        process(message.content)
+        message.ack()
 
 Messages act as context managers; in this mode, messsages will automatically acknowledge themselves if
 no exception is raised during processing:
