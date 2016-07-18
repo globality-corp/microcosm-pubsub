@@ -12,7 +12,7 @@ from hamcrest import (
 )
 from microcosm.api import create_object_graph
 
-from microcosm_pubsub.consumer import SQSMessage
+from microcosm_pubsub.message import SQSMessage
 from microcosm_pubsub.tests.fixtures import (
     FOO_QUEUE_URL,
     FOO_MEDIA_TYPE,
