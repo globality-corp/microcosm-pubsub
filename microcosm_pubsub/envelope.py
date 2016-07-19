@@ -10,7 +10,7 @@ from abc import ABCMeta, abstractmethod
 from json import loads
 from hashlib import md5
 
-from microcosm.api import defaults
+from microcosm.api import binding, defaults
 
 from microcosm_pubsub.codecs import MediaTypeSchema, PubSubMessageCodec
 from microcosm_pubsub.message import SQSMessage
@@ -107,6 +107,7 @@ class CodecSQSEnvelope(SQSEnvelope):
         return media_type, content
 
 
+@binding('sqs_envelope')
 @defaults(
     strategy_name="CodecSQSEnvelope",
     validate_md5=False,
