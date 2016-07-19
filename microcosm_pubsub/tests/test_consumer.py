@@ -12,7 +12,7 @@ from hamcrest import (
 )
 from microcosm.api import create_object_graph
 
-from microcosm_pubsub.consumer import SQSMessage
+from microcosm_pubsub.message import SQSMessage
 from microcosm_pubsub.tests.fixtures import (
     FOO_QUEUE_URL,
     FOO_MEDIA_TYPE,
@@ -89,9 +89,10 @@ def test_ack():
     graph = create_object_graph("example", testing=True, loader=loader)
     message = SQSMessage(
         consumer=graph.sqs_consumer,
+        content=None,
+        media_type=FooSchema.MEDIA_TYPE,
         message_id=MESSAGE_ID,
         receipt_handle=RECEIPT_HANDLE,
-        content=None,
     )
     message.ack()
     graph.sqs_consumer.sqs_client.delete_message.assert_called_with(

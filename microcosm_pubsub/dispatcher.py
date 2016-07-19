@@ -35,7 +35,7 @@ class SQSMessageDispatcher(object):
             message_count += 1
             try:
                 with message:
-                    if not self.handle_message(message.content):
+                    if not self.handle_message(message.media_type, message.content):
                         ignore_count += 1
             except Exception:
                 logger.info("Error handling SQS message.", exc_info=True)
@@ -43,15 +43,14 @@ class SQSMessageDispatcher(object):
 
         return DispatchResult(message_count, error_count, ignore_count)
 
-    def handle_message(self, message):
+    def handle_message(self, media_type, message):
         """
         Handle a single message.
 
         """
-        media_type = message["media_type"]
         sqs_message_handler = self.sqs_message_handlers.get(media_type)
         if sqs_message_handler is None:
-            logger.info("Skipping message with unsupported type: {}".format(media_type))
+            logger.debug("Skipping message with unsupported type: {}".format(media_type))
             return False
         return sqs_message_handler(message)
 

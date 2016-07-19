@@ -91,11 +91,9 @@ class PubSubMessageCodec(object):
 
 
 @defaults(
-    default=PubSubMessageSchema,
+    default=None,
     strict=True,
-    mappings=dict(
-        _=MediaTypeSchema,
-    ),
+    mappings=dict(),
 )
 def configure_pubsub_message_codecs(graph):
     """
@@ -105,7 +103,10 @@ def configure_pubsub_message_codecs(graph):
     default_schema_cls = graph.config.pubsub_message_codecs.default
     strict = graph.config.pubsub_message_codecs.strict
 
-    message_codecs = defaultdict(lambda: PubSubMessageCodec(default_schema_cls(strict=strict)))
+    if default_schema_cls:
+        message_codecs = defaultdict(lambda: PubSubMessageCodec(default_schema_cls(strict=strict)))
+    else:
+        message_codecs = dict()
 
     for key, schema_cls in graph.config.pubsub_message_codecs.mappings.items():
         message_codecs[key] = PubSubMessageCodec(schema_cls(strict=strict))

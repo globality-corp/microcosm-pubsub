@@ -14,7 +14,9 @@ RECEIPT_HANDLE = "receipt-handle"
 
 
 class FooSchema(PubSubMessageSchema):
+    MEDIA_TYPE = FOO_MEDIA_TYPE
+
     bar = fields.String(required=True)
 
     def deserialize_media_type(self, obj):
-        return FOO_MEDIA_TYPE
+        return FooSchema.MEDIA_TYPE
