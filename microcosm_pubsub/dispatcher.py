@@ -48,6 +48,9 @@ class SQSMessageDispatcher(object):
         Handle a single message.
 
         """
+        if message is None:
+            logger.debug("Skipping message with unparsed type: {}".format(media_type))
+            return False
         sqs_message_handler = self.sqs_message_handlers.get(media_type)
         if sqs_message_handler is None:
             logger.debug("Skipping message with unsupported type: {}".format(media_type))
