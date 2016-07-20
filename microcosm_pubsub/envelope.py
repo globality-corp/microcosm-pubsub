@@ -103,8 +103,12 @@ class CodecSQSEnvelope(SQSEnvelope):
         """
         base_message = self.media_type_codec.decode(message)
         media_type = base_message["mediaType"]
-        content = self.pubsub_message_codecs[media_type].decode(message)
-        return media_type, content
+        try:
+            content = self.pubsub_message_codecs[media_type].decode(message)
+        except KeyError:
+            return media_type, None
+        else:
+            return media_type, content
 
 
 @defaults(
