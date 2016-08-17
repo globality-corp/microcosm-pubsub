@@ -32,7 +32,7 @@ setup(
             "simple-daemon = microcosm_pubsub.main:main",
         ],
         "microcosm.factories": [
-            "message_context = microcosm_pubsub.context:configure_message_context",
+            "sqs_message_context = microcosm_pubsub.context:configure_sqs_message_context",
             "pubsub_message_codecs = microcosm_pubsub.codecs:configure_pubsub_message_codecs",
             "sqs_consumer = microcosm_pubsub.consumer:configure_sqs_consumer",
             "sqs_envelope = microcosm_pubsub.envelope:configure_sqs_envelope",

@@ -21,11 +21,11 @@ class SQSMessageDispatcher(object):
     Dispatch batches of SQSMessages to handler functions.
 
     """
-    def __init__(self, sqs_consumer, sqs_message_handlers, log_with_context, message_context):
+    def __init__(self, sqs_consumer, sqs_message_handlers, log_with_context, sqs_message_context):
         self.sqs_consumer = sqs_consumer
         self.sqs_message_handlers = sqs_message_handlers
         self.log_with_context = log_with_context
-        self.message_context = message_context
+        self.sqs_message_context = sqs_message_context
 
     def handle_batch(self):
         """
@@ -61,7 +61,7 @@ class SQSMessageDispatcher(object):
 
         if self.log_with_context:
             handler_with_context = context_logger(
-                self.message_context,
+                self.sqs_message_context,
                 sqs_message_handler,
                 parent=sqs_message_handler,
             )
@@ -88,9 +88,16 @@ def configure_sqs_message_dispatcher(graph):
     except NotBoundError:
         sqs_message_handlers = graph.config.sqs_message_dispatcher.mappings
 
+    try:
+        sqs_message_context = graph.sqs_message_context
+    except NotBoundError:
+        def context(message):
+            return dict()
+        sqs_message_context = context
+
     return SQSMessageDispatcher(
         sqs_consumer=graph.sqs_consumer,
         sqs_message_handlers=sqs_message_handlers,
         log_with_context=graph.config.sqs_message_dispatcher.log_with_context,
-        message_context=graph.message_context,
+        sqs_message_context=sqs_message_context,
     )
