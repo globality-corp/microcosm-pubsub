@@ -1,5 +1,5 @@
 """
-Consumer tests.
+Dispatcher tests.
 
 """
 from hamcrest import (
