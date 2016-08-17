@@ -19,7 +19,7 @@ from microcosm_pubsub.tests.fixtures import (
 
 def test_handle():
     """
-    Consumer delegates to SQS client.
+    Test that the dispatcher handles a message and assigns context.
 
     """
     def loader(metadata):
@@ -56,7 +56,7 @@ def test_handle():
 
 def test_handle_with_no_context():
     """
-    Consumer delegates to SQS client.
+    Test that when no context is added the dispatcher behaves sanely.
 
     """
     def loader(metadata):
