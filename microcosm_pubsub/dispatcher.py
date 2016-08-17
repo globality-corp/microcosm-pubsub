@@ -7,6 +7,7 @@ from logging import getLogger
 
 from microcosm.api import defaults
 from microcosm.errors import NotBoundError
+from microcosm_logging.decorators import context_logger
 
 
 DispatchResult = namedtuple("DispatchResult", ["message_count", "error_count", "ignore_count"])
@@ -20,9 +21,11 @@ class SQSMessageDispatcher(object):
     Dispatch batches of SQSMessages to handler functions.
 
     """
-    def __init__(self, sqs_consumer, sqs_message_handlers):
+    def __init__(self, sqs_consumer, sqs_message_handlers, log_with_context, message_context):
         self.sqs_consumer = sqs_consumer
         self.sqs_message_handlers = sqs_message_handlers
+        self.log_with_context = log_with_context
+        self.message_context = message_context
 
     def handle_batch(self):
         """
@@ -55,11 +58,21 @@ class SQSMessageDispatcher(object):
         if sqs_message_handler is None:
             logger.debug("Skipping message with unsupported type: {}".format(media_type))
             return False
-        return sqs_message_handler(message)
+
+        if self.log_with_context:
+            handler_with_context = context_logger(
+                self.message_context,
+                sqs_message_handler,
+                parent=sqs_message_handler,
+            )
+            return handler_with_context(message)
+        else:
+            return sqs_message_handler(message)
 
 
 @defaults(
     mappings=dict(),
+    log_with_context=True,
 )
 def configure_sqs_message_dispatcher(graph):
     """
@@ -78,4 +91,6 @@ def configure_sqs_message_dispatcher(graph):
     return SQSMessageDispatcher(
         sqs_consumer=graph.sqs_consumer,
         sqs_message_handlers=sqs_message_handlers,
+        log_with_context=graph.config.sqs_message_dispatcher.log_with_context,
+        message_context=graph.message_context,
     )
