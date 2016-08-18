@@ -2,7 +2,7 @@
 from setuptools import find_packages, setup
 
 project = "microcosm_pubsub"
-version = "0.9.1"
+version = "0.10.0"
 
 setup(
     name=project,
@@ -32,6 +32,7 @@ setup(
             "simple-daemon = microcosm_pubsub.main:main",
         ],
         "microcosm.factories": [
+            "sqs_message_context = microcosm_pubsub.context:configure_sqs_message_context",
             "pubsub_message_codecs = microcosm_pubsub.codecs:configure_pubsub_message_codecs",
             "sqs_consumer = microcosm_pubsub.consumer:configure_sqs_consumer",
             "sqs_envelope = microcosm_pubsub.envelope:configure_sqs_envelope",
