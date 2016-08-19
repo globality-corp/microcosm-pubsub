@@ -2,7 +2,7 @@ def sqs_message_context(message):
     #  NB This is the simplest possible idea for associated context with a handler funcion.
     #  In the future it would make sense to make this function configurable and
     #  add some parameters to control additional behavior.
-    return message.get("headers")
+    return message.get("headers", dict())
 
 
 def configure_sqs_message_context(graph):
