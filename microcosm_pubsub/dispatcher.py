@@ -96,6 +96,12 @@ def configure_sqs_message_dispatcher(graph):
             return dict()
         sqs_message_context = context
 
+    if graph.metadata.testing:
+        from mock import MagicMock
+        opaque = MagicMock(data_func=MagicMock(return_value=dict()))
+    else:
+        opaque = graph.opaque
+
     return SQSMessageDispatcher(
         opaque=opaque,
         sqs_consumer=graph.sqs_consumer,

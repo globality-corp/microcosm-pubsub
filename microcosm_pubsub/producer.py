@@ -15,7 +15,7 @@ class SNSProducer(object):
     Produces messages to SNS topics.
 
     """
-    def __init__(self, opaque, pubsub_message_codes, sns_client, sns_topic_arns):
+    def __init__(self, opaque, pubsub_message_codecs, sns_client, sns_topic_arns):
         self.opaque = opaque
         self.pubsub_message_codecs = pubsub_message_codecs
         self.sns_client = sns_client
@@ -28,7 +28,7 @@ class SNSProducer(object):
         :returns: the message id
 
         """
-        dct.setdefault('opaque_data', self.opaque.opaque_data_func())
+        kwargs.setdefault('opaque_data', self.opaque.data_func())
         topic_arn = self.choose_topic_arn(media_type)
         content = self.pubsub_message_codecs[media_type].encode(dct, **kwargs)
         result = self.sns_client.publish(
@@ -84,8 +84,14 @@ def configure_sns_producer(graph):
     else:
         sns_client = client("sns")
 
+    if graph.metadata.testing:
+        from mock import MagicMock
+        opaque = MagicMock(data_func=MagicMock(return_value=dict()))
+    else:
+        opaque = graph.opaque
+
     return SNSProducer(
-        opaque=graph.opaque,
+        opaque=opaque,
         pubsub_message_codecs=graph.pubsub_message_codecs,
         sns_client=sns_client,
         sns_topic_arns=graph.sns_topic_arns,
