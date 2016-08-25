@@ -21,10 +21,11 @@ class SQSMessageDispatcher(object):
     Dispatch batches of SQSMessages to handler functions.
 
     """
-    def __init__(self, sqs_consumer, sqs_message_handlers, sqs_message_context):
+    def __init__(self, opaque, sqs_consumer, sqs_message_handlers, sqs_message_context):
         self.sqs_consumer = sqs_consumer
         self.sqs_message_handlers = sqs_message_handlers
         self.sqs_message_context = sqs_message_context
+        self.opaque = opaque
 
     def handle_batch(self):
         """
@@ -67,7 +68,8 @@ class SQSMessageDispatcher(object):
             sqs_message_handler,
             parent=sqs_message_handler,
         )
-        return handler_with_context(message)
+        with self.opaque.opaque_data(self.sqs_message_context, message):
+            return handler_with_context(message)
 
 
 @defaults(
@@ -95,6 +97,7 @@ def configure_sqs_message_dispatcher(graph):
         sqs_message_context = context
 
     return SQSMessageDispatcher(
+        opaque=opaque,
         sqs_consumer=graph.sqs_consumer,
         sqs_message_handlers=sqs_message_handlers,
         sqs_message_context=sqs_message_context,
