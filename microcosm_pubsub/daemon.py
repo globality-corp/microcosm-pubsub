@@ -4,6 +4,7 @@ Consume Daemon main.
 """
 from abc import abstractproperty
 
+import microcosm.opaque  # noqa
 from microcosm_daemon.api import SleepNow
 from microcosm_daemon.daemon import Daemon
 
@@ -58,6 +59,7 @@ class ConsumerDaemon(Daemon):
     @property
     def components(self):
         return super(ConsumerDaemon, self).components + [
+            "opaque",
             "pubsub_message_codecs",
             "sqs_consumer",
             "sqs_message_dispatcher",
