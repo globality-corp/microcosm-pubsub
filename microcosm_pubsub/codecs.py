@@ -26,6 +26,7 @@ class PubSubMessageSchema(Schema):
         # need to set missing to non-None or marshmallow won't call the deserialize function
         missing=DEFAULT_MEDIA_TYPE,
     )
+    opaque_data = fields.Dict(required=False)
 
     def serialize_media_type(self, message):
         """

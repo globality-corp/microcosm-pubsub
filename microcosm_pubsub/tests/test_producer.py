@@ -12,6 +12,7 @@ from hamcrest import (
     raises,
 )
 from microcosm.api import create_object_graph
+import microcosm.opaque  # noqa
 
 from microcosm_pubsub.errors import TopicNotDefinedError
 from microcosm_pubsub.tests.fixtures import (
@@ -59,6 +60,7 @@ def test_produce_default_topic():
         )
 
     graph = create_object_graph("example", testing=True, loader=loader)
+    graph.use("opaque")
 
     # set up response
     graph.sns_producer.sns_client.publish.return_value = dict(MessageId=MESSAGE_ID)
@@ -70,6 +72,7 @@ def test_produce_default_topic():
     assert_that(loads(graph.sns_producer.sns_client.publish.call_args[1]["Message"]), is_(equal_to({
         "bar": "baz",
         "mediaType": "application/vnd.globality.pubsub.foo",
+        "opaque_data": {},
     })))
     assert_that(message_id, is_(equal_to(MESSAGE_ID)))
 
@@ -93,6 +96,7 @@ def test_produce_custom_topic():
         )
 
     graph = create_object_graph("example", testing=True, loader=loader)
+    graph.use("opaque")
 
     # set up response
     graph.sns_producer.sns_client.publish.return_value = dict(MessageId=MESSAGE_ID)
@@ -104,5 +108,6 @@ def test_produce_custom_topic():
     assert_that(loads(graph.sns_producer.sns_client.publish.call_args[1]["Message"]), is_(equal_to({
         "bar": "baz",
         "mediaType": "application/vnd.globality.pubsub.foo",
+        "opaque_data": {},
     })))
     assert_that(message_id, is_(equal_to(MESSAGE_ID)))
