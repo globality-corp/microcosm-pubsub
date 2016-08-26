@@ -77,6 +77,12 @@ def configure_sns_producer(graph):
     """
     Configure an SNS producer.
 
+    The SNS Producer requires the following collaborators:
+        - Opaque from microcosm.opaque for capturing context information
+        - an aws sns client, i.e. from boto.
+        - pubsub message codecs: see tests for examples.
+        - sns topic arns: see tests for examples.
+
     """
     if graph.metadata.testing:
         from mock import MagicMock
