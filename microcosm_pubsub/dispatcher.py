@@ -68,7 +68,7 @@ class SQSMessageDispatcher(object):
             sqs_message_handler,
             parent=sqs_message_handler,
         )
-        with self.opaque.bind(self.sqs_message_context, message):
+        with self.opaque.initialize(self.sqs_message_context, message):
             return handler_with_context(message)
 
 
