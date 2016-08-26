@@ -6,6 +6,7 @@ from collections import defaultdict
 
 from boto3 import client
 from microcosm.api import defaults
+from microcosm.errors import NotBoundError
 
 from microcosm_pubsub.errors import TopicNotDefinedError
 
@@ -28,7 +29,8 @@ class SNSProducer(object):
         :returns: the message id
 
         """
-        kwargs.setdefault('opaque_data', self.opaque.as_dict())
+        if self.opaque is not None:
+            kwargs.setdefault('opaque_data', self.opaque.as_dict())
         topic_arn = self.choose_topic_arn(media_type)
         content = self.pubsub_message_codecs[media_type].encode(dct, **kwargs)
         result = self.sns_client.publish(
@@ -90,11 +92,10 @@ def configure_sns_producer(graph):
     else:
         sns_client = client("sns")
 
-    if graph.metadata.testing:
-        from mock import MagicMock
-        opaque = MagicMock(as_dict=MagicMock(return_value=dict()))
-    else:
+    try:
         opaque = graph.opaque
+    except NotBoundError:
+        opaque = None
 
     return SNSProducer(
         opaque=opaque,
