@@ -68,7 +68,7 @@ class SQSMessageDispatcher(object):
             sqs_message_handler,
             parent=sqs_message_handler,
         )
-        with self.opaque.opaque_data(self.sqs_message_context, message):
+        with self.opaque.bind(self.sqs_message_context, message):
             return handler_with_context(message)
 
 
@@ -98,7 +98,7 @@ def configure_sqs_message_dispatcher(graph):
 
     if graph.metadata.testing:
         from mock import MagicMock
-        opaque = MagicMock(data_func=MagicMock(return_value=dict()))
+        opaque = MagicMock(bind=MagicMock())
     else:
         opaque = graph.opaque
 

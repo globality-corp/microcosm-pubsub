@@ -28,7 +28,7 @@ class SNSProducer(object):
         :returns: the message id
 
         """
-        kwargs.setdefault('opaque_data', self.opaque.data_func())
+        kwargs.setdefault('opaque_data', self.opaque.as_dict())
         topic_arn = self.choose_topic_arn(media_type)
         content = self.pubsub_message_codecs[media_type].encode(dct, **kwargs)
         result = self.sns_client.publish(
@@ -86,7 +86,7 @@ def configure_sns_producer(graph):
 
     if graph.metadata.testing:
         from mock import MagicMock
-        opaque = MagicMock(data_func=MagicMock(return_value=dict()))
+        opaque = MagicMock(as_dict=MagicMock(return_value=dict()))
     else:
         opaque = graph.opaque
 
