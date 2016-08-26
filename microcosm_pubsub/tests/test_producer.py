@@ -12,6 +12,7 @@ from hamcrest import (
     raises,
 )
 from microcosm.api import create_object_graph
+import microcosm.opaque  # noqa
 
 from microcosm_pubsub.errors import TopicNotDefinedError
 from microcosm_pubsub.tests.fixtures import (
@@ -59,6 +60,7 @@ def test_produce_default_topic():
         )
 
     graph = create_object_graph("example", testing=True, loader=loader)
+    graph.use("opaque")
 
     # set up response
     graph.sns_producer.sns_client.publish.return_value = dict(MessageId=MESSAGE_ID)
@@ -94,6 +96,7 @@ def test_produce_custom_topic():
         )
 
     graph = create_object_graph("example", testing=True, loader=loader)
+    graph.use("opaque")
 
     # set up response
     graph.sns_producer.sns_client.publish.return_value = dict(MessageId=MESSAGE_ID)
