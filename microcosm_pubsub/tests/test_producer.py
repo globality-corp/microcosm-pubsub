@@ -9,12 +9,14 @@ from hamcrest import (
     calling,
     equal_to,
     is_,
+    none,
     raises,
 )
 from microcosm.api import create_object_graph
 import microcosm.opaque  # noqa
 
 from microcosm_pubsub.errors import TopicNotDefinedError
+from microcosm_pubsub.producer import DeferredProducer
 from microcosm_pubsub.tests.fixtures import (
     FOO_TOPIC,
     FOO_MEDIA_TYPE,
@@ -111,3 +113,32 @@ def test_produce_custom_topic():
         "opaque_data": {},
     })))
     assert_that(message_id, is_(equal_to(MESSAGE_ID)))
+
+
+def test_deferred_production():
+    """
+    Deferred production waits until the end of a block.
+
+    """
+    def loader(metadata):
+        return dict(
+            pubsub_message_codecs=dict(
+                default=FooSchema,
+            ),
+            sns_topic_arns=dict(
+                default=FOO_TOPIC,
+            )
+        )
+
+    graph = create_object_graph("example", testing=True, loader=loader)
+    graph.use("opaque")
+
+    # set up response
+    graph.sns_producer.sns_client.publish.return_value = dict(MessageId=MESSAGE_ID)
+
+    with DeferredProducer(graph.sns_producer) as producer:
+        assert_that(producer.produce(FOO_MEDIA_TYPE, bar="baz"), is_(none()))
+
+        assert_that(graph.sns_producer.sns_client.publish.call_count, is_(equal_to(0)))
+
+    assert_that(graph.sns_producer.sns_client.publish.call_count, is_(equal_to(1)))

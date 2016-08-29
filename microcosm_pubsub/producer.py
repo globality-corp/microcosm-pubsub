@@ -29,13 +29,20 @@ class SNSProducer(object):
         :returns: the message id
 
         """
+        message, topic_arn = self.create_message(media_type, dct, **kwargs)
+        return self.publish_message(message, topic_arn)
+
+    def create_message(self, media_type, dct=None, **kwargs):
         if self.opaque is not None:
             kwargs.setdefault('opaque_data', self.opaque.as_dict())
         topic_arn = self.choose_topic_arn(media_type)
-        content = self.pubsub_message_codecs[media_type].encode(dct, **kwargs)
+        message = self.pubsub_message_codecs[media_type].encode(dct, **kwargs)
+        return message, topic_arn
+
+    def publish_message(self, message, topic_arn):
         result = self.sns_client.publish(
             TopicArn=topic_arn,
-            Message=content,
+            Message=message,
         )
         return result["MessageId"]
 
@@ -54,6 +61,31 @@ class SNSProducer(object):
                 media_type,
             ))
         return topic_arn
+
+
+class DeferredProducer(object):
+    """
+    A context manager to defer message production until the end of a block.
+
+    """
+    def __init__(self, producer):
+        self.producer = producer
+        self.messages = []
+
+    def produce(self, media_type, dct=None, **kwargs):
+        message = self.producer.create_message(media_type, dct, **kwargs)
+        self.messages.append(message)
+
+    def __enter__(self):
+        self.message = []
+        return self
+
+    def __exit__(self, type, value, traceback):
+        if type is not None:
+            return
+
+        for message, media_type in self.messages:
+            self.producer.publish_message(message, media_type)
 
 
 @defaults(
