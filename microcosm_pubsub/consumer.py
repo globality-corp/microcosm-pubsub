@@ -11,17 +11,21 @@ class SQSConsumer(object):
     Consume message from a (single) SQS queue.
 
     """
-    def __init__(self,
-                 sqs_client,
-                 sqs_envelope,
-                 sqs_queue_url,
-                 limit,
-                 wait_seconds):
+    def __init__(
+        self,
+        sqs_client,
+        sqs_envelope,
+        sqs_queue_url,
+        limit,
+        wait_seconds,
+        visibility_timeout_seconds,
+    ):
         self.sqs_client = sqs_client
         self.sqs_envelope = sqs_envelope
         self.sqs_queue_url = sqs_queue_url
         self.limit = limit
         self.wait_seconds = wait_seconds
+        self.visibility_timeout_seconds = visibility_timeout_seconds
 
     def consume(self):
         """
@@ -54,10 +58,15 @@ class SQSConsumer(object):
         """
         Acknowledge that a message was NOT processed successfully.
 
-        Does nothing, allowing queue dead-lettering to take effect.
+        Sets the visibility timeout if present
 
         """
-        pass
+        if self.visibility_timeout_seconds is not None:
+            self.sqs_client.change_message_visibility(
+                QueueUrl=self.sqs_queue_url,
+                ReceiptHandle=message.receipt_handle,
+                VisibilityTimeout=self.visibility_timeout_seconds,
+            )
 
 
 @defaults(
@@ -74,6 +83,7 @@ def configure_sqs_consumer(graph):
     sqs_queue_url = graph.config.sqs_consumer.sqs_queue_url
     limit = graph.config.sqs_consumer.limit
     wait_seconds = graph.config.sqs_consumer.wait_seconds
+    visibility_timeout_seconds = graph.config.sqs_consumer.visibility_timeout_seconds
 
     if graph.metadata.testing:
         from mock import MagicMock
@@ -87,4 +97,5 @@ def configure_sqs_consumer(graph):
         sqs_queue_url=sqs_queue_url,
         limit=limit,
         wait_seconds=wait_seconds,
+        visibility_timeout_seconds=visibility_timeout_seconds,
     )
