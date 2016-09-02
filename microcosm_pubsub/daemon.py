@@ -52,7 +52,7 @@ class ConsumerDaemon(Daemon):
                 ),
             )
         if self.args.sqs_queue_url:
-            dct.sqs_consumer.sqs_queue_url = self.args.sqs_queue_url
+            dct['sqs_consumer']['sqs_queue_url'] = self.args.sqs_queue_url
 
         return dct
 
