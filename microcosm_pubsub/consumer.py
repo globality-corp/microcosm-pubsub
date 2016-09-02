@@ -85,6 +85,9 @@ def configure_sqs_consumer(graph):
     wait_seconds = graph.config.sqs_consumer.wait_seconds
     visibility_timeout_seconds = graph.config.sqs_consumer.visibility_timeout_seconds
 
+    if visibility_timeout_seconds:
+        visibility_timeout_seconds = int(visibility_timeout_seconds)
+
     if graph.metadata.testing:
         from mock import MagicMock
         sqs_client = MagicMock()
