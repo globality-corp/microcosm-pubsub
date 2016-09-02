@@ -71,6 +71,7 @@ def consume():
             ),
             sqs_consumer=dict(
                 sqs_queue_url=args.queue_url,
+                visibility_timeout_seconds=None,
             ),
         )
 

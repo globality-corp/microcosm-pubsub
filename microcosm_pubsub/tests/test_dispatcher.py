@@ -26,6 +26,7 @@ def test_handle():
         return dict(
             sqs_consumer=dict(
                 sqs_queue_url=FOO_QUEUE_URL,
+                visibility_timeout_seconds=None,
             ),
             pubsub_message_codecs=dict(
                 default=FooSchema,
@@ -63,6 +64,7 @@ def test_handle_with_no_context():
         return dict(
             sqs_consumer=dict(
                 sqs_queue_url=FOO_QUEUE_URL,
+                visibility_timeout_seconds=None,
             ),
             pubsub_message_codecs=dict(
                 default=FooSchema,
