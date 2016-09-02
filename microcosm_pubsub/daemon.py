@@ -41,6 +41,9 @@ class ConsumerDaemon(Daemon):
             pubsub_message_codecs=dict(
                 mappings=self.schema_mappings,
             ),
+            sqs_consumer=dict(
+                visibility_timeout_seconds=None,
+            ),
         )
         if self.handler_mappings:
             dct.update(
@@ -49,11 +52,8 @@ class ConsumerDaemon(Daemon):
                 ),
             )
         if self.args.sqs_queue_url:
-            dct.update(
-                sqs_consumer=dict(
-                    sqs_queue_url=self.args.sqs_queue_url,
-                ),
-            )
+            dct.sqs_consumer.sqs_queue_url = self.args.sqs_queue_url
+
         return dct
 
     @property
