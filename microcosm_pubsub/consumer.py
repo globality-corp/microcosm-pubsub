@@ -66,7 +66,8 @@ class SQSConsumer(object):
             self.sqs_client.change_message_visibility(
                 QueueUrl=self.sqs_queue_url,
                 ReceiptHandle=message.receipt_handle,
-                VisibilityTimeout=timeout,
+                # we can only set integer or float timeouts
+                VisibilityTimeout=int(timeout),
             )
 
 
