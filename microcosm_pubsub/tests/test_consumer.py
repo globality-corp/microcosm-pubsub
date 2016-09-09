@@ -12,6 +12,7 @@ from hamcrest import (
 )
 from microcosm.api import create_object_graph
 
+from microcosm_pubsub.errors import Nack
 from microcosm_pubsub.message import SQSMessage
 from microcosm_pubsub.tests.fixtures import (
     FOO_QUEUE_URL,
@@ -127,6 +128,45 @@ def test_nack_with_visibility_timeout():
         receipt_handle=RECEIPT_HANDLE,
     )
     message.nack()
+    graph.sqs_consumer.sqs_client.change_message_visibility.assert_called_with(
+        QueueUrl='foo-queue-url',
+        ReceiptHandle=RECEIPT_HANDLE,
+        VisibilityTimeout=visibility_timeout_seconds,
+    )
+
+
+def test_nack_with_visibility_timeout_via_exception():
+    """
+    Consumer raises Nack; calls nack with visibility timeout
+
+    """
+    visibility_timeout_seconds = 2
+
+    def loader(metadata):
+        return dict(
+            sqs_consumer=dict(
+                sqs_queue_url=FOO_QUEUE_URL,
+                visibility_timeout_seconds=visibility_timeout_seconds,
+            ),
+            pubsub_message_codecs=dict(
+                default=FooSchema,
+            ),
+        )
+
+    graph = create_object_graph("example", testing=True, loader=loader)
+    message = SQSMessage(
+        consumer=graph.sqs_consumer,
+        content=None,
+        media_type=FooSchema.MEDIA_TYPE,
+        message_id=MESSAGE_ID,
+        receipt_handle=RECEIPT_HANDLE,
+    )
+    try:
+        with message:
+            raise Nack(visibility_timeout_seconds)
+    except Nack:
+        pass
+
     graph.sqs_consumer.sqs_client.change_message_visibility.assert_called_with(
         QueueUrl='foo-queue-url',
         ReceiptHandle=RECEIPT_HANDLE,

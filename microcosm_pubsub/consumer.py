@@ -54,18 +54,19 @@ class SQSConsumer(object):
             ReceiptHandle=message.receipt_handle,
         )
 
-    def nack(self, message):
+    def nack(self, message, visibility_timeout_second=None):
         """
         Acknowledge that a message was NOT processed successfully.
 
         Sets the visibility timeout if present
 
         """
-        if self.visibility_timeout_seconds is not None:
+        timeout = visibility_timeout_second or self.visibility_timeout_seconds
+        if timeout is not None:
             self.sqs_client.change_message_visibility(
                 QueueUrl=self.sqs_queue_url,
                 ReceiptHandle=message.receipt_handle,
-                VisibilityTimeout=self.visibility_timeout_seconds,
+                VisibilityTimeout=timeout,
             )
 
 
