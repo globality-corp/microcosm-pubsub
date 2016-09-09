@@ -8,6 +8,7 @@ from logging import getLogger
 from microcosm.api import defaults
 from microcosm.errors import NotBoundError
 from microcosm_logging.decorators import context_logger
+from microcosm_pubsub.errors import Nack
 
 
 DispatchResult = namedtuple("DispatchResult", ["message_count", "error_count", "ignore_count"])
@@ -40,10 +41,10 @@ class SQSMessageDispatcher(object):
                 with message:
                     if not self.handle_message(message.media_type, message.content):
                         ignore_count += 1
-            except Exception:
+            except Exception as error:
                 logger.info(
                     "Error handling SQS message.",
-                    exc_info=True,
+                    exc_info=not isinstance(error, Nack),
                     extra=self.sqs_message_context(message.content)
                 )
                 error_count += 1

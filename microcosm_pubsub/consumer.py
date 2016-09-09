@@ -54,18 +54,19 @@ class SQSConsumer(object):
             ReceiptHandle=message.receipt_handle,
         )
 
-    def nack(self, message):
+    def nack(self, message, visibility_timeout_second=None):
         """
         Acknowledge that a message was NOT processed successfully.
 
         Sets the visibility timeout if present
 
         """
-        if self.visibility_timeout_seconds is not None:
+        timeout = visibility_timeout_second or self.visibility_timeout_seconds
+        if timeout is not None:
             self.sqs_client.change_message_visibility(
                 QueueUrl=self.sqs_queue_url,
                 ReceiptHandle=message.receipt_handle,
-                VisibilityTimeout=self.visibility_timeout_seconds,
+                VisibilityTimeout=timeout,
             )
 
 
@@ -84,6 +85,9 @@ def configure_sqs_consumer(graph):
     limit = graph.config.sqs_consumer.limit
     wait_seconds = graph.config.sqs_consumer.wait_seconds
     visibility_timeout_seconds = graph.config.sqs_consumer.visibility_timeout_seconds
+
+    if visibility_timeout_seconds:
+        visibility_timeout_seconds = int(visibility_timeout_seconds)
 
     if graph.metadata.testing:
         from mock import MagicMock
