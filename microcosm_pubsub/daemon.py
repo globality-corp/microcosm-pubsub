@@ -24,17 +24,6 @@ class ConsumerDaemon(Daemon):
         """
         pass
 
-    def handler_mappings(self):
-        """
-        Define the PubSub message media-type to handler mappings.
-
-        This function is an alternative to configuring `graph.sqs_message_handlers` as
-        a graph component; it's useful for very simple mappings (e.g. that don't need access
-        to the graph.)
-
-        """
-        return {}
-
     @property
     def defaults(self):
         dct = dict(
@@ -45,12 +34,6 @@ class ConsumerDaemon(Daemon):
                 visibility_timeout_seconds=None,
             ),
         )
-        if self.handler_mappings:
-            dct.update(
-                sqs_message_dispatcher=dict(
-                    mappings=self.handler_mappings,
-                ),
-            )
         if self.args.sqs_queue_url:
             dct['sqs_consumer']['sqs_queue_url'] = self.args.sqs_queue_url
 

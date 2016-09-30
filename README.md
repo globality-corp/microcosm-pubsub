@@ -82,23 +82,37 @@ no exception is raised during processing:
 
 The `ConsumerDaemon` base class supports creating asynchronous workers ("daemons") that consume
 messages and dispatch them to user-defined worker functions. Usage requires creating a subclass
-that defines the `name`, `schema_mappings`, and `handler_mappings` properties. Here's how:
+that defines the `name` and `schema_mappings` properties and the `sqs_message_handlers` binding.
 
 
-Import the baseclass and one or more schemas:
+Import the baseclass and define a schema.
+
+    from marshmallow import fields
 
     from microcosm_pubsub.daemon import ConsumerDaemon
-    from microcosm_pubsub.main import SimpleSchema
+    from microcosm.api import create_object_graph
 
+    class SimpleSchema(PubSubMessageSchema):
+        """
+        A single schema that just sends a text string.
 
-Define a function that handles messages for each kind of schema:
+        """
+        MEDIA_TYPE = "application/vnd.globality.pubsub.simple"
+
+        message = fields.String(required=True)
+        timestamp = fields.Float(required=True)
+
+        def deserialize_media_type(self, obj):
+            return SimpleSchema.MEDIA_TYPE
+
+Define a function that handles messages for the schema:
 
     def handle_simple(message):
         print message
         return True
 
 
-Subclass the `ConsumerDaemon` to provide mappings from each schema's media type to
+Subclass the `ConsumerDaemon` and writing a binding to mapping the schema's media type to
 its schema class and handler function:
 
     class SimpleConsumerDaemon(ConsumerDaemon):
@@ -108,16 +122,16 @@ its schema class and handler function:
             return "example"
 
         @property
-        def handler_mappings(self):
-            return {
-                SimpleSchema.MEDIA_TYPE: handle_simple,
-            }
-
-        @property
         def schema_mappings(self):
             return {
                 SimpleSchema.MEDIA_TYPE: SimpleSchema,
             }
+
+    @binding("sqs_message_handlers")
+    def configure_sqs_message_handlers(graph):
+        return {
+            SimpleSchema.MEDIA_TYPE: SimpleSchema,
+        }
 
 
 Declare a main function for the daemon either using `setuptools` entry points (preferred) or
