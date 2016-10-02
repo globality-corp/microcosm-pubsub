@@ -4,7 +4,7 @@ Decorator tests.
 """
 from hamcrest import (
     assert_that,
-    contains,
+    equal_to,
     instance_of,
     is_,
 )
@@ -39,6 +39,6 @@ class TestDecorators(object):
 
     def test_handles_decorators(self):
         assert_that(
-            list(self.graph.sqs_message_handler_registry.iterate(TestSchema.MEDIA_TYPE)),
-            contains(noop_handler)
+            self.graph.sqs_message_handler_registry.find(TestSchema.MEDIA_TYPE),
+            is_(equal_to(noop_handler)),
         )

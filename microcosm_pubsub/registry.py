@@ -107,18 +107,6 @@ class SQSMessageHandlerRegistry(Registry):
     def allows_multiple(self):
         return True
 
-    def iterate(self, media_type):
-        """
-        Iterate through available values for the given media type.
-
-        """
-        value = self.__class__.find(media_type)
-        if not value:
-            self.logger.debug("No mapping found for media type: {}".format(media_type))
-            return
-
-        yield value
-
 
 @defaults(
     strict=True,

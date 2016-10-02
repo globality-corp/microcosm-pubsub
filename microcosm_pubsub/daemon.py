@@ -43,6 +43,7 @@ class ConsumerDaemon(Daemon):
         return super(ConsumerDaemon, self).components + [
             "opaque",
             "pubsub_message_schema_registry",
+            "sqs_message_handler_registry",
             "sqs_consumer",
             "sqs_message_dispatcher",
         ]

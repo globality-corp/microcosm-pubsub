@@ -65,16 +65,18 @@ class SQSMessageDispatcher(object):
             return False
 
         with self.opaque.initialize(self.sqs_message_context, message):
-            for sqs_message_handler in self.sqs_message_handler_registry.iterate(media_type):
+            try:
+                sqs_message_handler = self.sqs_message_handler_registry.find(media_type)
+            except KeyError:
+                # no handlers
+                return False
+            else:
                 handler_with_context = context_logger(
                     self.sqs_message_context,
                     sqs_message_handler,
                     parent=sqs_message_handler,
                 )
                 return handler_with_context(message)
-            else:
-                # no handlers
-                return False
 
 
 def configure(graph):
