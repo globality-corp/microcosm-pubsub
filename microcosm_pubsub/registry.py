@@ -42,9 +42,9 @@ class Registry(object):
     @classmethod
     def register(cls, media_type, value):
         """
-        Register a valuex for a media type.
+        Register a value for a media type.
 
-        It is an error to register the same value multiple times.
+        It is an error to register more than one value for the same media type.
 
         """
         existing_value = cls.MAPPINGS.get(media_type)
