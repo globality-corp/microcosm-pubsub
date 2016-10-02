@@ -12,6 +12,7 @@ from microcosm.registry import Registry
 from mock import Mock
 
 from microcosm_pubsub.tests.fixtures import (
+    foo_handler,
     FOO_QUEUE_URL,
     FooSchema,
 )
@@ -38,7 +39,7 @@ def test_handle():
     @binding("sqs_message_handlers", graph._registry)
     def configure_message_handlers(graph):
         return {
-            FooSchema.MEDIA_TYPE: Mock(return_value=True),
+            FooSchema.MEDIA_TYPE: foo_handler,
         }
 
     graph.use(
@@ -75,7 +76,7 @@ def test_handle_with_no_context():
     @binding("sqs_message_handlers", graph._registry)
     def configure_message_handlers(graph):
         return {
-            FooSchema.MEDIA_TYPE: Mock(return_value=True),
+            FooSchema.MEDIA_TYPE: foo_handler,
         }
     graph.use(
         'sqs_message_handlers',

@@ -2,11 +2,9 @@
 Message encoding and decoding.
 
 """
-from collections import defaultdict
 from json import dumps, loads
 
 from marshmallow import fields, Schema, ValidationError
-from microcosm.api import defaults
 
 
 DEFAULT_MEDIA_TYPE = "application/vnd.globality.pubsub.default"
@@ -89,27 +87,3 @@ class PubSubMessageCodec(object):
         self.schema.validate(dct)
         decoded = self.schema.dump(dct)
         return decoded.data
-
-
-@defaults(
-    default=None,
-    strict=True,
-    mappings=dict(),
-)
-def configure_pubsub_message_codecs(graph):
-    """
-    Configure a mapping from message types to codecs.
-
-    """
-    default_schema_cls = graph.config.pubsub_message_codecs.default
-    strict = graph.config.pubsub_message_codecs.strict
-
-    if default_schema_cls:
-        message_codecs = defaultdict(lambda: PubSubMessageCodec(default_schema_cls(strict=strict)))
-    else:
-        message_codecs = dict()
-
-    for key, schema_cls in graph.config.pubsub_message_codecs.mappings.items():
-        message_codecs[key] = PubSubMessageCodec(schema_cls(strict=strict))
-
-    return message_codecs

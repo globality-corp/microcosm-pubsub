@@ -19,20 +19,6 @@ PubSub with SNS/SQS
     by separate consumers.
 
 
-## CLI
-
-For testing purposes, the producer and consumer functions can be invoked from the CLI. These test functions
-use a very simplistic schema and will not work for most real use cases.
-
-To produce messages:
-
-    sns-produce --topic-arn <topic-arn>
-
-To consume messages:
-
-    sqs-consume --queue-url <queue-url>
-
-
 ## Validation
 
 Messages use [marshmallow](http://marshmallow.readthedocs.org/en/latest/index.html) schemas for validation.
@@ -81,17 +67,21 @@ no exception is raised during processing:
 ## Asynchronous Workers
 
 The `ConsumerDaemon` base class supports creating asynchronous workers ("daemons") that consume
-messages and dispatch them to user-defined worker functions. Usage requires creating a subclass
-that defines the `name` and `schema_mappings` properties and the `sqs_message_handlers` binding.
+messages and dispatch them to user-defined worker functions. Usage involves declaring a schema,
+declaring a handler function, and declaring a deamon that runs them.
 
 
-Import the baseclass and define a schema.
+Import the baseclass, define a schema, and decorate it with `@schema`:
 
     from marshmallow import fields
 
-    from microcosm_pubsub.daemon import ConsumerDaemon
-    from microcosm.api import create_object_graph
+    from microcosm.api import binding, create_object_graph
 
+    from microcosm_pubsub.daemon import ConsumerDaemon
+    from microcosm_pubsub.decorators import handles, schema
+
+
+    @schema
     class SimpleSchema(PubSubMessageSchema):
         """
         A single schema that just sends a text string.
@@ -105,33 +95,28 @@ Import the baseclass and define a schema.
         def deserialize_media_type(self, obj):
             return SimpleSchema.MEDIA_TYPE
 
-Define a function that handles messages for the schema:
+Define a function that handles messages for the schema and decorate it with `@handles` to
+indicate that it handles your schema type. While plain functions, suffice, most real-world
+handlers will be a class with its own `@binding` to pass other collaborators:
 
-    def handle_simple(message):
-        print message
-        return True
+    @binding("simple_handler")
+    @handles(SimpleSchema)
+    class SimpleHandler(object):
+        def __init__(self, graph):
+            self.collaborator = graph.collaborator
+
+        def __call__(self, message):
+            self.collaborator.do_something(message)
+            return True
 
 
-Subclass the `ConsumerDaemon` and writing a binding to mapping the schema's media type to
-its schema class and handler function:
+Subclass the `ConsumerDaemon` and override any required attribtes (notably `name`):
 
     class SimpleConsumerDaemon(ConsumerDaemon):
 
         @property
         def name(self):
             return "example"
-
-        @property
-        def schema_mappings(self):
-            return {
-                SimpleSchema.MEDIA_TYPE: SimpleSchema,
-            }
-
-    @binding("sqs_message_handlers")
-    def configure_sqs_message_handlers(graph):
-        return {
-            SimpleSchema.MEDIA_TYPE: SimpleSchema,
-        }
 
 
 Declare a main function for the daemon either using `setuptools` entry points (preferred) or

@@ -16,9 +16,9 @@ class SNSProducer(object):
     Produces messages to SNS topics.
 
     """
-    def __init__(self, opaque, pubsub_message_codecs, sns_client, sns_topic_arns):
+    def __init__(self, opaque, pubsub_message_schema_registry, sns_client, sns_topic_arns):
         self.opaque = opaque
-        self.pubsub_message_codecs = pubsub_message_codecs
+        self.pubsub_message_schema_registry = pubsub_message_schema_registry
         self.sns_client = sns_client
         self.sns_topic_arns = sns_topic_arns
 
@@ -36,7 +36,7 @@ class SNSProducer(object):
         if self.opaque is not None:
             kwargs.setdefault('opaque_data', self.opaque.as_dict())
         topic_arn = self.choose_topic_arn(media_type)
-        message = self.pubsub_message_codecs[media_type].encode(dct, **kwargs)
+        message = self.pubsub_message_schema_registry[media_type].encode(dct, **kwargs)
         return message, topic_arn
 
     def publish_message(self, message, topic_arn):
@@ -131,7 +131,7 @@ def configure_sns_producer(graph):
 
     return SNSProducer(
         opaque=opaque,
-        pubsub_message_codecs=graph.pubsub_message_codecs,
+        pubsub_message_schema_registry=graph.pubsub_message_schema_registry,
         sns_client=sns_client,
         sns_topic_arns=graph.sns_topic_arns,
     )

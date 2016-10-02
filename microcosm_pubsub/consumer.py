@@ -66,7 +66,7 @@ class SQSConsumer(object):
             self.sqs_client.change_message_visibility(
                 QueueUrl=self.sqs_queue_url,
                 ReceiptHandle=message.receipt_handle,
-                # we can only set integer or float timeouts
+                # we can only set integer timeouts
                 VisibilityTimeout=int(timeout),
             )
 
@@ -76,6 +76,8 @@ class SQSConsumer(object):
     limit=10,
     # SQS will only return a few messages at time unless long polling is enabled (>0)
     wait_seconds=1,
+    # By default, don't change message visibility on nack
+    visibility_timeout_seconds=None,
 )
 def configure_sqs_consumer(graph):
     """

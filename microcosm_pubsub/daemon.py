@@ -2,8 +2,6 @@
 Consume Daemon main.
 
 """
-from abc import abstractproperty
-
 import microcosm.opaque  # noqa
 from microcosm_daemon.api import SleepNow
 from microcosm_daemon.daemon import Daemon
@@ -16,34 +14,35 @@ class ConsumerDaemon(Daemon):
         parser.add_argument("--sqs-queue-url")
         return parser
 
-    @abstractproperty
     def schema_mappings(self):
         """
         Define the PubSub message media-type to schema mappings.
 
         """
-        pass
+        return dict()
+
+    def create_object_graph(self, args):
+        graph = super(ConsumerDaemon, self).create_object_graph(args)
+        for media_type, schema_cls in self.schema_mappings.items():
+            self.graph.pubsub_message_schema_registry.register(media_type, schema_cls)
+        return graph
 
     @property
     def defaults(self):
-        dct = dict(
-            pubsub_message_codecs=dict(
-                mappings=self.schema_mappings,
-            ),
+        if not self.args.sqs_queue_url:
+            return dict()
+
+        return dict(
             sqs_consumer=dict(
-                visibility_timeout_seconds=None,
+                sqs_queue_url=self.args.sqs_queue_url,
             ),
         )
-        if self.args.sqs_queue_url:
-            dct['sqs_consumer']['sqs_queue_url'] = self.args.sqs_queue_url
-
-        return dct
 
     @property
     def components(self):
         return super(ConsumerDaemon, self).components + [
             "opaque",
-            "pubsub_message_codecs",
+            "pubsub_message_schema_registry",
             "sqs_consumer",
             "sqs_message_dispatcher",
         ]
