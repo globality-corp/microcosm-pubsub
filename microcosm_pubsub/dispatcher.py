@@ -61,7 +61,7 @@ class SQSMessageDispatcher(object):
 
         """
         if message is None:
-            logger.debug("Skipping message with unparsed type: {}".format(media_type))
+            self.logger.debug("Skipping message with unparsed type: {}".format(media_type))
             return False
 
         with self.opaque.initialize(self.sqs_message_context, message):
@@ -69,6 +69,7 @@ class SQSMessageDispatcher(object):
                 sqs_message_handler = self.sqs_message_handler_registry.find(media_type)
             except KeyError:
                 # no handlers
+                self.logger.debug("Skipping message with no registered handler: {}".format(media_type))
                 return False
             else:
                 handler_with_context = context_logger(

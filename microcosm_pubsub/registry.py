@@ -78,10 +78,6 @@ class PubSubMessageSchemaRegistry(Registry):
     def legacy_binding_key(self):
         return "pubsub_message_codecs"
 
-    @property
-    def allows_multiple(self):
-        return False
-
     def __getitem__(self, media_type):
         """
         Create a codec or raise KeyError.
@@ -103,9 +99,6 @@ class SQSMessageHandlerRegistry(Registry):
     @property
     def legacy_binding_key(self):
         return "sqs_message_handlers"
-
-    def allows_multiple(self):
-        return True
 
 
 @defaults(
