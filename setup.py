@@ -18,7 +18,7 @@ setup(
         "boto3>=1.3.0",
         "marshmallow>=2.6.1",
         "microcosm>=0.12.0",
-        "microcosm-daemon>=0.2.0",
+        "microcosm-daemon>=0.8.0",
     ],
     setup_requires=[
         "nose>=1.3.6",

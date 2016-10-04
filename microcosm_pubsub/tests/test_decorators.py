@@ -39,6 +39,6 @@ class TestDecorators(object):
 
     def test_handles_decorators(self):
         assert_that(
-            self.graph.sqs_message_handler_registry.find(TestSchema.MEDIA_TYPE),
+            self.graph.sqs_message_handler_registry[TestSchema.MEDIA_TYPE],
             is_(equal_to(noop_handler)),
         )

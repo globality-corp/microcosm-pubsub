@@ -14,18 +14,22 @@ class ConsumerDaemon(Daemon):
         parser.add_argument("--sqs-queue-url")
         return parser
 
-    def schema_mappings(self):
-        """
-        Define the PubSub message media-type to schema mappings.
+    def create_object_graph_components(self, graph):
+        super(ConsumerDaemon, self).create_object_graph_components(graph)
 
-        """
-        return dict()
+        # legacy schema mappings support (as property)
+        if hasattr(self, "schema_mappings"):
+            for media_type, schema_cls in self.schema_mappings.items():
+                graph.pubsub_message_schema_registry.register(media_type, schema_cls)
 
-    def create_object_graph(self, args):
-        graph = super(ConsumerDaemon, self).create_object_graph(args)
-        for media_type, schema_cls in self.schema_mappings.items():
-            self.graph.pubsub_message_schema_registry.register(media_type, schema_cls)
-        return graph
+    def run_state_machine(self):
+        for media_type in self.graph.sqs_message_handler_registry.keys():
+            handler = self.graph.sqs_message_handler_registry[media_type]
+            self.graph.logger.info("Handling: {} with handler: {}".format(
+                media_type,
+                handler.__class__.__name__,
+            ))
+        super(ConsumerDaemon, self).run_state_machine()
 
     @property
     def defaults(self):

@@ -66,7 +66,7 @@ class SQSMessageDispatcher(object):
 
         with self.opaque.initialize(self.sqs_message_context, message):
             try:
-                sqs_message_handler = self.sqs_message_handler_registry.find(media_type)
+                sqs_message_handler = self.sqs_message_handler_registry[media_type]
             except KeyError:
                 # no handlers
                 self.logger.debug("Skipping message with no registered handler: {}".format(media_type))
