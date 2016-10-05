@@ -30,6 +30,9 @@ class URIHandler(object):
     """
     __metaclass__ = ABCMeta
 
+    def __init__(self, graph):
+        self.sqs_message_context = graph.sqs_message_context
+
     @property
     def name(self):
         return humanize(self.__class__.__name__)
@@ -43,7 +46,7 @@ class URIHandler(object):
             self.on_skip(message, uri, skip_reason)
             return False
 
-        resource = self.get_resource(uri=uri)
+        resource = self.get_resource(message, uri)
 
         if self.handle(message, uri, resource):
             self.on_handle(message, uri, resource)
@@ -96,12 +99,15 @@ class URIHandler(object):
         """
         return None
 
-    def get_resource(self, uri):
+    def get_resource(self, message, uri):
         """
         Mock-friendly URI getter.
 
+        Passes message context.
+
         """
-        response = get(uri)
+        headers = self.sqs_message_context(message)
+        response = get(uri, headers=headers)
         response.raise_for_status()
         return response.json()
 
