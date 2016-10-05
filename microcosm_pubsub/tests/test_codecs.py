@@ -2,7 +2,7 @@
 Codec tests.
 
 """
-from json import dumps
+from json import dumps, loads
 from operator import itemgetter
 
 from hamcrest import (
@@ -48,10 +48,10 @@ def test_encode():
     """
     graph = create_object_graph("example", testing=True)
     codec = graph.pubsub_message_schema_registry[FooSchema.MEDIA_TYPE]
-    assert_that(codec.encode(bar="baz"), is_(equal_to(dumps({
+    assert_that(loads(codec.encode(bar="baz")), is_(equal_to({
         "bar": "baz",
         "mediaType": "application/vnd.globality.pubsub.foo",
-    }))))
+    })))
 
 
 def test_encode_missing_field():
