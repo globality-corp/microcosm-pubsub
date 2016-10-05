@@ -1,8 +1,10 @@
 """
 Custom fields.
+
 """
-from marshmallow.fields import Field, ValidationError
 from uuid import UUID
+
+from marshmallow.fields import Field, ValidationError
 
 
 class UUIDField(Field):

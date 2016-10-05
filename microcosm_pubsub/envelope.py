@@ -24,7 +24,6 @@ class SQSEnvelope(object):
     __metaclass__ = ABCMeta
 
     def __init__(self, graph):
-        self.pubsub_message_codecs = graph.pubsub_message_codecs
         self.validate_md5 = graph.config.sqs_envelope.validate_md5
 
     def parse_raw_message(self, consumer, raw_message):
@@ -95,6 +94,7 @@ class CodecSQSEnvelope(SQSEnvelope):
     def __init__(self, graph):
         super(CodecSQSEnvelope, self).__init__(graph)
         self.media_type_codec = PubSubMessageCodec(MediaTypeSchema())
+        self.pubsub_message_schema_registry = graph.pubsub_message_schema_registry
 
     def parse_media_type_and_content(self, message):
         """
@@ -104,7 +104,7 @@ class CodecSQSEnvelope(SQSEnvelope):
         base_message = self.media_type_codec.decode(message)
         media_type = base_message["mediaType"]
         try:
-            content = self.pubsub_message_codecs[media_type].decode(message)
+            content = self.pubsub_message_schema_registry[media_type].decode(message)
         except KeyError:
             return media_type, None
         else:

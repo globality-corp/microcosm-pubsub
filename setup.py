@@ -18,7 +18,7 @@ setup(
         "boto3>=1.3.0",
         "marshmallow>=2.6.1",
         "microcosm>=0.12.0",
-        "microcosm-daemon>=0.2.0",
+        "microcosm-daemon>=0.8.0",
     ],
     setup_requires=[
         "nose>=1.3.6",
@@ -28,10 +28,11 @@ setup(
     entry_points={
         "microcosm.factories": [
             "sqs_message_context = microcosm_pubsub.context:configure_sqs_message_context",
-            "pubsub_message_codecs = microcosm_pubsub.codecs:configure_pubsub_message_codecs",
+            "pubsub_message_schema_registry = microcosm_pubsub.registry:configure_schema_registry",
             "sqs_consumer = microcosm_pubsub.consumer:configure_sqs_consumer",
             "sqs_envelope = microcosm_pubsub.envelope:configure_sqs_envelope",
-            "sqs_message_dispatcher = microcosm_pubsub.dispatcher:configure_sqs_message_dispatcher",
+            "sqs_message_dispatcher = microcosm_pubsub.dispatcher:configure",
+            "sqs_message_handler_registry = microcosm_pubsub.registry:configure_handler_registry",
             "sns_producer = microcosm_pubsub.producer:configure_sns_producer",
             "sns_topic_arns = microcosm_pubsub.producer:configure_sns_topic_arns",
         ]

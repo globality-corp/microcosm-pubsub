@@ -3,6 +3,7 @@ Test fixtures.
 
 """
 from marshmallow import fields
+from microcosm.api import binding
 
 from microcosm_pubsub.codecs import PubSubMessageSchema
 
@@ -20,3 +21,21 @@ class FooSchema(PubSubMessageSchema):
 
     def deserialize_media_type(self, obj):
         return FooSchema.MEDIA_TYPE
+
+
+def foo_handler(message):
+    return True
+
+
+@binding("pubsub_message_codecs")
+def configure_pubsub_message_codecs(graph):
+    return {
+        FooSchema.MEDIA_TYPE: FooSchema,
+    }
+
+
+@binding("sqs_message_handlers")
+def configure_sqs_message_handlers(graph):
+    return {
+        FooSchema.MEDIA_TYPE: foo_handler,
+    }
