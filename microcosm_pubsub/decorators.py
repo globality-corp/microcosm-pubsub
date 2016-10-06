@@ -2,7 +2,7 @@
 Fluent decorators for resources and handlers.
 
 """
-from microcosm.object_graph import on_resolve
+from microcosm.hooks import on_resolve
 
 from microcosm_pubsub.registry import (
     media_type_for,
