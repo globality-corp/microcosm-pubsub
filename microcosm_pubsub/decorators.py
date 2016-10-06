@@ -2,10 +2,21 @@
 Fluent decorators for resources and handlers.
 
 """
+from microcosm.hooks import on_resolve
+
 from microcosm_pubsub.registry import (
-    register_handler,
-    register_schema,
+    media_type_for,
+    PubSubMessageSchemaRegistry,
+    SQSMessageHandlerRegistry,
 )
+
+
+def register_schema(registry, schema_cls):
+    registry.register(media_type_for(schema_cls), schema_cls)
+
+
+def register_handler(registry, schema_cls, handler):
+    registry.register(media_type_for(schema_cls), handler)
 
 
 def handles(schema_cls):
@@ -16,8 +27,8 @@ def handles(schema_cls):
 
     """
     def decorator(func):
-        register_schema(schema_cls)
-        register_handler(schema_cls, func)
+        on_resolve(PubSubMessageSchemaRegistry, register_schema, schema_cls)
+        on_resolve(SQSMessageHandlerRegistry, register_handler, schema_cls, func)
         return func
     return decorator
 
@@ -27,5 +38,5 @@ def schema(schema_cls):
     Register a schema.
 
     """
-    register_schema(schema_cls)
+    on_resolve(PubSubMessageSchemaRegistry, register_schema, schema_cls)
     return schema_cls
