@@ -31,6 +31,7 @@ class Registry(object):
         Create registry, auto-registering items found using the legacy graph binding key.
 
         """
+        self.mappings = dict()
         self.graph = graph
 
         # legacy graph handling
@@ -50,26 +51,24 @@ class Registry(object):
     def legacy_binding_key(self):
         pass
 
-    @classmethod
-    def register(cls, media_type, value):
+    def register(self, media_type, value):
         """
         Register a value for a media type.
 
         It is an error to register more than one value for the same media type.
 
         """
-        existing_value = cls.MAPPINGS.get(media_type)
+        existing_value = self.mappings.get(media_type)
         if existing_value:
             if value == existing_value:
                 return
-            raise AlreadyRegisteredError("A mapping already exists  media type: {}".format(
+            raise AlreadyRegisteredError("A mapping already exists for media type: {}".format(
                 media_type,
             ))
-        cls.MAPPINGS[media_type] = value
+        self.mappings[media_type] = value
 
-    @classmethod
-    def keys(cls):
-        return cls.MAPPINGS.keys()
+    def keys(self):
+        return self.mappings.keys()
 
 
 @logger
@@ -78,9 +77,6 @@ class PubSubMessageSchemaRegistry(Registry):
     Keeps track of available message schemas.
 
     """
-    # singleton registry
-    MAPPINGS = dict()
-
     def __init__(self, graph):
         super(PubSubMessageSchemaRegistry, self).__init__(graph)
         self.strict = graph.config.pubsub_message_schema_registry.strict
@@ -94,7 +90,7 @@ class PubSubMessageSchemaRegistry(Registry):
         Create a codec or raise KeyError.
 
         """
-        schema_cls = self.__class__.MAPPINGS[media_type]
+        schema_cls = self.mappings[media_type]
         return PubSubMessageCodec(schema_cls(strict=self.strict))
 
 
@@ -104,9 +100,6 @@ class SQSMessageHandlerRegistry(Registry):
     Keeps track of available handlers.
 
     """
-    # singleton registry
-    MAPPINGS = dict()
-
     @property
     def legacy_binding_key(self):
         return "sqs_message_handlers"
@@ -116,7 +109,7 @@ class SQSMessageHandlerRegistry(Registry):
         Create a handler or raise KeyError.
 
         """
-        handler = self.__class__.MAPPINGS[media_type]
+        handler = self.mappings[media_type]
         if isclass(handler):
             return handler(self.graph)
         else:
@@ -140,11 +133,3 @@ def media_type_for(schema_cls):
     if hasattr(schema_cls, "infer_media_type"):
         return schema_cls.infer_media_type()
     raise Exception("Cannot infer media type for schema class: {}".format(schema_cls))
-
-
-def register_schema(schema_cls):
-    PubSubMessageSchemaRegistry.register(media_type_for(schema_cls), schema_cls)
-
-
-def register_handler(schema_cls, handler):
-    SQSMessageHandlerRegistry.register(media_type_for(schema_cls), handler)
