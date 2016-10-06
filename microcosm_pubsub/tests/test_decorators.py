@@ -30,6 +30,10 @@ class TestDecorators(object):
 
     def setup(self):
         self.graph = create_object_graph("test")
+        self.graph.use(
+            "pubsub_message_schema_registry",
+            "sqs_message_handler_registry",
+        )
 
     def test_schema_decorators(self):
         assert_that(
