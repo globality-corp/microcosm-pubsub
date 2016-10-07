@@ -111,5 +111,5 @@ class URIHandler(object):
         response.raise_for_status()
         return response.json()
 
-    def handle(self, message, resource):
+    def handle(self, message, uri, resource):
         return True
