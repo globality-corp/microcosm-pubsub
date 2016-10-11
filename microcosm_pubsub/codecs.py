@@ -7,7 +7,7 @@ from json import dumps, loads
 from marshmallow import fields, Schema, ValidationError
 
 
-DEFAULT_MEDIA_TYPE = "application/vnd.globality.pubsub.default"
+DEFAULT_MEDIA_TYPE = "application/json"
 
 
 class PubSubMessageSchema(Schema):
@@ -24,7 +24,10 @@ class PubSubMessageSchema(Schema):
         # need to set missing to non-None or marshmallow won't call the deserialize function
         missing=DEFAULT_MEDIA_TYPE,
     )
-    opaque_data = fields.Dict(required=False)
+    opaque_data = fields.Dict(
+        attribute="opaqueData",
+        required=False,
+    )
 
     def serialize_media_type(self, message):
         """

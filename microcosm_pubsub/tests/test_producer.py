@@ -74,7 +74,7 @@ def test_produce_default_topic():
     assert_that(loads(graph.sns_producer.sns_client.publish.call_args[1]["Message"]), is_(equal_to({
         "bar": "baz",
         "mediaType": "application/vnd.globality.pubsub.foo",
-        "opaque_data": {},
+        "opaqueData": {},
     })))
     assert_that(message_id, is_(equal_to(MESSAGE_ID)))
 
@@ -110,7 +110,7 @@ def test_produce_custom_topic():
     assert_that(loads(graph.sns_producer.sns_client.publish.call_args[1]["Message"]), is_(equal_to({
         "bar": "baz",
         "mediaType": "application/vnd.globality.pubsub.foo",
-        "opaque_data": {},
+        "opaqueData": {},
     })))
     assert_that(message_id, is_(equal_to(MESSAGE_ID)))
 
