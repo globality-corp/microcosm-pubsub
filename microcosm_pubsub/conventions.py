@@ -3,6 +3,8 @@ Convention-driven pubsub.
 
 """
 from enum import Enum, unique
+from inspect import isclass
+from six import string_types
 
 from inflection import underscore
 from marshmallow import fields
@@ -24,6 +26,24 @@ class LifecycleChange(Enum):
 
     def matches(self, media_type):
         return self.value in media_type.split(".")
+
+
+def name_for(obj):
+    """
+    Get a name for something.
+
+    Allows overriding of default names using the `__alias__` attribute.
+
+    """
+    if isinstance(obj, string_types):
+        return underscore(obj)
+
+    cls = obj if isclass(obj) else obj.__class__
+
+    if hasattr(cls, "__alias__"):
+        return underscore(cls.__alias__)
+    else:
+        return underscore(cls.__name__)
 
 
 def make_media_type(resource, lifecycle_change=None, organization=None, public=False):
@@ -49,7 +69,7 @@ def make_media_type(resource, lifecycle_change=None, organization=None, public=F
         # qualify the message with the kind of lifecycle change
         lifecycle_change.value,
         # specify the resource name
-        underscore(resource),
+        name_for(resource),
     )
 
 

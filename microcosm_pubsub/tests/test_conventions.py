@@ -17,6 +17,10 @@ from microcosm_pubsub.conventions import created, make_media_type, URIMessageSch
 from microcosm_pubsub.decorators import handles
 
 
+class Foo(object):
+    pass
+
+
 @handles(created("foo"))
 def noop_handler(message):
     return True
@@ -117,7 +121,7 @@ def test_dispatch_by_convention():
     """
     graph = create_object_graph("example", testing=True)
 
-    media_type = created("Foo")
+    media_type = created(Foo)
 
     assert_that(
         graph.pubsub_message_schema_registry[media_type].schema,
