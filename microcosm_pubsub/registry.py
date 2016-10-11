@@ -4,12 +4,14 @@ Registry of SQS message handlers.
 """
 from abc import ABCMeta, abstractproperty
 from inspect import isclass
+from six import string_types
 
 from microcosm.api import defaults
 from microcosm.errors import NotBoundError
 from microcosm_logging.decorators import logger
 
 from microcosm_pubsub.codecs import PubSubMessageCodec
+from microcosm_pubsub.conventions import LifecycleChange, URIMessageSchema
 
 
 class AlreadyRegisteredError(Exception):
@@ -79,6 +81,7 @@ class PubSubMessageSchemaRegistry(Registry):
     """
     def __init__(self, graph):
         super(PubSubMessageSchemaRegistry, self).__init__(graph)
+        self.auto_register = graph.config.pubsub_message_schema_registry.auto_register
         self.strict = graph.config.pubsub_message_schema_registry.strict
 
     @property
@@ -90,8 +93,25 @@ class PubSubMessageSchemaRegistry(Registry):
         Create a codec or raise KeyError.
 
         """
-        schema_cls = self.mappings[media_type]
-        return PubSubMessageCodec(schema_cls(strict=self.strict))
+        try:
+            schema_cls = self.mappings[media_type]
+            if isinstance(schema_cls, string_types):
+                media_type = schema_cls
+                schema = URIMessageSchema(media_type)
+            else:
+                schema = schema_cls(strict=self.strict)
+        except KeyError:
+            if not self.auto_register:
+                raise
+
+            for lifecycle_change in LifecycleChange:
+                if lifecycle_change.matches(media_type):
+                    schema = URIMessageSchema(media_type)
+                    break
+            else:
+                raise
+
+        return PubSubMessageCodec(schema)
 
 
 @logger
@@ -117,6 +137,7 @@ class SQSMessageHandlerRegistry(Registry):
 
 
 @defaults(
+    auto_register=True,
     strict=True,
 )
 def configure_schema_registry(graph):
@@ -132,4 +153,6 @@ def media_type_for(schema_cls):
         return schema_cls.MEDIA_TYPE
     if hasattr(schema_cls, "infer_media_type"):
         return schema_cls.infer_media_type()
+    if isinstance(schema_cls, string_types):
+        return schema_cls
     raise Exception("Cannot infer media type for schema class: {}".format(schema_cls))
