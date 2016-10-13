@@ -63,7 +63,7 @@ class SNSProducer(object):
                 Message=message,
             )
 
-        self.logger.info("Published message with media type {media_type}", extra)
+        self.logger.info("Published message with media type {media_type}", extra=extra)
 
         return result["MessageId"]
 
