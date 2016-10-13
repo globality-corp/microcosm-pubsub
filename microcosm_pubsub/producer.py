@@ -7,10 +7,13 @@ from collections import defaultdict
 from boto3 import client
 from microcosm.api import defaults
 from microcosm.errors import NotBoundError
+from microcosm_logging.decorators import logger
+from microcosm_logging.timing import elapsed_time
 
 from microcosm_pubsub.errors import TopicNotDefinedError
 
 
+@logger
 class SNSProducer(object):
     """
     Produces messages to SNS topics.
@@ -29,8 +32,17 @@ class SNSProducer(object):
         :returns: the message id
 
         """
-        message, topic_arn = self.create_message(media_type, dct, **kwargs)
-        return self.publish_message(message, topic_arn)
+        extra = dict(
+            media_type=media_type,
+        )
+        self.logger.debug("Publishing message with media type {media_type}", extra=extra)
+
+        with elapsed_time(extra):
+            message, topic_arn = self.create_message(media_type, dct, **kwargs)
+            result = self.publish_message(message, topic_arn)
+
+        self.logger.info("Published message with media type {media_type}", extra)
+        return result
 
     def create_message(self, media_type, dct=None, **kwargs):
         if self.opaque is not None:
