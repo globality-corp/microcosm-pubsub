@@ -25,30 +25,39 @@ class SNSProducer(object):
         self.sns_client = sns_client
         self.sns_topic_arns = sns_topic_arns
 
-    def produce(self, media_type, dct=None, **kwargs):
+    def produce(self, media_type, dct=None, opaque_data=None, **kwargs):
         """
         Produce a message.
 
         :returns: the message id
 
         """
+        if opaque_data is None:
+            opaque_data = dict()
+
+        if self.opaque is not None:
+            opaque_data.update(self.opaque.as_dict())
+
         extra = dict(
             media_type=media_type,
+            **opaque_data
         )
         self.logger.debug("Publishing message with media type {media_type}", extra=extra)
 
         with elapsed_time(extra):
-            message, topic_arn = self.create_message(media_type, dct, **kwargs)
+            message, topic_arn = self.create_message(media_type, dct, opaque_data, **kwargs)
             result = self.publish_message(message, topic_arn)
 
         self.logger.info("Published message with media type {media_type}", extra)
         return result
 
-    def create_message(self, media_type, dct=None, **kwargs):
-        if self.opaque is not None:
-            kwargs.setdefault('opaque_data', self.opaque.as_dict())
+    def create_message(self, media_type, dct, opaque_data, **kwargs):
         topic_arn = self.choose_topic_arn(media_type)
-        message = self.pubsub_message_schema_registry[media_type].encode(dct, **kwargs)
+        message = self.pubsub_message_schema_registry[media_type].encode(
+            dct,
+            opaque_data=opaque_data,
+            **kwargs
+        )
         return message, topic_arn
 
     def publish_message(self, message, topic_arn):
@@ -84,8 +93,11 @@ class DeferredProducer(object):
         self.producer = producer
         self.messages = []
 
-    def produce(self, media_type, dct=None, **kwargs):
-        message = self.producer.create_message(media_type, dct, **kwargs)
+    def produce(self, media_type, dct=None, opaque_data=None, **kwargs):
+        if opaque_data is None:
+            opaque_data = dict()
+
+        message = self.producer.create_message(media_type, dct, opaque_data, **kwargs)
         self.messages.append(message)
 
     def __enter__(self):
