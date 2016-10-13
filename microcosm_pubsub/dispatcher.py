@@ -46,11 +46,21 @@ class SQSMessageDispatcher(object):
                     if not self.handle_message(message.media_type, message.content):
                         ignore_count += 1
             except Exception as error:
-                self.logger.info(
-                    "Error handling SQS message.",
-                    exc_info=not isinstance(error, Nack),
-                    extra=self.sqs_message_context(message.content)
-                )
+                if isinstance(error, Nack):
+                    self.logger.info(
+                        "Nacking SQS message: {}".format(
+                            message.media_type,
+                        ),
+                        extra=self.sqs_message_context(message.content)
+                    )
+                else:
+                    self.logger.info(
+                        "Error handling SQS message: {}".format(
+                            message.media_type,
+                        ),
+                        exc_info=True,
+                        extra=self.sqs_message_context(message.content)
+                    )
                 error_count += 1
 
         return DispatchResult(message_count, error_count, ignore_count)
