@@ -5,7 +5,9 @@ Handler base classes.
 from abc import ABCMeta
 from inflection import humanize
 
-from requests import get
+from requests import codes, get
+
+from microcosm_pubsub.errors import Nack
 
 
 class URIHandler(object):
@@ -30,12 +32,17 @@ class URIHandler(object):
     """
     __metaclass__ = ABCMeta
 
-    def __init__(self, graph):
+    def __init__(self, graph, nack_timeout=1):
         self.sqs_message_context = graph.sqs_message_context
+        self.nack_timeout = nack_timeout
 
     @property
     def name(self):
         return humanize(self.__class__.__name__)
+
+    @property
+    def nack_if_not_found(self):
+        return True
 
     def __call__(self, message):
         uri = message["uri"]
@@ -108,6 +115,8 @@ class URIHandler(object):
         """
         headers = self.sqs_message_context(message)
         response = get(uri, headers=headers)
+        if response.status_code == codes.not_found and self.nack_if_not_found:
+            raise Nack(self.nack_timeout)
         response.raise_for_status()
         return response.json()
 

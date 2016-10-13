@@ -32,30 +32,39 @@ class SNSProducer(object):
         :returns: the message id
 
         """
+        message, topic_arn, opaque_data = self.create_message(media_type, dct, **kwargs)
+        return self.publish_message(media_type, message, topic_arn, opaque_data)
+
+    def create_message(self, media_type, dct, opaque_data=None, **kwargs):
+        if opaque_data is None:
+            opaque_data = dict()
+
+        if self.opaque is not None:
+            opaque_data.update(self.opaque.as_dict())
+
+        topic_arn = self.choose_topic_arn(media_type)
+        message = self.pubsub_message_schema_registry[media_type].encode(
+            dct,
+            opaque_data=opaque_data,
+            **kwargs
+        )
+        return message, topic_arn, opaque_data
+
+    def publish_message(self, media_type, message, topic_arn, opaque_data):
         extra = dict(
             media_type=media_type,
+            **opaque_data
         )
         self.logger.debug("Publishing message with media type {media_type}", extra=extra)
 
         with elapsed_time(extra):
-            message, topic_arn = self.create_message(media_type, dct, **kwargs)
-            result = self.publish_message(message, topic_arn)
+            result = self.sns_client.publish(
+                TopicArn=topic_arn,
+                Message=message,
+            )
 
         self.logger.info("Published message with media type {media_type}", extra)
-        return result
 
-    def create_message(self, media_type, dct=None, **kwargs):
-        if self.opaque is not None:
-            kwargs.setdefault('opaque_data', self.opaque.as_dict())
-        topic_arn = self.choose_topic_arn(media_type)
-        message = self.pubsub_message_schema_registry[media_type].encode(dct, **kwargs)
-        return message, topic_arn
-
-    def publish_message(self, message, topic_arn):
-        result = self.sns_client.publish(
-            TopicArn=topic_arn,
-            Message=message,
-        )
         return result["MessageId"]
 
     def choose_topic_arn(self, media_type):
@@ -85,8 +94,8 @@ class DeferredProducer(object):
         self.messages = []
 
     def produce(self, media_type, dct=None, **kwargs):
-        message = self.producer.create_message(media_type, dct, **kwargs)
-        self.messages.append(message)
+        message, topic_arn, opaque_data = self.producer.create_message(media_type, dct, **kwargs)
+        self.messages.append((media_type, message, topic_arn, opaque_data))
 
     def __enter__(self):
         self.message = []
@@ -96,8 +105,8 @@ class DeferredProducer(object):
         if type is not None:
             return
 
-        for message, media_type in self.messages:
-            self.producer.publish_message(message, media_type)
+        for media_type, message, topic_arn, opaque_data in self.messages:
+            self.producer.publish_message(media_type, message, topic_arn, opaque_data)
 
 
 @defaults(
