@@ -3,7 +3,7 @@ Handler base classes.
 
 """
 from abc import ABCMeta
-from inflection import humanize
+from inflection import titleize
 
 from requests import codes, get
 
@@ -38,7 +38,7 @@ class URIHandler(object):
 
     @property
     def name(self):
-        return humanize(self.__class__.__name__)
+        return titleize(self.__class__.__name__)
 
     @property
     def nack_if_not_found(self):
