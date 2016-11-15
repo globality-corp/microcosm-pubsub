@@ -23,6 +23,7 @@ class LifecycleChange(Enum):
     Changed = u"changed"
     Created = u"created"
     Deleted = u"deleted"
+    Stopped = u"stopped"
 
     def matches(self, media_type):
         return self.value in media_type.split(".")
@@ -116,3 +117,11 @@ def deleted(resource, **kwargs):
 
     """
     return make_media_type(resource, lifecycle_change=LifecycleChange.Deleted, **kwargs)
+
+
+def stopped(resource, **kwargs):
+    """
+    Fluent wrapper around message publishing for convention-driven schemas.
+
+    """
+    return make_media_type(resource, lifecycle_change=LifecycleChange.Stopped, **kwargs)
