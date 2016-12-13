@@ -85,8 +85,8 @@ def configure_sqs_consumer(graph):
 
     """
     sqs_queue_url = graph.config.sqs_consumer.sqs_queue_url
-    limit = graph.config.sqs_consumer.limit
-    wait_seconds = graph.config.sqs_consumer.wait_seconds
+    limit = int(graph.config.sqs_consumer.limit)
+    wait_seconds = int(graph.config.sqs_consumer.wait_seconds)
     visibility_timeout_seconds = graph.config.sqs_consumer.visibility_timeout_seconds
 
     if visibility_timeout_seconds:
