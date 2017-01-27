@@ -64,7 +64,9 @@ class URIHandler(object):
 
     def on_call(self, message, uri):
         self.logger.debug(
-            "Starting {handler}",
+            "Starting {handler}".format(
+                handler=self.name,
+            ),
             extra=dict(
                 handler=self.name,
                 uri=uri,
@@ -73,7 +75,10 @@ class URIHandler(object):
 
     def on_skip(self, message, uri, reason):
         self.logger.info(
-            "Skipping {handler} because {reason}",
+            "Skipping {handler} because {reason}".format(
+                handler=self.name,
+                reason=reason,
+            ),
             extra=dict(
                 handler=self.name,
                 reason=reason,
@@ -83,7 +88,9 @@ class URIHandler(object):
 
     def on_handle(self, message, uri, resource):
         self.logger.info(
-            "Handled {handler}",
+            "Handled {handler}".format(
+                handler=self.name,
+            ),
             extra=dict(
                 handler=self.name,
                 uri=uri,
