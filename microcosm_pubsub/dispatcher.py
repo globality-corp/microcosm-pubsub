@@ -89,7 +89,7 @@ class SQSMessageDispatcher(object):
                         extra=self.sqs_message_context(message)
                     )
                 else:
-                    logger.info(
+                    logger.error(
                         "Error handling SQS message: {}".format(
                             media_type,
                          ),
