@@ -77,8 +77,9 @@ class SQSMessageDispatcher(object):
             except Exception as error:
                 # NB if possible, log with the handler's logger to make it easier
                 # to tell which handler failed in the logs.
-                logger = getattr(sqs_message_handler, "logger", None)
-                if logger is None:
+                try:
+                    logger = sqs_message_handler.logger
+                except AttributeError:
                     logger = self.logger
 
                 if isinstance(error, Nack):
@@ -89,7 +90,7 @@ class SQSMessageDispatcher(object):
                         extra=self.sqs_message_context(message)
                     )
                 else:
-                    logger.error(
+                    logger.warning(
                         "Error handling SQS message: {}".format(
                             media_type,
                          ),
