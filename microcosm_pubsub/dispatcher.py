@@ -68,6 +68,13 @@ class SQSMessageDispatcher(object):
                 self.logger.debug("Skipping message with no registered handler: {}".format(media_type))
                 return False
 
+            # NB if possible, log with the handler's logger to make it easier
+            # to tell which handler failed in the logs.
+            try:
+                logger = sqs_message_handler.logger
+            except AttributeError:
+                logger = self.logger
+
             try:
                 handler_with_context = context_logger(
                     self.sqs_message_context,
@@ -76,34 +83,29 @@ class SQSMessageDispatcher(object):
                 )
                 return handler_with_context(message)
             except SkipMessage as skipped:
-                self.logger.info(
+                extra = self.sqs_message_context(message)
+                extra.update(skipped.extra)
+                logger.info(
                     "Skipping message for reason: {}".format(str(skipped)),
-                    extra=skipped.extra,
+                    extra=extra,
                 )
                 return False
+            except Nack:
+                logger.info(
+                    "Nacking SQS message: {}".format(
+                        media_type,
+                    ),
+                    extra=self.sqs_message_context(message)
+                )
+                raise
             except Exception as error:
-                # NB if possible, log with the handler's logger to make it easier
-                # to tell which handler failed in the logs.
-                try:
-                    logger = sqs_message_handler.logger
-                except AttributeError:
-                    logger = self.logger
-
-                if isinstance(error, Nack):
-                    logger.info(
-                        "Nacking SQS message: {}".format(
-                            media_type,
-                        ),
-                        extra=self.sqs_message_context(message)
-                    )
-                else:
-                    logger.warning(
-                        "Error handling SQS message: {}".format(
-                            media_type,
-                         ),
-                        exc_info=True,
-                        extra=self.sqs_message_context(message)
-                     )
+                logger.warning(
+                    "Error handling SQS message: {}".format(
+                        media_type,
+                    ),
+                    exc_info=True,
+                    extra=self.sqs_message_context(message)
+                )
                 raise error
 
 
