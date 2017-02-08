@@ -83,9 +83,11 @@ class SQSMessageDispatcher(object):
                 )
                 return handler_with_context(message)
             except SkipMessage as skipped:
+                extra = self.sqs_message_context(message)
+                extra.update(skipped.extra)
                 logger.info(
                     "Skipping message for reason: {}".format(str(skipped)),
-                    extra=skipped.extra,
+                    extra=extra,
                 )
                 return False
             except Nack:
