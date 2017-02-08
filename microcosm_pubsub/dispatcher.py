@@ -12,6 +12,15 @@ from microcosm_pubsub.errors import Nack
 DispatchResult = namedtuple("DispatchResult", ["message_count", "error_count", "ignore_count"])
 
 
+class SkipMessage(Exception):
+    """
+    Control-flow exception to skip resource processing.
+
+    """
+    def __init__(self, reason):
+        super(SkipMessage, self).__init__(reason)
+
+
 @logger
 class SQSMessageDispatcher(object):
     """
@@ -74,6 +83,9 @@ class SQSMessageDispatcher(object):
                     parent=sqs_message_handler,
                 )
                 return handler_with_context(message)
+            except SkipMessage as skipped:
+                self.logger.debug("Skipping message for reason: {}".format(str(skipped)))
+                return False
             except Exception as error:
                 # NB if possible, log with the handler's logger to make it easier
                 # to tell which handler failed in the logs.
