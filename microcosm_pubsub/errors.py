@@ -18,3 +18,13 @@ class Nack(Exception):
 
     def __repr__(self):
         return "Nack({})".format(self.visibility_timeout_seconds)
+
+
+class SkipMessage(Exception):
+    """
+    Control-flow exception to skip resource processing.
+
+    """
+    def __init__(self, reason, extra=None):
+        super(SkipMessage, self).__init__(reason)
+        self.extra = extra or dict()
