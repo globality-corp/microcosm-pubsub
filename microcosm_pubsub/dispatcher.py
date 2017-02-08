@@ -84,7 +84,7 @@ class SQSMessageDispatcher(object):
                 )
                 return handler_with_context(message)
             except SkipMessage as skipped:
-                self.logger.debug("Skipping message for reason: {}".format(skipped.message))
+                self.logger.debug("Skipping message for reason: {}".format(str(skipped)))
                 return False
             except Exception as error:
                 # NB if possible, log with the handler's logger to make it easier
