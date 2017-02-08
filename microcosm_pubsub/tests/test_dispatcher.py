@@ -11,7 +11,7 @@ from microcosm.api import binding, create_object_graph
 from microcosm.registry import Registry
 from mock import Mock
 
-from microcosm_pubsub.dispatcher import SkipMessage
+from microcosm_pubsub.errors import SkipMessage
 from microcosm_pubsub.tests.fixtures import (
     foo_handler,
     FOO_QUEUE_URL,

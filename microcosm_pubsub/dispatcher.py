@@ -6,19 +6,11 @@ from collections import namedtuple
 
 from microcosm.errors import NotBoundError
 from microcosm_logging.decorators import context_logger, logger
-from microcosm_pubsub.errors import Nack
+
+from microcosm_pubsub.errors import Nack, SkipMessage
 
 
 DispatchResult = namedtuple("DispatchResult", ["message_count", "error_count", "ignore_count"])
-
-
-class SkipMessage(Exception):
-    """
-    Control-flow exception to skip resource processing.
-
-    """
-    def __init__(self, reason):
-        super(SkipMessage, self).__init__(reason)
 
 
 @logger
@@ -84,7 +76,10 @@ class SQSMessageDispatcher(object):
                 )
                 return handler_with_context(message)
             except SkipMessage as skipped:
-                self.logger.debug("Skipping message for reason: {}".format(str(skipped)))
+                self.logger.info(
+                    "Skipping message for reason: {}".format(str(skipped)),
+                    extra=skipped.extra,
+                )
                 return False
             except Exception as error:
                 # NB if possible, log with the handler's logger to make it easier
