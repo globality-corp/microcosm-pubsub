@@ -3,6 +3,7 @@ Producer tests.
 
 """
 from json import loads
+from os import environ
 
 from hamcrest import (
     assert_that,
@@ -13,10 +14,12 @@ from hamcrest import (
     raises,
 )
 from microcosm.api import create_object_graph
+from microcosm.loaders import load_from_environ
 import microcosm.opaque  # noqa
 
+from microcosm_pubsub.conventions import created
 from microcosm_pubsub.errors import TopicNotDefinedError
-from microcosm_pubsub.producer import DeferredProducer
+from microcosm_pubsub.producer import DeferredProducer, iter_topic_mappings
 from microcosm_pubsub.tests.fixtures import (
     FOO_TOPIC,
     FOO_MEDIA_TYPE,
@@ -113,6 +116,42 @@ def test_produce_custom_topic():
         "opaqueData": {},
     })))
     assert_that(message_id, is_(equal_to(MESSAGE_ID)))
+
+
+def test_iter_topic_mappings():
+    result = dict(
+        iter_topic_mappings(
+            dict(
+                foo="bar",
+                bar=dict(
+                    foo="baz",
+                ),
+                baz=dict(
+                    foo=dict(
+                        bar="foo",
+                    ),
+                ),
+            )
+        )
+    )
+    assert_that(result, is_(equal_to({
+        "foo": "bar",
+        "bar.foo": "baz",
+        "baz.foo.bar": "foo",
+    })))
+
+
+def test_produce_custom_topic_environ():
+    """
+    Can set a custom topic via environment
+
+    """
+    key = "EXAMPLE__SNS_TOPIC_ARNS__CREATED__FOO__BAR_BAZ"
+    environ[key] = "foo-topic"
+    graph = create_object_graph("example", testing=True, loader=load_from_environ)
+    graph.sns_producer.produce(created("foo.bar_baz"), bar="baz")
+    assert_that(graph.sns_producer.sns_client.publish.call_count, is_(equal_to(1)))
+    assert_that(graph.sns_producer.sns_client.publish.call_args[1]["TopicArn"], is_(equal_to(FOO_TOPIC)))
 
 
 def test_deferred_production():
