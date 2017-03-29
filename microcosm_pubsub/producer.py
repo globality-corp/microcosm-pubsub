@@ -134,8 +134,8 @@ def iter_topic_mappings(dct):
         if isinstance(value, string_types):
             yield key, value
         else:
-            for key, value in collapse_dict(value, key):
-                yield key, value
+            for nested_key, nested_value in collapse_dict(value, key):
+                yield nested_key, nested_value
 
 
 @defaults(
