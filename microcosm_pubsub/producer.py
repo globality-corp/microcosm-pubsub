@@ -3,6 +3,7 @@ Message producer.
 
 """
 from collections import defaultdict
+from six import string_types
 
 from boto3 import client
 from microcosm.api import defaults
@@ -10,6 +11,7 @@ from microcosm.errors import NotBoundError
 from microcosm_logging.decorators import logger
 from microcosm_logging.timing import elapsed_time
 
+from microcosm_pubsub.conventions import LifecycleChange, make_media_type
 from microcosm_pubsub.errors import TopicNotDefinedError
 
 
@@ -109,6 +111,33 @@ class DeferredProducer(object):
             self.producer.publish_message(media_type, message, topic_arn, opaque_data)
 
 
+def collapse_dict(dct, prefix="", separator="."):
+    """
+    Collapse a nested dictionary into a single-level dictionary.
+
+    Since "." is not legal in an environment variable, we can't easily express our
+    pubsub overrides in environment variable form. The only legal special characters
+    is underscore and our configuration loader already uses double underscore as
+    a dictionary separator. So we (re)collapse nested dictionaries here.
+
+    """
+    for key, value in dct.items():
+        if isinstance(value, dict):
+            for nested_key, nested_value in collapse_dict(value, key, separator):
+                yield separator.join([prefix, nested_key]), nested_value
+        else:
+            yield separator.join([prefix, key]), value
+
+
+def iter_topic_mappings(dct):
+    for key, value in dct.items():
+        if isinstance(value, string_types):
+            yield key, value
+        else:
+            for key, value in collapse_dict(value, key):
+                yield key, value
+
+
 @defaults(
     default=None,
     mappings={},
@@ -124,6 +153,12 @@ def configure_sns_topic_arns(graph):
         sns_topic_arns = defaultdict(lambda: graph.config.sns_topic_arns.default)
 
     sns_topic_arns.update(graph.config.sns_topic_arns.mappings)
+
+    for lifecycle_change in LifecycleChange:
+        resource_dict = graph.config.sns_topic_arns.get(lifecycle_change.value, {})
+        for resource_name, topic in iter_topic_mappings(resource_dict):
+            media_type = make_media_type(resource_name, lifecycle_change)
+            sns_topic_arns[media_type] = topic
 
     return sns_topic_arns
 
