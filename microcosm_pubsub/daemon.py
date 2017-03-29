@@ -46,6 +46,7 @@ class ConsumerDaemon(Daemon):
     def components(self):
         return super(ConsumerDaemon, self).components + [
             "opaque",
+            "monitoring",
             "pubsub_message_schema_registry",
             "sqs_message_handler_registry",
             "sqs_consumer",
