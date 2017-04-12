@@ -60,3 +60,7 @@ class ConsumerDaemon(Daemon):
         result = graph.sqs_message_dispatcher.handle_batch()
         if not result.message_count:
             raise SleepNow()
+
+    @classmethod
+    def create_for_testing(cls, **kwargs):
+        return super(ConsumerDaemon, cls).create_for_testing(sqs_queue_url="queue", **kwargs)
