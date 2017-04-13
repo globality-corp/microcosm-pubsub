@@ -35,7 +35,7 @@ def test_produce_no_topic_arn():
     """
     def loader(metadata):
         return dict(
-            pubsub_message_codecs=dict(
+            pubsub_message_schema_registry=dict(
                 default=FooSchema,
             ),
             sns_topic_arns=dict(

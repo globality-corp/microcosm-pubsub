@@ -45,9 +45,8 @@ def test_handle():
 
     message = dict(bar="baz")
     sqs_message_context = Mock(return_value=dict())
-    graph.sqs_message_dispatcher.sqs_message_context = sqs_message_context
-
-    result = graph.sqs_message_dispatcher.handle_message(FooSchema.MEDIA_TYPE, message)
+    with graph.opaque.initialize(sqs_message_context, message):
+        result = graph.sqs_message_dispatcher.handle_message(FooSchema.MEDIA_TYPE, message)
 
     assert_that(result, is_(equal_to(True)))
     sqs_message_context.assert_called_once_with(message)

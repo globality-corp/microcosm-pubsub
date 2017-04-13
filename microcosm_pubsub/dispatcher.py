@@ -110,8 +110,4 @@ class SQSMessageDispatcher(object):
 
 
 def configure(graph):
-    if graph.metadata.testing:
-        from mock import MagicMock
-        graph.opaque = MagicMock(bind=MagicMock())
-
     return SQSMessageDispatcher(graph)
