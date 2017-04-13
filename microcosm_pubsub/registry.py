@@ -16,21 +16,17 @@ class AlreadyRegisteredError(Exception):
     pass
 
 
-class Registry(object):
+@logger
+class PubSubMessageSchemaRegistry(object):
     """
-    A decorator-friendly registry of per-media type objects.
-
-    Supports static configuration from binding keys and explicit registration from decorators
-    (using a singleton).
+    Keeps track of available message schemas.
 
     """
     def __init__(self, graph):
-        """
-        Create registry.
-
-        """
-        self.mappings = dict()
+        self._mappings = dict()
         self.graph = graph
+        self.auto_register = graph.config.pubsub_message_schema_registry.auto_register
+        self.strict = graph.config.pubsub_message_schema_registry.strict
 
     def register(self, media_type, value):
         """
@@ -39,40 +35,22 @@ class Registry(object):
         It is an error to register more than one value for the same media type.
 
         """
-        existing_value = self.mappings.get(media_type)
+        existing_value = self._mappings.get(media_type)
         if existing_value:
             if value == existing_value:
                 return
-            # NB: Caching scopes and graph hooks are not cooperating currently
-            if self.graph.metadata.testing:
-                return
-            raise AlreadyRegisteredError("A mapping already exists for media type: {}".format(
+            raise AlreadyRegisteredError("A schema already exists for media type: {}".format(
                 media_type,
             ))
-        self.mappings[media_type] = value
+        self._mappings[media_type] = value
 
-    def keys(self):
-        return self.mappings.keys()
-
-
-@logger
-class PubSubMessageSchemaRegistry(Registry):
-    """
-    Keeps track of available message schemas.
-
-    """
-    def __init__(self, graph):
-        super(PubSubMessageSchemaRegistry, self).__init__(graph)
-        self.auto_register = graph.config.pubsub_message_schema_registry.auto_register
-        self.strict = graph.config.pubsub_message_schema_registry.strict
-
-    def __getitem__(self, media_type):
+    def find(self, media_type):
         """
         Create a codec or raise KeyError.
 
         """
         try:
-            schema_cls = self.mappings[media_type]
+            schema_cls = self._mappings[media_type]
             if isinstance(schema_cls, string_types):
                 media_type = schema_cls
                 schema = URIMessageSchema(media_type)
@@ -91,23 +69,43 @@ class PubSubMessageSchemaRegistry(Registry):
 
         return PubSubMessageCodec(schema)
 
+    def keys(self):
+        return self._mappings.keys()
+
 
 @logger
-class SQSMessageHandlerRegistry(Registry):
+class SQSMessageHandlerRegistry(object):
     """
     Keeps track of available handlers.
 
     """
-    def __getitem__(self, media_type):
-        """
-        Create a handler or raise KeyError.
+    def __init__(self, graph):
+        self._mappings = dict()
+        self.graph = graph
 
-        """
-        handler = self.mappings[media_type]
+    def register(self, media_type, handler):
+        existing_value = self._mappings.get(media_type)
+        if existing_value:
+            if handler == existing_value:
+                return
+            # NB: Caching scopes and graph hooks are not cooperating currently
+            if self.graph.metadata.testing:
+                return
+            raise AlreadyRegisteredError("A handler already exists for media type: {}".format(
+                media_type,
+            ))
+        self._mappings[media_type] = handler
+
+    def find(self, media_type):
+        handler = self._mappings[media_type]
+
         if isclass(handler):
             return handler(self.graph)
         else:
             return handler
+
+    def keys(self):
+        return self._mappings.keys()
 
 
 @defaults(

@@ -104,7 +104,7 @@ class CodecSQSEnvelope(SQSEnvelope):
         base_message = self.media_type_codec.decode(message)
         media_type = base_message["mediaType"]
         try:
-            content = self.pubsub_message_schema_registry[media_type].decode(message)
+            content = self.pubsub_message_schema_registry.find(media_type).decode(message)
         except KeyError:
             return media_type, None
         else:

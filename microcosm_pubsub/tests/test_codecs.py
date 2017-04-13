@@ -3,7 +3,6 @@ Codec tests.
 
 """
 from json import dumps, loads
-from operator import itemgetter
 
 from hamcrest import (
     assert_that,
@@ -26,7 +25,7 @@ def test_no_default_schema():
     """
     graph = create_object_graph("example", testing=True)
     assert_that(
-        calling(itemgetter("bar")).with_args(graph.pubsub_message_schema_registry),
+        calling(graph.pubsub_message_schema_registry.find).with_args("bar"),
         raises(KeyError),
     )
 
@@ -37,7 +36,7 @@ def test_custom_schema():
 
     """
     graph = create_object_graph("example", testing=True)
-    codec = graph.pubsub_message_schema_registry[FooSchema.MEDIA_TYPE]
+    codec = graph.pubsub_message_schema_registry.find(FooSchema.MEDIA_TYPE)
     assert_that(codec.schema, is_(instance_of(FooSchema)))
 
 
@@ -47,7 +46,7 @@ def test_encode():
 
     """
     graph = create_object_graph("example", testing=True)
-    codec = graph.pubsub_message_schema_registry[FooSchema.MEDIA_TYPE]
+    codec = graph.pubsub_message_schema_registry.find(FooSchema.MEDIA_TYPE)
     assert_that(loads(codec.encode(bar="baz")), is_(equal_to({
         "bar": "baz",
         "mediaType": "application/vnd.globality.pubsub.foo",
@@ -60,7 +59,7 @@ def test_encode_missing_field():
 
     """
     graph = create_object_graph("example", testing=True)
-    codec = graph.pubsub_message_schema_registry[FooSchema.MEDIA_TYPE]
+    codec = graph.pubsub_message_schema_registry.find(FooSchema.MEDIA_TYPE)
     assert_that(calling(codec.encode).with_args(baz="bar"), raises(ValidationError))
 
 
@@ -70,7 +69,7 @@ def test_decode():
 
     """
     graph = create_object_graph("example", testing=True)
-    codec = graph.pubsub_message_schema_registry[FooSchema.MEDIA_TYPE]
+    codec = graph.pubsub_message_schema_registry.find(FooSchema.MEDIA_TYPE)
     message = dumps({
         "bar": "baz",
         "mediaType": "application/vnd.globality.pubsub.foo",
@@ -87,7 +86,7 @@ def test_decode_missing_media_type():
 
     """
     graph = create_object_graph("example", testing=True)
-    codec = graph.pubsub_message_schema_registry[FooSchema.MEDIA_TYPE]
+    codec = graph.pubsub_message_schema_registry.find(FooSchema.MEDIA_TYPE)
     message = dumps({
         "bar": "baz",
     })
@@ -100,7 +99,7 @@ def test_decode_missing_field():
 
     """
     graph = create_object_graph("example", testing=True)
-    codec = graph.pubsub_message_schema_registry[FooSchema.MEDIA_TYPE]
+    codec = graph.pubsub_message_schema_registry.find(FooSchema.MEDIA_TYPE)
     message = dumps({
         "mediaType": "application/vnd.globality.pubsub.foo",
     })
