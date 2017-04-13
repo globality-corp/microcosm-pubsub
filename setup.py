@@ -20,6 +20,7 @@ setup(
         "microcosm>=0.17.2",
         "microcosm-daemon>=0.10.0",
         "microcosm-logging>=0.12.0",
+        "datadog>=0.15.0",
     ],
     setup_requires=[
         "nose>=1.3.6",
