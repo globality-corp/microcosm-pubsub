@@ -163,6 +163,9 @@ def configure_sns_topic_arns(graph):
     return sns_topic_arns
 
 
+@defaults(
+    mock_sns=True,
+)
 def configure_sns_producer(graph):
     """
     Configure an SNS producer.
@@ -176,6 +179,10 @@ def configure_sns_producer(graph):
     """
     if graph.metadata.testing:
         from mock import MagicMock
+
+        if not graph.config.sns_producer.mock_sns:
+            return MagicMock()
+
         sns_client = MagicMock()
     else:
         sns_client = client("sns")

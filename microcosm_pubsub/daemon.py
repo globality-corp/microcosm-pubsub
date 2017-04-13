@@ -2,7 +2,7 @@
 Consume Daemon main.
 
 """
-import microcosm.opaque  # noqa
+from microcosm.loaders import load_each, load_from_dict
 from microcosm_daemon.api import SleepNow
 from microcosm_daemon.daemon import Daemon
 
@@ -62,5 +62,20 @@ class ConsumerDaemon(Daemon):
             raise SleepNow()
 
     @classmethod
-    def create_for_testing(cls, **kwargs):
-        return super(ConsumerDaemon, cls).create_for_testing(sqs_queue_url="queue", **kwargs)
+    def create_for_testing(cls, loader=None, **kwargs):
+        mock_config = load_from_dict(
+            sns_producer=dict(
+                mock_sns=False,
+            ),
+        )
+
+        if loader is None:
+            loader = mock_config
+        else:
+            loader = load_each(loader, mock_config)
+
+        return super(ConsumerDaemon, cls).create_for_testing(
+            sqs_queue_url="queue",
+            loader=loader,
+            **kwargs
+        )
