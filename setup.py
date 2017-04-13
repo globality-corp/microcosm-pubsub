@@ -17,7 +17,7 @@ setup(
     install_requires=[
         "boto3>=1.3.0",
         "marshmallow>=2.12.1",
-        "microcosm>=0.17.0",
+        "microcosm>=0.17.1",
         "microcosm-daemon>=0.10.0",
         "microcosm-logging>=0.12.0",
     ],

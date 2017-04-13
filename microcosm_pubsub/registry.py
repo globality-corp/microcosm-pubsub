@@ -26,7 +26,7 @@ class Registry(object):
     """
     def __init__(self, graph):
         """
-        Create registry, auto-registering items found using the legacy graph binding key.
+        Create registry.
 
         """
         self.mappings = dict()

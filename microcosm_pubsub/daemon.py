@@ -14,14 +14,6 @@ class ConsumerDaemon(Daemon):
         parser.add_argument("--sqs-queue-url")
         return parser
 
-    def create_object_graph_components(self, graph):
-        super(ConsumerDaemon, self).create_object_graph_components(graph)
-
-        # legacy schema mappings support (as property)
-        if hasattr(self, "schema_mappings"):
-            for media_type, schema_cls in self.schema_mappings.items():
-                graph.pubsub_message_schema_registry.register(media_type, schema_cls)
-
     def run_state_machine(self):
         for media_type in self.graph.sqs_message_handler_registry.keys():
             handler = self.graph.sqs_message_handler_registry[media_type]
