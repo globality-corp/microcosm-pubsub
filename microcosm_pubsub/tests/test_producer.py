@@ -23,7 +23,6 @@ from microcosm_pubsub.producer import DeferredProducer, iter_topic_mappings
 from microcosm_pubsub.tests.fixtures import (
     FOO_TOPIC,
     FOO_MEDIA_TYPE,
-    FooSchema,
     MESSAGE_ID,
 )
 
@@ -35,9 +34,6 @@ def test_produce_no_topic_arn():
     """
     def loader(metadata):
         return dict(
-            pubsub_message_schema_registry=dict(
-                default=FooSchema,
-            ),
             sns_topic_arns=dict(
             ),
         )
@@ -56,16 +52,12 @@ def test_produce_default_topic():
     """
     def loader(metadata):
         return dict(
-            pubsub_message_codecs=dict(
-                default=FooSchema,
-            ),
             sns_topic_arns=dict(
                 default=FOO_TOPIC,
             )
         )
 
     graph = create_object_graph("example", testing=True, loader=loader)
-    graph.use("opaque")
 
     # set up response
     graph.sns_producer.sns_client.publish.return_value = dict(MessageId=MESSAGE_ID)
@@ -89,9 +81,6 @@ def test_produce_custom_topic():
     """
     def loader(metadata):
         return dict(
-            pubsub_message_codecs=dict(
-                default=FooSchema,
-            ),
             sns_topic_arns=dict(
                 default=None,
                 mappings={
@@ -161,9 +150,6 @@ def test_deferred_production():
     """
     def loader(metadata):
         return dict(
-            pubsub_message_codecs=dict(
-                default=FooSchema,
-            ),
             sns_topic_arns=dict(
                 default=FOO_TOPIC,
             )

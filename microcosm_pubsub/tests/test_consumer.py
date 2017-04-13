@@ -10,12 +10,12 @@ from hamcrest import (
     is_,
     has_length,
 )
-from microcosm.api import create_object_graph
+from mock import patch
 
 from microcosm_pubsub.errors import Nack
 from microcosm_pubsub.message import SQSMessage
 from microcosm_pubsub.tests.fixtures import (
-    FOO_QUEUE_URL,
+    ExampleDaemon,
     FOO_MEDIA_TYPE,
     FooSchema,
     MESSAGE_ID,
@@ -28,18 +28,7 @@ def test_consume():
     Consumer delegates to SQS client.
 
     """
-    def loader(metadata):
-        return dict(
-            sqs_consumer=dict(
-                sqs_queue_url=FOO_QUEUE_URL,
-                visibility_timeout_seconds=None,
-            ),
-            pubsub_message_codecs=dict(
-                default=FooSchema,
-            ),
-        )
-
-    graph = create_object_graph("example", testing=True, loader=loader)
+    graph = ExampleDaemon.create_for_testing().graph
     # simulate the response structure
     graph.sqs_consumer.sqs_client.receive_message.return_value = dict(Messages=[dict(
         MessageId=MESSAGE_ID,
@@ -57,7 +46,7 @@ def test_consume():
 
     # SQS should have been called
     graph.sqs_consumer.sqs_client.receive_message.assert_called_with(
-        QueueUrl='foo-queue-url',
+        QueueUrl="queue",
         MaxNumberOfMessages=10,
         WaitTimeSeconds=1,
     )
@@ -78,18 +67,7 @@ def test_nack_without_visibility_timeout():
     Consumer passes
 
     """
-    def loader(metadata):
-        return dict(
-            sqs_consumer=dict(
-                sqs_queue_url=FOO_QUEUE_URL,
-                visibility_timeout_seconds=None,
-            ),
-            pubsub_message_codecs=dict(
-                default=FooSchema,
-            ),
-        )
-
-    graph = create_object_graph("example", testing=True, loader=loader)
+    graph = ExampleDaemon.create_for_testing().graph
     message = SQSMessage(
         consumer=graph.sqs_consumer,
         content=None,
@@ -107,19 +85,7 @@ def test_nack_with_visibility_timeout():
 
     """
     visibility_timeout_seconds = 2
-
-    def loader(metadata):
-        return dict(
-            sqs_consumer=dict(
-                sqs_queue_url=FOO_QUEUE_URL,
-                visibility_timeout_seconds=visibility_timeout_seconds,
-            ),
-            pubsub_message_codecs=dict(
-                default=FooSchema,
-            ),
-        )
-
-    graph = create_object_graph("example", testing=True, loader=loader)
+    graph = ExampleDaemon.create_for_testing().graph
     message = SQSMessage(
         consumer=graph.sqs_consumer,
         content=None,
@@ -127,12 +93,13 @@ def test_nack_with_visibility_timeout():
         message_id=MESSAGE_ID,
         receipt_handle=RECEIPT_HANDLE,
     )
-    message.nack()
-    graph.sqs_consumer.sqs_client.change_message_visibility.assert_called_with(
-        QueueUrl='foo-queue-url',
-        ReceiptHandle=RECEIPT_HANDLE,
-        VisibilityTimeout=visibility_timeout_seconds,
-    )
+    with patch.object(graph.sqs_consumer, "visibility_timeout_seconds", visibility_timeout_seconds):
+        message.nack()
+        graph.sqs_consumer.sqs_client.change_message_visibility.assert_called_with(
+            QueueUrl="queue",
+            ReceiptHandle=RECEIPT_HANDLE,
+            VisibilityTimeout=visibility_timeout_seconds,
+        )
 
 
 def test_nack_with_visibility_timeout_via_exception():
@@ -141,19 +108,7 @@ def test_nack_with_visibility_timeout_via_exception():
 
     """
     visibility_timeout_seconds = 2
-
-    def loader(metadata):
-        return dict(
-            sqs_consumer=dict(
-                sqs_queue_url=FOO_QUEUE_URL,
-                visibility_timeout_seconds=visibility_timeout_seconds,
-            ),
-            pubsub_message_codecs=dict(
-                default=FooSchema,
-            ),
-        )
-
-    graph = create_object_graph("example", testing=True, loader=loader)
+    graph = ExampleDaemon.create_for_testing().graph
     message = SQSMessage(
         consumer=graph.sqs_consumer,
         content=None,
@@ -161,14 +116,15 @@ def test_nack_with_visibility_timeout_via_exception():
         message_id=MESSAGE_ID,
         receipt_handle=RECEIPT_HANDLE,
     )
-    try:
-        with message:
-            raise Nack(visibility_timeout_seconds)
-    except Nack:
-        pass
+    with patch.object(graph.sqs_consumer, "visibility_timeout_seconds", visibility_timeout_seconds):
+        try:
+            with message:
+                raise Nack(visibility_timeout_seconds)
+        except Nack:
+            pass
 
     graph.sqs_consumer.sqs_client.change_message_visibility.assert_called_with(
-        QueueUrl='foo-queue-url',
+        QueueUrl="queue",
         ReceiptHandle=RECEIPT_HANDLE,
         VisibilityTimeout=visibility_timeout_seconds,
     )
@@ -179,18 +135,7 @@ def test_ack():
     Consumer delegates to SQS client.
 
     """
-    def loader(metadata):
-        return dict(
-            sqs_consumer=dict(
-                sqs_queue_url=FOO_QUEUE_URL,
-                visibility_timeout_seconds=None,
-            ),
-            pubsub_message_codecs=dict(
-                default=FooSchema,
-            ),
-        )
-
-    graph = create_object_graph("example", testing=True, loader=loader)
+    graph = ExampleDaemon.create_for_testing().graph
     message = SQSMessage(
         consumer=graph.sqs_consumer,
         content=None,
@@ -200,6 +145,6 @@ def test_ack():
     )
     message.ack()
     graph.sqs_consumer.sqs_client.delete_message.assert_called_with(
-        QueueUrl='foo-queue-url',
+        QueueUrl="queue",
         ReceiptHandle=RECEIPT_HANDLE,
     )

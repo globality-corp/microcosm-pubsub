@@ -3,9 +3,11 @@ Test fixtures.
 
 """
 from marshmallow import fields
-from microcosm.api import binding
 
 from microcosm_pubsub.codecs import PubSubMessageSchema
+from microcosm_pubsub.daemon import ConsumerDaemon
+from microcosm_pubsub.decorators import handles, schema
+
 
 FOO_MEDIA_TYPE = "application/vnd.globality.pubsub.foo"
 FOO_QUEUE_URL = "foo-queue-url"
@@ -14,6 +16,14 @@ MESSAGE_ID = "message-id"
 RECEIPT_HANDLE = "receipt-handle"
 
 
+class ExampleDaemon(ConsumerDaemon):
+
+    @property
+    def name(self):
+        return "example"
+
+
+@schema
 class FooSchema(PubSubMessageSchema):
     MEDIA_TYPE = FOO_MEDIA_TYPE
 
@@ -23,19 +33,6 @@ class FooSchema(PubSubMessageSchema):
         return FooSchema.MEDIA_TYPE
 
 
+@handles(FooSchema.MEDIA_TYPE)
 def foo_handler(message):
     return True
-
-
-@binding("pubsub_message_codecs")
-def configure_pubsub_message_codecs(graph):
-    return {
-        FooSchema.MEDIA_TYPE: FooSchema,
-    }
-
-
-@binding("sqs_message_handlers")
-def configure_sqs_message_handlers(graph):
-    return {
-        FooSchema.MEDIA_TYPE: foo_handler,
-    }

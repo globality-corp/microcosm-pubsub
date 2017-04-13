@@ -2,12 +2,10 @@
 Registry of SQS message handlers.
 
 """
-from abc import ABCMeta, abstractproperty
 from inspect import isclass
 from six import string_types
 
 from microcosm.api import defaults
-from microcosm.errors import NotBoundError
 from microcosm_logging.decorators import logger
 
 from microcosm_pubsub.codecs import PubSubMessageCodec
@@ -26,8 +24,6 @@ class Registry(object):
     (using a singleton).
 
     """
-    __metaclass__ = ABCMeta
-
     def __init__(self, graph):
         """
         Create registry, auto-registering items found using the legacy graph binding key.
@@ -35,23 +31,6 @@ class Registry(object):
         """
         self.mappings = dict()
         self.graph = graph
-
-        # legacy graph handling
-        try:
-            for media_type, value in getattr(graph, self.legacy_binding_key).items():
-                self.register(media_type, value)
-        except NotBoundError:
-            pass
-        # legacy config handling
-        try:
-            for media_type, value in getattr(graph.config, self.legacy_binding_key).get("mappings").items():
-                self.register(media_type, value)
-        except AttributeError:
-            pass
-
-    @abstractproperty
-    def legacy_binding_key(self):
-        pass
 
     def register(self, media_type, value):
         """
@@ -87,10 +66,6 @@ class PubSubMessageSchemaRegistry(Registry):
         self.auto_register = graph.config.pubsub_message_schema_registry.auto_register
         self.strict = graph.config.pubsub_message_schema_registry.strict
 
-    @property
-    def legacy_binding_key(self):
-        return "pubsub_message_codecs"
-
     def __getitem__(self, media_type):
         """
         Create a codec or raise KeyError.
@@ -123,10 +98,6 @@ class SQSMessageHandlerRegistry(Registry):
     Keeps track of available handlers.
 
     """
-    @property
-    def legacy_binding_key(self):
-        return "sqs_message_handlers"
-
     def __getitem__(self, media_type):
         """
         Create a handler or raise KeyError.

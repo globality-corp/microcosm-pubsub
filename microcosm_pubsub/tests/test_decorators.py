@@ -29,7 +29,7 @@ def noop_handler(message):
 class TestDecorators(object):
 
     def setup(self):
-        self.graph = create_object_graph("test")
+        self.graph = create_object_graph("test", testing=True)
         self.graph.use(
             "pubsub_message_schema_registry",
             "sqs_message_handler_registry",

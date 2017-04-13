@@ -86,14 +86,7 @@ def test_decode_missing_media_type():
     An invalid message will raise errors.
 
     """
-    def loader(metadata):
-        return dict(
-            pubsub_message_codecs=dict(
-                default=FooSchema,
-            ),
-        )
-
-    graph = create_object_graph("example", testing=True, loader=loader)
+    graph = create_object_graph("example", testing=True)
     codec = graph.pubsub_message_schema_registry[FooSchema.MEDIA_TYPE]
     message = dumps({
         "bar": "baz",
