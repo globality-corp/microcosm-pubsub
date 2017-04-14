@@ -16,7 +16,7 @@ class ConsumerDaemon(Daemon):
 
     def run_state_machine(self):
         for media_type in self.graph.sqs_message_handler_registry.keys():
-            handler = self.graph.sqs_message_handler_registry[media_type]
+            handler = self.graph.sqs_message_handler_registry.find(media_type)
             self.graph.logger.info("Handling: {} with handler: {}".format(
                 media_type,
                 handler.__class__.__name__,

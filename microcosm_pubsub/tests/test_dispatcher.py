@@ -10,8 +10,6 @@ from hamcrest import (
 from mock import Mock
 
 from microcosm_pubsub.conventions import created
-from microcosm_pubsub.decorators import handles
-from microcosm_pubsub.errors import SkipMessage
 from microcosm_pubsub.tests.fixtures import (
     ExampleDaemon,
     FooSchema,
@@ -56,10 +54,6 @@ def test_handle_with_skipping():
     Test that skipping works
 
     """
-    @handles(created("bar"))
-    def skipping_handler(message):
-        raise SkipMessage("Failed")
-
     graph = ExampleDaemon.create_for_testing().graph
     message = dict(bar="baz")
     result = graph.sqs_message_dispatcher.handle_message(created("bar"), message)

@@ -45,7 +45,7 @@ class SNSProducer(object):
             opaque_data.update(self.opaque.as_dict())
 
         topic_arn = self.choose_topic_arn(media_type)
-        message = self.pubsub_message_schema_registry[media_type].encode(
+        message = self.pubsub_message_schema_registry.find(media_type).encode(
             dct,
             opaque_data=opaque_data,
             **kwargs

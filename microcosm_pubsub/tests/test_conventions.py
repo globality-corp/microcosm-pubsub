@@ -14,16 +14,7 @@ from microcosm.api import create_object_graph
 
 from microcosm_pubsub.codecs import PubSubMessageCodec
 from microcosm_pubsub.conventions import created, make_media_type, URIMessageSchema
-from microcosm_pubsub.decorators import handles
-
-
-class Foo(object):
-    pass
-
-
-@handles(created("foo"))
-def noop_handler(message):
-    return True
+from microcosm_pubsub.tests.fixtures import Foo, noop_handler
 
 
 def test_make_media_type():
@@ -124,11 +115,11 @@ def test_dispatch_by_convention():
     media_type = created(Foo)
 
     assert_that(
-        graph.pubsub_message_schema_registry[media_type].schema,
+        graph.pubsub_message_schema_registry.find(media_type).schema,
         is_(instance_of(URIMessageSchema)),
     )
 
     assert_that(
-        graph.sqs_message_handler_registry[media_type],
+        graph.sqs_message_handler_registry.find(media_type),
         is_(equal_to(noop_handler)),
     )
