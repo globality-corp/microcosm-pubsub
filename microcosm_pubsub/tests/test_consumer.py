@@ -14,13 +14,11 @@ from mock import patch
 
 from microcosm_pubsub.errors import Nack
 from microcosm_pubsub.message import SQSMessage
-from microcosm_pubsub.tests.fixtures import (
-    ExampleDaemon,
-    FOO_MEDIA_TYPE,
-    FooSchema,
-    MESSAGE_ID,
-    RECEIPT_HANDLE,
-)
+from microcosm_pubsub.tests.fixtures import DerivedSchema, ExampleDaemon
+
+
+MESSAGE_ID = "message-id"
+RECEIPT_HANDLE = "receipt-handle"
 
 
 def test_consume():
@@ -36,8 +34,8 @@ def test_consume():
         MD5OfBody="7efaa8404863d47c51ed0e20b9014aec",
         Body=dumps(dict(
             Message=dumps(dict(
-                bar="baz",
-                mediaType=FOO_MEDIA_TYPE,
+                data="data",
+                mediaType=DerivedSchema.MEDIA_TYPE,
             )),
         ))),
     ])
@@ -57,8 +55,8 @@ def test_consume():
     assert_that(messages[0].message_id, is_(equal_to(MESSAGE_ID)))
     assert_that(messages[0].receipt_handle, is_(equal_to(RECEIPT_HANDLE)))
     assert_that(messages[0].content, is_(equal_to(dict(
-        bar="baz",
-        media_type=FOO_MEDIA_TYPE,
+        data="data",
+        media_type=DerivedSchema.MEDIA_TYPE,
     ))))
 
 
@@ -71,7 +69,7 @@ def test_nack_without_visibility_timeout():
     message = SQSMessage(
         consumer=graph.sqs_consumer,
         content=None,
-        media_type=FooSchema.MEDIA_TYPE,
+        media_type=DerivedSchema.MEDIA_TYPE,
         message_id=MESSAGE_ID,
         receipt_handle=RECEIPT_HANDLE,
     )
@@ -89,7 +87,7 @@ def test_nack_with_visibility_timeout():
     message = SQSMessage(
         consumer=graph.sqs_consumer,
         content=None,
-        media_type=FooSchema.MEDIA_TYPE,
+        media_type=DerivedSchema.MEDIA_TYPE,
         message_id=MESSAGE_ID,
         receipt_handle=RECEIPT_HANDLE,
     )
@@ -112,7 +110,7 @@ def test_nack_with_visibility_timeout_via_exception():
     message = SQSMessage(
         consumer=graph.sqs_consumer,
         content=None,
-        media_type=FooSchema.MEDIA_TYPE,
+        media_type=DerivedSchema.MEDIA_TYPE,
         message_id=MESSAGE_ID,
         receipt_handle=RECEIPT_HANDLE,
     )
@@ -139,7 +137,7 @@ def test_ack():
     message = SQSMessage(
         consumer=graph.sqs_consumer,
         content=None,
-        media_type=FooSchema.MEDIA_TYPE,
+        media_type=DerivedSchema.MEDIA_TYPE,
         message_id=MESSAGE_ID,
         receipt_handle=RECEIPT_HANDLE,
     )

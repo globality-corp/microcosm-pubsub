@@ -25,8 +25,12 @@ class LifecycleChange(Enum):
     Deleted = u"deleted"
     Stopped = u"stopped"
 
-    def matches(self, media_type):
-        return self.value in media_type.split(".")
+    @classmethod
+    def matches(cls, media_type):
+        return any(
+            item.value in media_type.split(".")
+            for item in cls
+        )
 
 
 def name_for(obj):

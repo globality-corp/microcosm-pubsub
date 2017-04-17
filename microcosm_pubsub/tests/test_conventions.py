@@ -13,8 +13,20 @@ from hamcrest import (
 from microcosm.api import create_object_graph
 
 from microcosm_pubsub.codecs import PubSubMessageCodec
-from microcosm_pubsub.conventions import created, make_media_type, URIMessageSchema
-from microcosm_pubsub.tests.fixtures import Foo, noop_handler
+from microcosm_pubsub.conventions import (
+    created,
+    LifecycleChange,
+    make_media_type,
+    URIMessageSchema,
+)
+from microcosm_pubsub.tests.fixtures import (
+    ExampleDaemon,
+    noop_handler,
+)
+
+
+class Foo(object):
+    pass
 
 
 def test_make_media_type():
@@ -42,7 +54,7 @@ def test_encode_uri_message_schema():
     Message encoding should include the standard fields.
 
     """
-    schema = URIMessageSchema(make_media_type("Foo"))
+    schema = URIMessageSchema(make_media_type("Foo", lifecycle_change=LifecycleChange.Deleted))
     codec = PubSubMessageCodec(schema)
     assert_that(
         loads(codec.encode(
@@ -50,7 +62,7 @@ def test_encode_uri_message_schema():
             uri="http://example.com",
         )),
         is_(equal_to({
-            "mediaType": "application/vnd.globality.pubsub._.created.foo",
+            "mediaType": "application/vnd.globality.pubsub._.deleted.foo",
             "opaqueData": {
                 "foo": "bar",
             },
@@ -110,7 +122,8 @@ def test_dispatch_by_convention():
     Message dispatch can use this convention.
 
     """
-    graph = create_object_graph("example", testing=True)
+    daemon = ExampleDaemon.create_for_testing()
+    graph = daemon.graph
 
     media_type = created(Foo)
 
@@ -120,6 +133,6 @@ def test_dispatch_by_convention():
     )
 
     assert_that(
-        graph.sqs_message_handler_registry.find(media_type),
+        graph.sqs_message_handler_registry.find(media_type, daemon.bound_handlers),
         is_(equal_to(noop_handler)),
     )
