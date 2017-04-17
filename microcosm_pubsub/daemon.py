@@ -9,18 +9,30 @@ from microcosm_daemon.daemon import Daemon
 
 class ConsumerDaemon(Daemon):
 
+    def __init__(self):
+        super(ConsumerDaemon, self).__init__()
+        self.bound_handlers = None
+
     def make_arg_parser(self):
         parser = super(ConsumerDaemon, self).make_arg_parser()
         parser.add_argument("--sqs-queue-url")
         return parser
 
+    def create_object_graph_components(self, graph):
+        super(ConsumerDaemon, self).create_object_graph_components(graph)
+        self.bound_handlers = graph.sqs_message_handler_registry.compute_bound_handlers(
+            self.components,
+        )
+
     def run_state_machine(self):
-        for media_type in self.graph.sqs_message_handler_registry.keys():
-            handler = self.graph.sqs_message_handler_registry.find(media_type)
+        self.compute_bound_handlers()
+
+        for media_type, handler in self.bound_handlers.items():
             self.graph.logger.info("Handling: {} with handler: {}".format(
                 media_type,
                 handler.__class__.__name__,
             ))
+
         super(ConsumerDaemon, self).run_state_machine()
 
     @property
@@ -49,7 +61,7 @@ class ConsumerDaemon(Daemon):
         Implement daemon by sinking messages from the consumer to a dispatcher function.
 
         """
-        result = graph.sqs_message_dispatcher.handle_batch()
+        result = graph.sqs_message_dispatcher.handle_batch(self.bound_handlers)
         if not result.message_count:
             raise SleepNow()
 

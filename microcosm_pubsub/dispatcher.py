@@ -33,7 +33,7 @@ class SQSMessageDispatcher(object):
                 return dict()
             return context
 
-    def handle_batch(self):
+    def handle_batch(self, bound_handlers):
         """
         Send a batch of messages to a function.
 
@@ -44,14 +44,14 @@ class SQSMessageDispatcher(object):
             message_count += 1
             try:
                 with message:
-                    if not self.handle_message(message.media_type, message.content):
+                    if not self.handle_message(message.media_type, message.content, bound_handlers):
                         ignore_count += 1
             except Exception:
                 error_count += 1
 
         return DispatchResult(message_count, error_count, ignore_count)
 
-    def handle_message(self, media_type, message):
+    def handle_message(self, media_type, message, bound_handlers):
         """
         Handle a single message.
 
@@ -62,7 +62,7 @@ class SQSMessageDispatcher(object):
 
         with self.opaque.initialize(self.sqs_message_context, message):
             try:
-                sqs_message_handler = self.sqs_message_handler_registry.find(media_type)
+                sqs_message_handler = self.sqs_message_handler_registry.find(media_type, bound_handlers)
             except KeyError:
                 # no handlers
                 self.logger.debug("Skipping message with no registered handler: {}".format(media_type))
