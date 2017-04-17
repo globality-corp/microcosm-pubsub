@@ -13,14 +13,6 @@ from microcosm_pubsub.codecs import PubSubMessageCodec
 from microcosm_pubsub.conventions import LifecycleChange, URIMessageSchema
 
 
-def hashable(value):
-    try:
-        hash(value)
-    except TypeError:
-        return False
-    return True
-
-
 class AlreadyRegisteredError(Exception):
     pass
 
