@@ -2,7 +2,7 @@
 from setuptools import find_packages, setup
 
 project = "microcosm_pubsub"
-version = "0.27.0"
+version = "0.27.1"
 
 setup(
     name=project,

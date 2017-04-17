@@ -102,10 +102,14 @@ class SQSMessageHandlerRegistry(object):
             getattr(self.graph, binding)
             for binding in bindings
         ]
+        bound_component_types = [
+            type(bound_component)
+            for bound_component in bound_components
+        ]
         return {
             media_type: handler
             for media_type, handler in self.iter_handlers()
-            if handler in bound_components
+            if handler in bound_components or handler in bound_component_types
         }
 
     def find(self, media_type, bound_handlers):
