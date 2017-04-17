@@ -9,6 +9,10 @@ from microcosm_daemon.daemon import Daemon
 
 class ConsumerDaemon(Daemon):
 
+    def __init__(self):
+        super(ConsumerDaemon, self).__init__()
+        self.bound_handlers = None
+
     def make_arg_parser(self):
         parser = super(ConsumerDaemon, self).make_arg_parser()
         parser.add_argument("--sqs-queue-url")
@@ -16,19 +20,17 @@ class ConsumerDaemon(Daemon):
 
     def create_object_graph_components(self, graph):
         super(ConsumerDaemon, self).create_object_graph_components(graph)
-
-        # legacy schema mappings support (as property)
-        if hasattr(self, "schema_mappings"):
-            for media_type, schema_cls in self.schema_mappings.items():
-                graph.pubsub_message_schema_registry.register(media_type, schema_cls)
+        self.bound_handlers = graph.sqs_message_handler_registry.compute_bound_handlers(
+            self.components,
+        )
 
     def run_state_machine(self):
-        for media_type in self.graph.sqs_message_handler_registry.keys():
-            handler = self.graph.sqs_message_handler_registry[media_type]
+        for media_type, handler in self.bound_handlers.items():
             self.graph.logger.info("Handling: {} with handler: {}".format(
                 media_type,
                 handler.__class__.__name__,
             ))
+
         super(ConsumerDaemon, self).run_state_machine()
 
     @property
@@ -57,7 +59,7 @@ class ConsumerDaemon(Daemon):
         Implement daemon by sinking messages from the consumer to a dispatcher function.
 
         """
-        result = graph.sqs_message_dispatcher.handle_batch()
+        result = graph.sqs_message_dispatcher.handle_batch(self.bound_handlers)
         if not result.message_count:
             raise SleepNow()
 

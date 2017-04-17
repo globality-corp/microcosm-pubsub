@@ -20,12 +20,10 @@ import microcosm.opaque  # noqa
 from microcosm_pubsub.conventions import created
 from microcosm_pubsub.errors import TopicNotDefinedError
 from microcosm_pubsub.producer import DeferredProducer, iter_topic_mappings
-from microcosm_pubsub.tests.fixtures import (
-    FOO_TOPIC,
-    FOO_MEDIA_TYPE,
-    FooSchema,
-    MESSAGE_ID,
-)
+from microcosm_pubsub.tests.fixtures import DerivedSchema
+
+
+MESSAGE_ID = "message-id"
 
 
 def test_produce_no_topic_arn():
@@ -35,16 +33,13 @@ def test_produce_no_topic_arn():
     """
     def loader(metadata):
         return dict(
-            pubsub_message_schema_registry=dict(
-                default=FooSchema,
-            ),
             sns_topic_arns=dict(
             ),
         )
 
     graph = create_object_graph("example", testing=True, loader=loader)
     assert_that(
-        calling(graph.sns_producer.produce).with_args(FOO_MEDIA_TYPE, bar="baz"),
+        calling(graph.sns_producer.produce).with_args(DerivedSchema.MEDIA_TYPE, data="data"),
         raises(TopicNotDefinedError),
     )
 
@@ -56,27 +51,23 @@ def test_produce_default_topic():
     """
     def loader(metadata):
         return dict(
-            pubsub_message_codecs=dict(
-                default=FooSchema,
-            ),
             sns_topic_arns=dict(
-                default=FOO_TOPIC,
+                default="topic",
             )
         )
 
     graph = create_object_graph("example", testing=True, loader=loader)
-    graph.use("opaque")
 
     # set up response
     graph.sns_producer.sns_client.publish.return_value = dict(MessageId=MESSAGE_ID)
 
-    message_id = graph.sns_producer.produce(FOO_MEDIA_TYPE, bar="baz")
+    message_id = graph.sns_producer.produce(DerivedSchema.MEDIA_TYPE, data="data")
 
     assert_that(graph.sns_producer.sns_client.publish.call_count, is_(equal_to(1)))
-    assert_that(graph.sns_producer.sns_client.publish.call_args[1]["TopicArn"], is_(equal_to(FOO_TOPIC)))
+    assert_that(graph.sns_producer.sns_client.publish.call_args[1]["TopicArn"], is_(equal_to("topic")))
     assert_that(loads(graph.sns_producer.sns_client.publish.call_args[1]["Message"]), is_(equal_to({
-        "bar": "baz",
-        "mediaType": "application/vnd.globality.pubsub.foo",
+        "data": "data",
+        "mediaType": DerivedSchema.MEDIA_TYPE,
         "opaqueData": {},
     })))
     assert_that(message_id, is_(equal_to(MESSAGE_ID)))
@@ -89,13 +80,10 @@ def test_produce_custom_topic():
     """
     def loader(metadata):
         return dict(
-            pubsub_message_codecs=dict(
-                default=FooSchema,
-            ),
             sns_topic_arns=dict(
                 default=None,
                 mappings={
-                    FOO_MEDIA_TYPE: FOO_TOPIC,
+                    DerivedSchema.MEDIA_TYPE: "special-topic",
                 },
             )
         )
@@ -106,13 +94,13 @@ def test_produce_custom_topic():
     # set up response
     graph.sns_producer.sns_client.publish.return_value = dict(MessageId=MESSAGE_ID)
 
-    message_id = graph.sns_producer.produce(FOO_MEDIA_TYPE, bar="baz")
+    message_id = graph.sns_producer.produce(DerivedSchema.MEDIA_TYPE, data="data")
 
     assert_that(graph.sns_producer.sns_client.publish.call_count, is_(equal_to(1)))
-    assert_that(graph.sns_producer.sns_client.publish.call_args[1]["TopicArn"], is_(equal_to(FOO_TOPIC)))
+    assert_that(graph.sns_producer.sns_client.publish.call_args[1]["TopicArn"], is_(equal_to("special-topic")))
     assert_that(loads(graph.sns_producer.sns_client.publish.call_args[1]["Message"]), is_(equal_to({
-        "bar": "baz",
-        "mediaType": "application/vnd.globality.pubsub.foo",
+        "data": "data",
+        "mediaType": DerivedSchema.MEDIA_TYPE,
         "opaqueData": {},
     })))
     assert_that(message_id, is_(equal_to(MESSAGE_ID)))
@@ -147,11 +135,11 @@ def test_produce_custom_topic_environ():
 
     """
     key = "EXAMPLE__SNS_TOPIC_ARNS__CREATED__FOO__BAR_BAZ"
-    environ[key] = "foo-topic"
+    environ[key] = "topic"
     graph = create_object_graph("example", testing=True, loader=load_from_environ)
     graph.sns_producer.produce(created("foo.bar_baz"), bar="baz")
     assert_that(graph.sns_producer.sns_client.publish.call_count, is_(equal_to(1)))
-    assert_that(graph.sns_producer.sns_client.publish.call_args[1]["TopicArn"], is_(equal_to(FOO_TOPIC)))
+    assert_that(graph.sns_producer.sns_client.publish.call_args[1]["TopicArn"], is_(equal_to("topic")))
 
 
 def test_deferred_production():
@@ -161,11 +149,8 @@ def test_deferred_production():
     """
     def loader(metadata):
         return dict(
-            pubsub_message_codecs=dict(
-                default=FooSchema,
-            ),
             sns_topic_arns=dict(
-                default=FOO_TOPIC,
+                default="topic",
             )
         )
 
@@ -176,8 +161,7 @@ def test_deferred_production():
     graph.sns_producer.sns_client.publish.return_value = dict(MessageId=MESSAGE_ID)
 
     with DeferredProducer(graph.sns_producer) as producer:
-        assert_that(producer.produce(FOO_MEDIA_TYPE, bar="baz"), is_(none()))
-
+        assert_that(producer.produce(DerivedSchema.MEDIA_TYPE, data="data"), is_(none()))
         assert_that(graph.sns_producer.sns_client.publish.call_count, is_(equal_to(0)))
 
     assert_that(graph.sns_producer.sns_client.publish.call_count, is_(equal_to(1)))

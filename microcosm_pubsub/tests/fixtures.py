@@ -2,40 +2,66 @@
 Test fixtures.
 
 """
-from marshmallow import fields
+from marshmallow import fields, Schema
+
 from microcosm.api import binding
-
 from microcosm_pubsub.codecs import PubSubMessageSchema
-
-FOO_MEDIA_TYPE = "application/vnd.globality.pubsub.foo"
-FOO_QUEUE_URL = "foo-queue-url"
-FOO_TOPIC = "foo-topic"
-MESSAGE_ID = "message-id"
-RECEIPT_HANDLE = "receipt-handle"
+from microcosm_pubsub.conventions import created
+from microcosm_pubsub.daemon import ConsumerDaemon
+from microcosm_pubsub.decorators import handles, schema
+from microcosm_pubsub.errors import SkipMessage
 
 
-class FooSchema(PubSubMessageSchema):
-    MEDIA_TYPE = FOO_MEDIA_TYPE
+@schema
+class DerivedSchema(PubSubMessageSchema):
+    """
+    A schema that is derived from `PubSubMessageSchema`
 
-    bar = fields.String(required=True)
+    """
+    MEDIA_TYPE = "application/vnd.microcosm.derived"
+
+    data = fields.String(required=True)
 
     def deserialize_media_type(self, obj):
-        return FooSchema.MEDIA_TYPE
+        return DerivedSchema.MEDIA_TYPE
 
 
-def foo_handler(message):
+@schema
+class DuckTypeSchema(Schema):
+    """
+    A duck typed schema
+
+    """
+    MEDIA_TYPE = "application/vnd.microcosm.duck"
+
+    quack = fields.String()
+
+
+@handles(DuckTypeSchema)
+@handles(created("foo"))
+@handles(DerivedSchema.MEDIA_TYPE)
+def noop_handler(message):
     return True
 
 
-@binding("pubsub_message_codecs")
-def configure_pubsub_message_codecs(graph):
-    return {
-        FooSchema.MEDIA_TYPE: FooSchema,
-    }
+@handles(created("IgnoredResource"))
+def skipping_handler(message):
+    raise SkipMessage("Failed")
 
 
-@binding("sqs_message_handlers")
-def configure_sqs_message_handlers(graph):
-    return {
-        FooSchema.MEDIA_TYPE: foo_handler,
-    }
+class ExampleDaemon(ConsumerDaemon):
+
+    @property
+    def name(self):
+        return "example"
+
+    @property
+    def components(self):
+        return super(ExampleDaemon, self).components + [
+            "noop_handler",
+        ]
+
+
+@binding("noop_handler")
+def configure_noop_handler(graph):
+    return noop_handler

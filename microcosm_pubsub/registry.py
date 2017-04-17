@@ -2,12 +2,11 @@
 Registry of SQS message handlers.
 
 """
-from abc import ABCMeta, abstractproperty
+from collections import defaultdict
 from inspect import isclass
 from six import string_types
 
 from microcosm.api import defaults
-from microcosm.errors import NotBoundError
 from microcosm_logging.decorators import logger
 
 from microcosm_pubsub.codecs import PubSubMessageCodec
@@ -18,40 +17,18 @@ class AlreadyRegisteredError(Exception):
     pass
 
 
-class Registry(object):
+@logger
+class PubSubMessageSchemaRegistry(object):
     """
-    A decorator-friendly registry of per-media type objects.
-
-    Supports static configuration from binding keys and explicit registration from decorators
-    (using a singleton).
+    Keeps track of available message schemas.
 
     """
-    __metaclass__ = ABCMeta
-
     def __init__(self, graph):
-        """
-        Create registry, auto-registering items found using the legacy graph binding key.
-
-        """
-        self.mappings = dict()
+        self._media_types = set()
+        self._mappings = dict()
         self.graph = graph
-
-        # legacy graph handling
-        try:
-            for media_type, value in getattr(graph, self.legacy_binding_key).items():
-                self.register(media_type, value)
-        except NotBoundError:
-            pass
-        # legacy config handling
-        try:
-            for media_type, value in getattr(graph.config, self.legacy_binding_key).get("mappings").items():
-                self.register(media_type, value)
-        except AttributeError:
-            pass
-
-    @abstractproperty
-    def legacy_binding_key(self):
-        pass
+        self.auto_register = graph.config.pubsub_message_schema_registry.auto_register
+        self.strict = graph.config.pubsub_message_schema_registry.strict
 
     def register(self, media_type, value):
         """
@@ -60,83 +37,92 @@ class Registry(object):
         It is an error to register more than one value for the same media type.
 
         """
-        existing_value = self.mappings.get(media_type)
+        self._media_types.add(media_type)
+
+        if isinstance(value, string_types):
+            # When using the @handles convention, there may not be a concrete schema class declared.
+            # In this case, the media type itself is passed as the value.
+            # thereby allowing handlers to be declared using convention-driven
+            return
+
+        existing_value = self._mappings.get(media_type)
         if existing_value:
             if value == existing_value:
                 return
-            # NB: Caching scopes and graph hooks are not cooperating currently
-            if self.graph.metadata.testing:
-                return
-            raise AlreadyRegisteredError("A mapping already exists for media type: {}".format(
+            raise AlreadyRegisteredError("A schema already exists for media type: {}".format(
                 media_type,
             ))
-        self.mappings[media_type] = value
+        self._mappings[media_type] = value
 
-    def keys(self):
-        return self.mappings.keys()
-
-
-@logger
-class PubSubMessageSchemaRegistry(Registry):
-    """
-    Keeps track of available message schemas.
-
-    """
-    def __init__(self, graph):
-        super(PubSubMessageSchemaRegistry, self).__init__(graph)
-        self.auto_register = graph.config.pubsub_message_schema_registry.auto_register
-        self.strict = graph.config.pubsub_message_schema_registry.strict
-
-    @property
-    def legacy_binding_key(self):
-        return "pubsub_message_codecs"
-
-    def __getitem__(self, media_type):
+    def find(self, media_type):
         """
         Create a codec or raise KeyError.
 
         """
-        try:
-            schema_cls = self.mappings[media_type]
-            if isinstance(schema_cls, string_types):
-                media_type = schema_cls
-                schema = URIMessageSchema(media_type)
+        if media_type not in self._media_types:
+            if self.auto_register and LifecycleChange.matches(media_type):
+                # When using convention-based media types, we may need to auto-register
+                self._media_types.add(media_type)
             else:
-                schema = schema_cls(strict=self.strict)
-        except KeyError:
-            if not self.auto_register:
-                raise
+                raise KeyError("Unregistered media type: {}".format(media_type))
 
-            for lifecycle_change in LifecycleChange:
-                if lifecycle_change.matches(media_type):
-                    schema = URIMessageSchema(media_type)
-                    break
-            else:
-                raise
+        try:
+            # use a concrete schema class if any
+            schema_cls = self._mappings[media_type]
+            schema = schema_cls(strict=self.strict)
+        except KeyError:
+            # use convention otherwise
+            schema = URIMessageSchema(media_type)
 
         return PubSubMessageCodec(schema)
 
 
 @logger
-class SQSMessageHandlerRegistry(Registry):
+class SQSMessageHandlerRegistry(object):
     """
     Keeps track of available handlers.
 
     """
-    @property
-    def legacy_binding_key(self):
-        return "sqs_message_handlers"
+    def __init__(self, graph):
+        self._mappings = defaultdict(set)
+        self.graph = graph
 
-    def __getitem__(self, media_type):
+    def register(self, media_type, handler):
+        self._mappings[media_type].add(handler)
+
+    def compute_bound_handlers(self, bindings):
         """
-        Create a handler or raise KeyError.
+        Compute which handlers are bound to the graph.
+
+        In cases where multiple daemons exist in the same code base, it's possible that
+        the registry will include handlers that aren't currently bound.
 
         """
-        handler = self.mappings[media_type]
+        bound_components = [
+            getattr(self.graph, binding)
+            for binding in bindings
+        ]
+        return {
+            media_type: handler
+            for media_type, handler in self.iter_handlers()
+            if handler in bound_components
+        }
+
+    def find(self, media_type, bound_handlers):
+        handler = bound_handlers[media_type]
+
         if isclass(handler):
             return handler(self.graph)
         else:
             return handler
+
+    def iter_handlers(self):
+        for media_type, handlers in self._mappings.items():
+            for handler in handlers:
+                yield media_type, handler
+
+    def keys(self):
+        return self._mappings.keys()
 
 
 @defaults(
