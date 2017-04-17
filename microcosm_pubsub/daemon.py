@@ -25,8 +25,6 @@ class ConsumerDaemon(Daemon):
         )
 
     def run_state_machine(self):
-        self.compute_bound_handlers()
-
         for media_type, handler in self.bound_handlers.items():
             self.graph.logger.info("Handling: {} with handler: {}".format(
                 media_type,
