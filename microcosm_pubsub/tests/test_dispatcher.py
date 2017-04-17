@@ -16,6 +16,9 @@ from microcosm_pubsub.tests.fixtures import (
 )
 
 
+MESSAGE_ID = "message-id"
+
+
 def test_handle():
     """
     Test that the dispatcher handles a message and assigns context.
@@ -28,9 +31,10 @@ def test_handle():
     sqs_message_context = Mock(return_value=dict())
     with graph.opaque.initialize(sqs_message_context, message):
         result = graph.sqs_message_dispatcher.handle_message(
-            DerivedSchema.MEDIA_TYPE,
-            message,
-            daemon.bound_handlers,
+            message_id=MESSAGE_ID,
+            media_type=DerivedSchema.MEDIA_TYPE,
+            content=message,
+            bound_handlers=daemon.bound_handlers,
         )
 
     assert_that(result, is_(equal_to(True)))
@@ -51,9 +55,10 @@ def test_handle_with_no_context():
 
     message = dict(bar="baz")
     result = graph.sqs_message_dispatcher.handle_message(
-        DerivedSchema.MEDIA_TYPE,
-        message,
-        daemon.bound_handlers,
+        message_id=MESSAGE_ID,
+        media_type=DerivedSchema.MEDIA_TYPE,
+        content=message,
+        bound_handlers=daemon.bound_handlers,
     )
 
     assert_that(result, is_(equal_to(True)))
@@ -70,8 +75,9 @@ def test_handle_with_skipping():
 
     message = dict(bar="baz")
     result = graph.sqs_message_dispatcher.handle_message(
-        created("bar"),
-        message,
-        daemon.bound_handlers,
+        message_id=MESSAGE_ID,
+        media_type=created("bar"),
+        content=message,
+        bound_handlers=daemon.bound_handlers,
     )
     assert_that(result, is_(equal_to(False)))
