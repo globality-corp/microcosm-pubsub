@@ -95,6 +95,9 @@ def configure_sqs_consumer(graph):
     if graph.metadata.testing:
         from mock import MagicMock
         sqs_client = MagicMock()
+    elif sqs_queue_url == "test":
+        from mock import MagicMock
+        sqs_client = MagicMock()
     else:
         sqs_client = client("sqs")
 
