@@ -99,6 +99,24 @@ class URIMessageSchema(PubSubMessageSchema):
         return self.MEDIA_TYPE
 
 
+class IdentityMessageSchema(PubSubMessageSchema):
+    """
+    Define a baseline message schema that points to (the identity of) a resource that experienced a lifecycle change.
+
+    In general, these conventions prefer URI-based messages, but for some lifecycle changes (e.g. deletion),
+    a URI may not be available.
+
+    """
+    def __init__(self, media_type, **kwargs):
+        super(PubSubMessageSchema, self).__init__(**kwargs)
+        self.MEDIA_TYPE = media_type
+
+    id = fields.String(required=True)
+
+    def deserialize_media_type(self, obj):
+        return self.MEDIA_TYPE
+
+
 def changed(resource, **kwargs):
     """
     Fluent wrapper around message publishing for convention-driven schemas.

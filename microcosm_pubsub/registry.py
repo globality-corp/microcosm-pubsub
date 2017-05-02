@@ -10,7 +10,7 @@ from microcosm.api import defaults
 from microcosm_logging.decorators import logger
 
 from microcosm_pubsub.codecs import PubSubMessageCodec
-from microcosm_pubsub.conventions import LifecycleChange, URIMessageSchema
+from microcosm_pubsub.conventions import LifecycleChange, IdentityMessageSchema, URIMessageSchema
 
 
 class AlreadyRegisteredError(Exception):
@@ -72,7 +72,10 @@ class PubSubMessageSchemaRegistry(object):
             schema = schema_cls(strict=self.strict)
         except KeyError:
             # use convention otherwise
-            schema = URIMessageSchema(media_type)
+            if LifecycleChange.Deleted.value in media_type.split("."):
+                schema = IdentityMessageSchema(media_type)
+            else:
+                schema = URIMessageSchema(media_type)
 
         return PubSubMessageCodec(schema)
 
