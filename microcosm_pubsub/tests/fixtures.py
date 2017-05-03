@@ -6,7 +6,7 @@ from marshmallow import fields, Schema
 
 from microcosm.api import binding
 from microcosm_pubsub.codecs import PubSubMessageSchema
-from microcosm_pubsub.conventions import created
+from microcosm_pubsub.conventions import created, deleted
 from microcosm_pubsub.daemon import ConsumerDaemon
 from microcosm_pubsub.decorators import handles, schema
 from microcosm_pubsub.errors import SkipMessage
@@ -39,6 +39,7 @@ class DuckTypeSchema(Schema):
 
 @handles(DuckTypeSchema)
 @handles(created("foo"))
+@handles(deleted("foo"))
 @handles(DerivedSchema.MEDIA_TYPE)
 def noop_handler(message):
     return True
