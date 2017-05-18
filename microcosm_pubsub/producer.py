@@ -3,6 +3,7 @@ Message producer.
 
 """
 from collections import defaultdict
+from distutils.util import strtobool
 from six import string_types
 
 from boto3 import client
@@ -21,11 +22,12 @@ class SNSProducer(object):
     Produces messages to SNS topics.
 
     """
-    def __init__(self, opaque, pubsub_message_schema_registry, sns_client, sns_topic_arns):
+    def __init__(self, opaque, pubsub_message_schema_registry, sns_client, sns_topic_arns, skip):
         self.opaque = opaque
         self.pubsub_message_schema_registry = pubsub_message_schema_registry
         self.sns_client = sns_client
         self.sns_topic_arns = sns_topic_arns
+        self.skip = skip
 
     def produce(self, media_type, dct=None, **kwargs):
         """
@@ -34,6 +36,8 @@ class SNSProducer(object):
         :returns: the message id
 
         """
+        if self.skip:
+            return
         message, topic_arn, opaque_data = self.create_message(media_type, dct, **kwargs)
         return self.publish_message(media_type, message, topic_arn, opaque_data)
 
@@ -165,6 +169,7 @@ def configure_sns_topic_arns(graph):
 
 @defaults(
     mock_sns=True,
+    skip=None,
 )
 def configure_sns_producer(graph):
     """
@@ -192,9 +197,18 @@ def configure_sns_producer(graph):
     except NotBoundError:
         opaque = None
 
+    if graph.config.sns_producer.skip is None:
+        # In development mode, default to not publishing because there's typically
+        # not anywhere to publish to (e.g. no SNS topic)
+        skip = graph.metadata.debug
+    else:
+        # If configured explicitly, respect the flag
+        skip = strtobool(graph.config.sns_producer.skip)
+
     return SNSProducer(
         opaque=opaque,
         pubsub_message_schema_registry=graph.pubsub_message_schema_registry,
         sns_client=sns_client,
         sns_topic_arns=graph.sns_topic_arns,
+        skip=skip,
     )
