@@ -4,6 +4,7 @@ Message producer.
 """
 from collections import defaultdict
 from distutils.util import strtobool
+from functools import wraps
 from six import string_types
 
 from boto3 import client
@@ -104,7 +105,7 @@ class DeferredProducer(object):
         self.messages.append((media_type, message, topic_arn, opaque_data))
 
     def __enter__(self):
-        self.message = []
+        self.messages = []
         return self
 
     def __exit__(self, type, value, traceback):
@@ -113,6 +114,28 @@ class DeferredProducer(object):
 
         for media_type, message, topic_arn, opaque_data in self.messages:
             self.producer.publish_message(media_type, message, topic_arn, opaque_data)
+
+
+def deferred(component, key="sns_producer"):
+    """
+    A decorator to defer message production until after the decorated function has completed
+
+    """
+    graph = component.graph
+    sns_producer = getattr(graph, key)
+
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            try:
+                deferred_producer = DeferredProducer(sns_producer)
+                setattr(component, key, deferred_producer)
+                with deferred_producer:
+                    return func(*args, **kwargs)
+            finally:
+                setattr(component, key, sns_producer)
+        return wrapper
+    return decorator
 
 
 def collapse_dict(dct, prefix="", separator="."):
