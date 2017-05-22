@@ -19,7 +19,7 @@ import microcosm.opaque  # noqa
 
 from microcosm_pubsub.conventions import created
 from microcosm_pubsub.errors import TopicNotDefinedError
-from microcosm_pubsub.producer import DeferredProducer, iter_topic_mappings
+from microcosm_pubsub.producer import deferred, DeferredProducer, iter_topic_mappings
 from microcosm_pubsub.tests.fixtures import DerivedSchema
 
 
@@ -163,5 +163,35 @@ def test_deferred_production():
     with DeferredProducer(graph.sns_producer) as producer:
         assert_that(producer.produce(DerivedSchema.MEDIA_TYPE, data="data"), is_(none()))
         assert_that(graph.sns_producer.sns_client.publish.call_count, is_(equal_to(0)))
+
+    assert_that(graph.sns_producer.sns_client.publish.call_count, is_(equal_to(1)))
+
+
+def test_deferred_production_decorator():
+    """
+    Deferred production can be used to decorate a function
+
+    """
+    def loader(metadata):
+        return dict(
+            sns_topic_arns=dict(
+                default="topic",
+            )
+        )
+
+    class Foo:
+        def __init__(self, graph):
+            self.graph = graph
+            self.sns_producer = graph.sns_producer
+
+        def bar(self):
+            assert isinstance(self.sns_producer, DeferredProducer)
+            self.sns_producer.produce(DerivedSchema.MEDIA_TYPE, data="data")
+
+    graph = create_object_graph("example", testing=True, loader=loader)
+    foo = Foo(graph)
+
+    func = deferred(foo)(foo.bar)
+    func()
 
     assert_that(graph.sns_producer.sns_client.publish.call_count, is_(equal_to(1)))
