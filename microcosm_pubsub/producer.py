@@ -191,6 +191,7 @@ def configure_sns_topic_arns(graph):
 
 
 @defaults(
+    endpoint_url=None,
     mock_sns=True,
     skip=None,
 )
@@ -213,8 +214,8 @@ def configure_sns_producer(graph):
 
         sns_client = MagicMock()
     else:
-        sns_client = client("sns")
-
+        endpoint_url = graph.config.sns_producer.endpoint_url
+        sns_client = client("sns", endpoint_url=endpoint_url)
     try:
         opaque = graph.opaque
     except NotBoundError:
