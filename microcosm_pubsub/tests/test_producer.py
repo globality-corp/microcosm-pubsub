@@ -187,6 +187,7 @@ def test_deferred_production_decorator():
         def bar(self):
             assert isinstance(self.sns_producer, DeferredProducer)
             self.sns_producer.produce(DerivedSchema.MEDIA_TYPE, data="data")
+            assert_that(graph.sns_producer.sns_client.publish.call_count, is_(equal_to(0)))
 
     graph = create_object_graph("example", testing=True, loader=loader)
     foo = Foo(graph)
