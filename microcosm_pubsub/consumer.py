@@ -72,6 +72,7 @@ class SQSConsumer(object):
 
 
 @defaults(
+    endpoint_url=None,
     # SQS will not return more than ten messages at a time
     limit=10,
     # SQS will only return a few messages at time unless long polling is enabled (>0)
@@ -99,7 +100,8 @@ def configure_sqs_consumer(graph):
         from mock import MagicMock
         sqs_client = MagicMock()
     else:
-        sqs_client = client("sqs")
+        endpoint_url = graph.config.sqs_consumer.endpoint_url
+        sqs_client = client("sqs", endpoint_url=endpoint_url)
 
     return SQSConsumer(
         sqs_client=sqs_client,
