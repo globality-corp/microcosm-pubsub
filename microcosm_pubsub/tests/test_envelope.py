@@ -29,9 +29,9 @@ def test_raw_sqs_envelope():
     sqs_message = envelope.parse_raw_message(consumer, dict(
         MessageId=message_id,
         ReceiptHandle=receipt_handle,
-        Body=dict(
+        Body=dumps(dict(
             foo="bar",
-        ),
+        )),
     ))
 
     assert_that(sqs_message.content, is_(equal_to(dict(foo="bar"))))
