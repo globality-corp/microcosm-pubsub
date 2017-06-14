@@ -66,7 +66,7 @@ class RawMediaTypeAndContentParser(MediaTypeAndContentParser):
     def parse_media_type_and_content(self, message):
         content = message
         media_type = "application/json"
-        return media_type, content
+        return media_type, loads(content)
 
 
 class SNSMessageBodyParser(MessageBodyParser):
