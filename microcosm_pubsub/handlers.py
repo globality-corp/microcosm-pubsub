@@ -7,6 +7,7 @@ from inflection import titleize
 
 from requests import codes, get
 
+from microcosm_logging.timing import elapsed_time
 from microcosm_pubsub.errors import Nack
 
 
@@ -55,11 +56,18 @@ class URIHandler(object):
 
         resource = self.get_resource(message, uri)
 
-        if self.handle(message, uri, resource):
-            self.on_handle(message, uri, resource)
+        extra = dict(
+            handler=self.name,
+            uri=uri,
+        )
+        with elapsed_time(extra):
+            result = self.handle(message, uri, resource)
+
+        if result:
+            self.on_handle(message, uri, resource, extra)
             return True
         else:
-            self.on_ignore(message, uri, resource)
+            self.on_ignore(message, uri, resource, extra)
             return False
 
     def on_call(self, message, uri):
@@ -81,22 +89,16 @@ class URIHandler(object):
             ),
         )
 
-    def on_handle(self, message, uri, resource):
+    def on_handle(self, message, uri, resource, extra):
         self.logger.info(
             "Handled {handler}",
-            extra=dict(
-                handler=self.name,
-                uri=uri,
-            ),
+            extra=extra,
         )
 
-    def on_ignore(self, message, uri, resource):
+    def on_ignore(self, message, uri, resource, extra):
         self.logger.info(
             "Ignored {handler}",
-            extra=dict(
-                handler=self.name,
-                uri=uri,
-            ),
+            extra=extra,
         )
 
     def get_reason_to_skip(self, message, uri):
