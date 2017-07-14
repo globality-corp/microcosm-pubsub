@@ -119,6 +119,9 @@ class SQSEnvelope(MessageBodyParser, MediaTypeAndContentParser):
         """
         message_id = raw_message["MessageId"]
         receipt_handle = raw_message["ReceiptHandle"]
+        attributes = raw_message["Attributes"]
+        approximate_receive_count = attributes["ApproximateReceiveCount"]
+
         body = raw_message["Body"]
 
         if self.validate_md5:
@@ -133,6 +136,7 @@ class SQSEnvelope(MessageBodyParser, MediaTypeAndContentParser):
             media_type=media_type,
             message_id=message_id,
             receipt_handle=receipt_handle,
+            approximate_receive_count=approximate_receive_count,
         )
 
     def validate_md5(self, raw_message, body):

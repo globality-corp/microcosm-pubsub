@@ -36,8 +36,11 @@ class SQSConsumer(object):
         return [
             self.sqs_envelope.parse_raw_message(self, raw_message)
             for raw_message in self.sqs_client.receive_message(
-                QueueUrl=self.sqs_queue_url,
+                AttributeNames=[
+                    "ApproximateReceiveCount",
+                ],
                 MaxNumberOfMessages=self.limit,
+                QueueUrl=self.sqs_queue_url,
                 WaitTimeSeconds=self.wait_seconds,
             ).get("Messages", [])
         ]
