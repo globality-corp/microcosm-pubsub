@@ -119,8 +119,8 @@ class SQSEnvelope(MessageBodyParser, MediaTypeAndContentParser):
         """
         message_id = raw_message["MessageId"]
         receipt_handle = raw_message["ReceiptHandle"]
-        attributes = raw_message["Attributes"]
-        approximate_receive_count = attributes["ApproximateReceiveCount"]
+        attributes = raw_message.get("Attributes", {})
+        approximate_receive_count = attributes.get("ApproximateReceiveCount")
 
         body = raw_message["Body"]
 
