@@ -7,7 +7,7 @@ from distutils.util import strtobool
 from functools import wraps
 from six import string_types
 
-from boto3 import client
+from boto3 import Session
 from microcosm.api import defaults
 from microcosm.errors import NotBoundError
 from microcosm_logging.decorators import logger
@@ -191,6 +191,8 @@ def configure_sns_topic_arns(graph):
 
 
 @defaults(
+    profile_name=None,
+    region_name=None,
     endpoint_url=None,
     mock_sns=True,
     skip=None,
@@ -215,7 +217,14 @@ def configure_sns_producer(graph):
         sns_client = MagicMock()
     else:
         endpoint_url = graph.config.sns_producer.endpoint_url
-        sns_client = client("sns", endpoint_url=endpoint_url)
+        profile_name = graph.config.sns_producer.profile_name
+        region_name = graph.config.sns_producer.region_name
+        session = Session(profile_name=profile_name)
+        sns_client = session.client(
+            "sns",
+            endpoint_url=endpoint_url,
+            region_name=region_name,
+        )
     try:
         opaque = graph.opaque
     except NotBoundError:

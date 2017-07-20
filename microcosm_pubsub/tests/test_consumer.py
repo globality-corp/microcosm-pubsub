@@ -44,6 +44,9 @@ def test_consume():
 
     # SQS should have been called
     graph.sqs_consumer.sqs_client.receive_message.assert_called_with(
+        AttributeNames=[
+            "ApproximateReceiveCount",
+        ],
         QueueUrl="queue",
         MaxNumberOfMessages=10,
         WaitTimeSeconds=1,
@@ -91,7 +94,7 @@ def test_nack_with_visibility_timeout():
         message_id=MESSAGE_ID,
         receipt_handle=RECEIPT_HANDLE,
     )
-    with patch.object(graph.sqs_consumer, "visibility_timeout_seconds", visibility_timeout_seconds):
+    with patch.object(graph.sqs_consumer.backoff_policy, "visibility_timeout_seconds", visibility_timeout_seconds):
         message.nack()
         graph.sqs_consumer.sqs_client.change_message_visibility.assert_called_with(
             QueueUrl="queue",
@@ -114,7 +117,7 @@ def test_nack_with_visibility_timeout_via_exception():
         message_id=MESSAGE_ID,
         receipt_handle=RECEIPT_HANDLE,
     )
-    with patch.object(graph.sqs_consumer, "visibility_timeout_seconds", visibility_timeout_seconds):
+    with patch.object(graph.sqs_consumer.backoff_policy, "visibility_timeout_seconds", visibility_timeout_seconds):
         try:
             with message:
                 raise Nack(visibility_timeout_seconds)
