@@ -27,9 +27,12 @@ setup(
     dependency_links=[
     ],
     entry_points={
+        "console_scripts": [
+            "pubsub = microcosm_pubsub.main:main",
+        ],
         "microcosm.factories": [
-            "sqs_message_context = microcosm_pubsub.context:configure_sqs_message_context",
             "pubsub_message_schema_registry = microcosm_pubsub.registry:configure_schema_registry",
+            "sqs_message_context = microcosm_pubsub.context:configure_sqs_message_context",
             "sqs_consumer = microcosm_pubsub.consumer:configure_sqs_consumer",
             "sqs_envelope = microcosm_pubsub.envelope:configure_sqs_envelope",
             "sqs_message_dispatcher = microcosm_pubsub.dispatcher:configure",

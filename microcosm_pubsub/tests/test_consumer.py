@@ -44,6 +44,9 @@ def test_consume():
 
     # SQS should have been called
     graph.sqs_consumer.sqs_client.receive_message.assert_called_with(
+        AttributeNames=[
+            "ApproximateReceiveCount",
+        ],
         QueueUrl="queue",
         MaxNumberOfMessages=10,
         WaitTimeSeconds=1,

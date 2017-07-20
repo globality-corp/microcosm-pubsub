@@ -10,12 +10,19 @@ class SQSMessage(object):
     SQS message wrapper.
 
     """
-    def __init__(self, consumer, content, media_type, message_id, receipt_handle):
+    def __init__(self,
+                 consumer,
+                 content,
+                 media_type,
+                 message_id,
+                 receipt_handle,
+                 approximate_receive_count=None):
         self.consumer = consumer
         self.content = content
         self.media_type = media_type
         self.message_id = message_id
         self.receipt_handle = receipt_handle
+        self.approximate_receive_count = approximate_receive_count
 
     def ack(self):
         """
