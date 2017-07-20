@@ -6,6 +6,8 @@ from boto3 import Session
 
 from microcosm.api import defaults
 
+from microcosm_pubsub.backoff import BackoffPolicy
+
 
 class SQSConsumer(object):
     """
@@ -19,14 +21,14 @@ class SQSConsumer(object):
         sqs_queue_url,
         limit,
         wait_seconds,
-        visibility_timeout_seconds,
+        backoff_policy,
     ):
         self.sqs_client = sqs_client
         self.sqs_envelope = sqs_envelope
         self.sqs_queue_url = sqs_queue_url
         self.limit = limit
         self.wait_seconds = wait_seconds
-        self.visibility_timeout_seconds = visibility_timeout_seconds
+        self.backoff_policy = backoff_policy
 
     def consume(self):
         """
@@ -65,20 +67,23 @@ class SQSConsumer(object):
         Sets the visibility timeout if present
 
         """
-        timeout = visibility_timeout_seconds or self.visibility_timeout_seconds
-        if timeout is not None:
-            self.sqs_client.change_message_visibility(
-                QueueUrl=self.sqs_queue_url,
-                ReceiptHandle=message.receipt_handle,
-                # we can only set integer timeouts
-                VisibilityTimeout=int(timeout),
-            )
+        timeout = self.backoff_policy.compute_backoff_timeout(message, visibility_timeout_seconds)
+        if timeout is None:
+            return
+
+        self.sqs_client.change_message_visibility(
+            QueueUrl=self.sqs_queue_url,
+            ReceiptHandle=message.receipt_handle,
+            VisibilityTimeout=timeout,
+        )
 
 
 @defaults(
+    endpoint_url=None,
     profile_name=None,
     region_name=None,
-    endpoint_url=None,
+    # backoff policy
+    backoff_policy="NaiveBackoffPolicy",
     # SQS will not return more than ten messages at a time
     limit=10,
     # SQS will only return a few messages at time unless long polling is enabled (>0)
@@ -116,11 +121,19 @@ def configure_sqs_consumer(graph):
             region_name=region_name,
         )
 
+    backoff_policy_class = BackoffPolicy.choose_backoff_policy(
+        graph.config.sqs_consumer.backoff_policy,
+    )
+
+    backoff_policy = backoff_policy_class(
+        visibility_timeout_seconds=visibility_timeout_seconds,
+    )
+
     return SQSConsumer(
         sqs_client=sqs_client,
         sqs_envelope=graph.sqs_envelope,
         sqs_queue_url=sqs_queue_url,
         limit=limit,
         wait_seconds=wait_seconds,
-        visibility_timeout_seconds=visibility_timeout_seconds,
+        backoff_policy=backoff_policy,
     )
