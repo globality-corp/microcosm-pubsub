@@ -2,7 +2,8 @@
 Message consumer.
 
 """
-from boto3 import client
+from boto3 import Session
+
 from microcosm.api import defaults
 
 
@@ -75,6 +76,8 @@ class SQSConsumer(object):
 
 
 @defaults(
+    profile_name=None,
+    region_name=None,
     endpoint_url=None,
     # SQS will not return more than ten messages at a time
     limit=10,
@@ -104,7 +107,14 @@ def configure_sqs_consumer(graph):
         sqs_client = MagicMock()
     else:
         endpoint_url = graph.config.sqs_consumer.endpoint_url
-        sqs_client = client("sqs", endpoint_url=endpoint_url)
+        profile_name = graph.config.sqs_consumer.profile_name
+        region_name = graph.config.sqs_consumer.region_name
+        session = Session(profile_name=profile_name)
+        sqs_client = session.client(
+            "sqs",
+            endpoint_url=endpoint_url,
+            region_name=region_name,
+        )
 
     return SQSConsumer(
         sqs_client=sqs_client,
