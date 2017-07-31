@@ -43,9 +43,6 @@ Here's how:
                 endpoint_url="http://localhost:4576",
                 sqs_queue_url="http://localhost:4576/123456789012/myqueue",
             ),
-            sqs_envelope=dict(
-                strategy_name="LocalStackSQSEnvelope",
-            ),
             sns_producer=dict(
                 endpoint_url="http://localhost:4575",
             ),

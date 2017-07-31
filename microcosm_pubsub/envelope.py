@@ -171,14 +171,6 @@ class CodecSQSEnvelope(SNSMessageBodyParser, CodecMediaTypeAndContentParser, SQS
     pass
 
 
-class LocalStackSQSEnvelope(RawMessageBodyParser, CodecSQSEnvelope, SQSEnvelope):
-    """
-    Enveloping strategy that uses a media type-driven message codec with localstack conventions.
-
-    """
-    pass
-
-
 @defaults(
     strategy_name="CodecSQSEnvelope",
     validate_md5=False,

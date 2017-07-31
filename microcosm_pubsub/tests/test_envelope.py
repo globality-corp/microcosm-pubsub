@@ -14,7 +14,6 @@ from microcosm.api import create_object_graph
 from microcosm_pubsub.conventions import created
 from microcosm_pubsub.envelope import (
     CodecSQSEnvelope,
-    LocalStackSQSEnvelope,
     RawSQSEnvelope,
 )
 
@@ -59,36 +58,6 @@ def test_codec_sqs_envelope():
                 foo="bar",
                 uri=uri,
             )),
-        )),
-    ))
-
-    assert_that(sqs_message.content, is_(equal_to(dict(
-        # NB: no foo key here because it's not part of the schema
-        media_type=media_type,
-        uri=uri,
-    ))))
-    assert_that(sqs_message.media_type, is_(equal_to(media_type)))
-    assert_that(sqs_message.message_id, is_(equal_to(message_id)))
-    assert_that(sqs_message.receipt_handle, is_(equal_to(receipt_handle)))
-
-
-def test_localstack_sqs_envealope():
-    graph = create_object_graph("example", testing=True)
-    consumer = None
-    message_id = "message_id"
-    receipt_handle = "receipt_handle"
-    envelope = LocalStackSQSEnvelope(graph)
-
-    media_type = created("foo")
-    uri = "http://foo/id"
-
-    sqs_message = envelope.parse_raw_message(consumer, dict(
-        MessageId=message_id,
-        ReceiptHandle=receipt_handle,
-        Body=dumps(dict(
-            mediaType=media_type,
-            foo="bar",
-            uri=uri,
         )),
     ))
 
