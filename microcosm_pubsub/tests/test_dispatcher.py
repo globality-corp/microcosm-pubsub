@@ -17,6 +17,7 @@ from microcosm_pubsub.tests.fixtures import (
 
 
 MESSAGE_ID = "message-id"
+TOPIC_ARN = "topic-arn"
 
 
 def test_handle():
@@ -33,6 +34,7 @@ def test_handle():
         result = graph.sqs_message_dispatcher.handle_message(
             message_id=MESSAGE_ID,
             media_type=DerivedSchema.MEDIA_TYPE,
+            topic_arn=TOPIC_ARN,
             content=message,
             bound_handlers=daemon.bound_handlers,
         )
@@ -57,6 +59,7 @@ def test_handle_with_no_context():
     result = graph.sqs_message_dispatcher.handle_message(
         message_id=MESSAGE_ID,
         media_type=DerivedSchema.MEDIA_TYPE,
+        topic_arn=TOPIC_ARN,
         content=message,
         bound_handlers=daemon.bound_handlers,
     )
@@ -77,6 +80,7 @@ def test_handle_with_skipping():
     result = graph.sqs_message_dispatcher.handle_message(
         message_id=MESSAGE_ID,
         media_type=created("bar"),
+        topic_arn=TOPIC_ARN,
         content=message,
         bound_handlers=daemon.bound_handlers,
     )

@@ -47,6 +47,7 @@ class SQSMessageDispatcher(object):
                     handled = self.handle_message(
                         message_id=message.message_id,
                         media_type=message.media_type,
+                        topic_arn=message.topic_arn,
                         content=message.content,
                         bound_handlers=bound_handlers,
                     )
@@ -57,7 +58,7 @@ class SQSMessageDispatcher(object):
 
         return DispatchResult(message_count, error_count, ignore_count)
 
-    def handle_message(self, message_id, media_type, content, bound_handlers):
+    def handle_message(self, message_id, media_type, topic_arn, content, bound_handlers):
         """
         Handle a single message.
 
@@ -74,9 +75,9 @@ class SQSMessageDispatcher(object):
                 self.logger.debug("Skipping message with no registered handler: {}".format(media_type))
                 return False
 
-            return self.invoke_handler(handler, media_type, content)
+            return self.invoke_handler(handler, media_type, topic_arn, content)
 
-    def invoke_handler(self, handler, media_type, content):
+    def invoke_handler(self, handler, media_type, topic_arn, content):
         """
         Invoke handler with logging and error handling.
 
@@ -91,7 +92,7 @@ class SQSMessageDispatcher(object):
             )
             return handler_with_context(content)
         except SkipMessage as skipped:
-            extra = self.sqs_message_context(content)
+            extra = self.sqs_message_context(content, topic_arn=topic_arn)
             extra.update(skipped.extra)
             logger.info(
                 "Skipping message for reason: {}".format(str(skipped)),
@@ -103,7 +104,7 @@ class SQSMessageDispatcher(object):
                 "Nacking SQS message: {}".format(
                     media_type,
                 ),
-                extra=self.sqs_message_context(content)
+                extra=self.sqs_message_context(content, topic_arn=topic_arn),
             )
             raise
         except Exception as error:
@@ -112,7 +113,7 @@ class SQSMessageDispatcher(object):
                     media_type,
                 ),
                 exc_info=True,
-                extra=self.sqs_message_context(content)
+                extra=self.sqs_message_context(content, topic_arn=topic_arn),
             )
             raise error
 
