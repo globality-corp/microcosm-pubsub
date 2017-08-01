@@ -6,6 +6,11 @@ Message context.
 
 def sqs_message_context(message_dct, **kwargs):
     context = message_dct.get("opaque_data", dict())
+
+    # If there is a uri add it to the context
+    if message_dct.get("uri"):
+        context["uri"] = message_dct.get("uri")
+
     context.update(**kwargs)
     return context
 
