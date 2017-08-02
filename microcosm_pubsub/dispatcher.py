@@ -45,10 +45,7 @@ class SQSMessageDispatcher(object):
             try:
                 with message:
                     handled = self.handle_message(
-                        message_id=message.message_id,
-                        media_type=message.media_type,
-                        topic_arn=message.topic_arn,
-                        content=message.content,
+                        message=message,
                         bound_handlers=bound_handlers,
                     )
                     if not handled:
@@ -58,11 +55,16 @@ class SQSMessageDispatcher(object):
 
         return DispatchResult(message_count, error_count, ignore_count)
 
-    def handle_message(self, message_id, media_type, topic_arn, content, bound_handlers):
+    def handle_message(self, message, bound_handlers):
         """
         Handle a single message.
 
         """
+        message_id = message.message_id
+        media_type = message.media_type
+        topic_arn = message.topic_arn
+        content = message.content
+
         if content is None:
             self.logger.debug("Skipping message with unparsed type: {}".format(media_type))
             return False
