@@ -10,6 +10,7 @@ from hamcrest import (
 from mock import Mock
 
 from microcosm_pubsub.conventions import created
+from microcosm_pubsub.message import SQSMessage
 from microcosm_pubsub.tests.fixtures import (
     ExampleDaemon,
     DerivedSchema,
@@ -17,7 +18,6 @@ from microcosm_pubsub.tests.fixtures import (
 
 
 MESSAGE_ID = "message-id"
-TOPIC_ARN = "topic-arn"
 
 
 def test_handle():
@@ -28,19 +28,22 @@ def test_handle():
     daemon = ExampleDaemon.create_for_testing()
     graph = daemon.graph
 
-    message = dict(bar="baz")
+    content = dict(bar="baz")
     sqs_message_context = Mock(return_value=dict())
-    with graph.opaque.initialize(sqs_message_context, message):
+    with graph.opaque.initialize(sqs_message_context, content):
         result = graph.sqs_message_dispatcher.handle_message(
-            message_id=MESSAGE_ID,
-            media_type=DerivedSchema.MEDIA_TYPE,
-            topic_arn=TOPIC_ARN,
-            content=message,
+            message=SQSMessage(
+                consumer=None,
+                content=content,
+                media_type=DerivedSchema.MEDIA_TYPE,
+                message_id=MESSAGE_ID,
+                receipt_handle=None,
+            ),
             bound_handlers=daemon.bound_handlers,
         )
 
     assert_that(result, is_(equal_to(True)))
-    sqs_message_context.assert_called_once_with(message)
+    sqs_message_context.assert_called_once_with(content)
 
 
 def test_handle_with_no_context():
@@ -55,17 +58,20 @@ def test_handle_with_no_context():
     # defaulting logic
     graph._registry.entry_points.pop("sqs_message_context")
 
-    message = dict(bar="baz")
+    content = dict(bar="baz")
     result = graph.sqs_message_dispatcher.handle_message(
-        message_id=MESSAGE_ID,
-        media_type=DerivedSchema.MEDIA_TYPE,
-        topic_arn=TOPIC_ARN,
-        content=message,
+        message=SQSMessage(
+            consumer=None,
+            content=content,
+            media_type=DerivedSchema.MEDIA_TYPE,
+            message_id=MESSAGE_ID,
+            receipt_handle=None,
+        ),
         bound_handlers=daemon.bound_handlers,
     )
 
     assert_that(result, is_(equal_to(True)))
-    assert_that(graph.sqs_message_dispatcher.sqs_message_context(message), is_(equal_to(dict())))
+    assert_that(graph.sqs_message_dispatcher.sqs_message_context(content), is_(equal_to(dict())))
 
 
 def test_handle_with_skipping():
@@ -76,12 +82,15 @@ def test_handle_with_skipping():
     daemon = ExampleDaemon.create_for_testing()
     graph = daemon.graph
 
-    message = dict(bar="baz")
+    content = dict(bar="baz")
     result = graph.sqs_message_dispatcher.handle_message(
-        message_id=MESSAGE_ID,
-        media_type=created("bar"),
-        topic_arn=TOPIC_ARN,
-        content=message,
+        message=SQSMessage(
+            consumer=None,
+            content=content,
+            media_type=created("bar"),
+            message_id=MESSAGE_ID,
+            receipt_handle=None,
+        ),
         bound_handlers=daemon.bound_handlers,
     )
     assert_that(result, is_(equal_to(False)))
