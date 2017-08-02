@@ -1,5 +1,5 @@
 """
-oConsumer backoff policy
+Consumer backoff policy
 
 """
 from abc import ABCMeta, abstractmethod
