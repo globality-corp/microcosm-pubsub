@@ -10,7 +10,10 @@ from microcosm_pubsub.message import SQSMessage
 
 
 def test_default_timeout():
-    message = SQSMessage(None, None, None, None, None, 1)
+    message = SQSMessage(
+        None, None, None, None, None,
+        approximate_receive_count=1,
+    )
     backoff_policy = NaiveBackoffPolicy(42)
 
     assert_that(
@@ -20,7 +23,10 @@ def test_default_timeout():
 
 
 def test_message_timeout():
-    message = SQSMessage(None, None, None, None, None, 1)
+    message = SQSMessage(
+        None, None, None, None, None,
+        approximate_receive_count=1,
+    )
     backoff_policy = NaiveBackoffPolicy(42)
 
     assert_that(
@@ -30,7 +36,10 @@ def test_message_timeout():
 
 
 def test_exponential_timeout():
-    message = SQSMessage(None, None, None, None, None, 1)
+    message = SQSMessage(
+        None, None, None, None, None,
+        approximate_receive_count=1,
+    )
     backoff_policy = ExponentialBackoffPolicy()
 
     assert_that(
@@ -40,7 +49,10 @@ def test_exponential_timeout():
 
 
 def test_scaled_exponential_timeout():
-    message = SQSMessage(None, None, None, None, None, 2)
+    message = SQSMessage(
+        None, None, None, None, None,
+        approximate_receive_count=2,
+    )
     backoff_policy = ExponentialBackoffPolicy()
 
     with patch.object(backoff_policy, "randint") as mocked:
