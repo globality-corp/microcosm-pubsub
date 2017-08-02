@@ -18,7 +18,6 @@ from microcosm_pubsub.tests.fixtures import (
 
 
 MESSAGE_ID = "message-id"
-TOPIC_ARN = "topic-arn"
 
 
 def test_handle():
@@ -39,7 +38,6 @@ def test_handle():
                 media_type=DerivedSchema.MEDIA_TYPE,
                 message_id=MESSAGE_ID,
                 receipt_handle=None,
-                topic_arn=TOPIC_ARN,
             ),
             bound_handlers=daemon.bound_handlers,
         )
@@ -68,7 +66,6 @@ def test_handle_with_no_context():
             media_type=DerivedSchema.MEDIA_TYPE,
             message_id=MESSAGE_ID,
             receipt_handle=None,
-            topic_arn=TOPIC_ARN,
         ),
         bound_handlers=daemon.bound_handlers,
     )
@@ -93,7 +90,6 @@ def test_handle_with_skipping():
             media_type=created("bar"),
             message_id=MESSAGE_ID,
             receipt_handle=None,
-            topic_arn=TOPIC_ARN,
         ),
         bound_handlers=daemon.bound_handlers,
     )
