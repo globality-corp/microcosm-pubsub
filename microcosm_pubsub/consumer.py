@@ -2,11 +2,21 @@
 Message consumer.
 
 """
-from boto3 import Session
+from os.path import exists
+from six.moves.urllib import parse
 
+from boto3 import Session
 from microcosm.api import defaults
 
 from microcosm_pubsub.backoff import BackoffPolicy
+from microcosm_pubsub.reader import SQSFileReader
+
+
+def is_file(url):
+    if exists(url):
+        return True
+
+    return exists(parse(url).path)
 
 
 class SQSConsumer(object):
@@ -78,6 +88,18 @@ class SQSConsumer(object):
         )
 
 
+def configure_sqs_client(graph):
+    endpoint_url = graph.config.sqs_consumer.endpoint_url
+    profile_name = graph.config.sqs_consumer.profile_name
+    region_name = graph.config.sqs_consumer.region_name
+    session = Session(profile_name=profile_name)
+    return session.client(
+        "sqs",
+        endpoint_url=endpoint_url,
+        region_name=region_name,
+    )
+
+
 @defaults(
     endpoint_url=None,
     profile_name=None,
@@ -97,29 +119,20 @@ def configure_sqs_consumer(graph):
 
     """
     sqs_queue_url = graph.config.sqs_consumer.sqs_queue_url
+
     limit = int(graph.config.sqs_consumer.limit)
     wait_seconds = int(graph.config.sqs_consumer.wait_seconds)
     visibility_timeout_seconds = graph.config.sqs_consumer.visibility_timeout_seconds
-
     if visibility_timeout_seconds:
         visibility_timeout_seconds = int(visibility_timeout_seconds)
 
-    if graph.metadata.testing:
+    if graph.metadata.testing or sqs_queue_url == "test":
         from mock import MagicMock
         sqs_client = MagicMock()
-    elif sqs_queue_url == "test":
-        from mock import MagicMock
-        sqs_client = MagicMock()
+    elif is_file(sqs_queue_url):
+        sqs_client = SQSFileReader(sqs_queue_url)
     else:
-        endpoint_url = graph.config.sqs_consumer.endpoint_url
-        profile_name = graph.config.sqs_consumer.profile_name
-        region_name = graph.config.sqs_consumer.region_name
-        session = Session(profile_name=profile_name)
-        sqs_client = session.client(
-            "sqs",
-            endpoint_url=endpoint_url,
-            region_name=region_name,
-        )
+        sqs_client = configure_sqs_client(graph)
 
     backoff_policy_class = BackoffPolicy.choose_backoff_policy(
         graph.config.sqs_consumer.backoff_policy,
