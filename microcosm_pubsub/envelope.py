@@ -130,7 +130,7 @@ class SQSEnvelope(MessageBodyParser, MediaTypeAndContentParser):
         Create an `SQSMessage` from SQS data.
 
         """
-        message_id = self.parse_message(raw_message)
+        message_id = self.parse_message_id(raw_message)
         receipt_handle = self.parse_receipt_handle(raw_message)
         attributes = raw_message.get("Attributes", {})
         approximate_receive_count = attributes.get("ApproximateReceiveCount")

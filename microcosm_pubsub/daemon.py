@@ -94,5 +94,6 @@ class ConsumerDaemon(Daemon):
         return super(ConsumerDaemon, cls).create_for_testing(
             sqs_queue_url="queue",
             loader=loader,
+            envelope=None,
             **kwargs
         )
