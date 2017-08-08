@@ -6,6 +6,8 @@ from microcosm.loaders import load_each, load_from_dict
 from microcosm_daemon.api import SleepNow
 from microcosm_daemon.daemon import Daemon
 
+from microcosm_pubsub.envelope import SQSEnvelope
+
 
 class ConsumerDaemon(Daemon):
 
@@ -16,6 +18,10 @@ class ConsumerDaemon(Daemon):
     def make_arg_parser(self):
         parser = super(ConsumerDaemon, self).make_arg_parser()
         parser.add_argument("--sqs-queue-url")
+        parser.add_argument("--envelope", choices=[
+            envelope_cls.__name__
+            for envelope_cls in SQSEnvelope.__subclasses__()
+        ])
         return parser
 
     def create_object_graph_components(self, graph):
@@ -35,14 +41,23 @@ class ConsumerDaemon(Daemon):
 
     @property
     def defaults(self):
-        if not self.args.sqs_queue_url:
-            return dict()
+        config = dict()
 
-        return dict(
-            sqs_consumer=dict(
-                sqs_queue_url=self.args.sqs_queue_url,
-            ),
-        )
+        if self.args.sqs_queue_url:
+            config.update(
+                sqs_consumer=dict(
+                    sqs_queue_url=self.args.sqs_queue_url,
+                ),
+            )
+
+        if self.args.envelope:
+            config.update(
+                sqs_envelope=dict(
+                    strategy_name=self.args.envelope,
+                ),
+            )
+
+        return config
 
     @property
     def components(self):

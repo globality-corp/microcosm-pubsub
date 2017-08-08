@@ -10,6 +10,7 @@ from abc import ABCMeta, abstractmethod
 from json import loads
 from hashlib import md5
 from six import add_metaclass
+from uuid import uuid4
 
 from microcosm.api import defaults
 
@@ -69,6 +70,18 @@ class RawMediaTypeAndContentParser(MediaTypeAndContentParser):
         return media_type, loads(content)
 
 
+class NaiveMediaTypeAndContentParser(MediaTypeAndContentParser):
+
+    def parse_media_type_and_content(self, message):
+        media_type = message["mediaType"]
+        content = {
+            key: value
+            for key, value in message.items()
+            if key != "mediaType"
+        }
+        return media_type, content
+
+
 class SNSMessageBodyParser(MessageBodyParser):
 
     def parse_message(self, body):
@@ -117,12 +130,12 @@ class SQSEnvelope(MessageBodyParser, MediaTypeAndContentParser):
         Create an `SQSMessage` from SQS data.
 
         """
-        message_id = raw_message["MessageId"]
-        receipt_handle = raw_message["ReceiptHandle"]
+        message_id = self.parse_message(raw_message)
+        receipt_handle = self.parse_receipt_handle(raw_message)
         attributes = raw_message.get("Attributes", {})
         approximate_receive_count = attributes.get("ApproximateReceiveCount")
 
-        body = raw_message["Body"]
+        body = self.parse_body(raw_message)
 
         if self.validate_md5:
             self.validate_md5(raw_message, body)
@@ -138,6 +151,15 @@ class SQSEnvelope(MessageBodyParser, MediaTypeAndContentParser):
             receipt_handle=receipt_handle,
             approximate_receive_count=approximate_receive_count,
         )
+
+    def parse_message_id(self, raw_message):
+        return raw_message["MessageId"]
+
+    def parse_receipt_handle(self, raw_message):
+        return raw_message["ReceiptHandle"]
+
+    def parse_body(self, raw_message):
+        return raw_message["Body"]
 
     def validate_md5(self, raw_message, body):
         """
@@ -169,6 +191,21 @@ class CodecSQSEnvelope(SNSMessageBodyParser, CodecMediaTypeAndContentParser, SQS
 
     """
     pass
+
+
+class NaiveSQSEnvelope(RawMessageBodyParser, NaiveMediaTypeAndContentParser, SQSEnvelope):
+    """
+    Enveloping strategy for naive debugging.
+
+    """
+    def parse_message_id(self, raw_message):
+        return "message-id-{}".format(uuid4())
+
+    def parse_receipt_handle(self, raw_message):
+        return "receipt-handle-{}".format(uuid4())
+
+    def parse_body(self, raw_message):
+        return raw_message
 
 
 @defaults(
