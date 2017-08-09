@@ -3,7 +3,7 @@ Message consumer.
 
 """
 from os.path import exists
-from six.moves.urllib import parse
+from six.moves.urllib.parse import urlparse
 
 from boto3 import Session
 from microcosm.api import defaults
@@ -16,7 +16,7 @@ def is_file(url):
     if exists(url):
         return True
 
-    return exists(parse(url).path)
+    return exists(urlparse(url).path)
 
 
 class SQSConsumer(object):
