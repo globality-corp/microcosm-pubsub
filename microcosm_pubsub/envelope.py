@@ -133,7 +133,7 @@ class SQSEnvelope(MessageBodyParser, MediaTypeAndContentParser):
         message_id = self.parse_message_id(raw_message)
         receipt_handle = self.parse_receipt_handle(raw_message)
         attributes = raw_message.get("Attributes", {})
-        approximate_receive_count = int(attributes.get("ApproximateReceiveCount"))
+        approximate_receive_count = int(attributes.get("ApproximateReceiveCount", 1))
 
         body = self.parse_body(raw_message)
 
