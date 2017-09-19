@@ -195,7 +195,7 @@ def configure_sns_topic_arns(graph):
     region_name=None,
     endpoint_url=None,
     mock_sns=True,
-    skip=None,
+    skip="False",
 )
 def configure_sns_producer(graph):
     """
@@ -230,13 +230,8 @@ def configure_sns_producer(graph):
     except NotBoundError:
         opaque = None
 
-    if graph.config.sns_producer.skip is None:
-        # In development mode, default to not publishing because there's typically
-        # not anywhere to publish to (e.g. no SNS topic)
-        skip = graph.metadata.debug
-    else:
-        # If configured explicitly, respect the flag
-        skip = strtobool(graph.config.sns_producer.skip)
+    # If configured explicitly, respect the flag
+    skip = strtobool(graph.config.sns_producer.skip)
 
     return SNSProducer(
         opaque=opaque,
