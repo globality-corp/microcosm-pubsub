@@ -4,7 +4,7 @@ Implement SQS message reading from other sources.
 """
 from json import loads
 
-from microcosm_daemon.error_policy import FatalError
+from microcosm_daemon.error_policy import ExitError
 
 
 class SQSFileReader(object):
@@ -29,7 +29,7 @@ class SQSFileReader(object):
                 messages.append(loads(message))
 
         if not messages:
-            raise FatalError("No more messages to replay")
+            raise ExitError("No more messages to replay")
         return dict(Messages=messages)
 
     def delete_message(self, *args, **kwargs):
