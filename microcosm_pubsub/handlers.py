@@ -131,7 +131,7 @@ class URIHandler(object):
 @binding("publish_message_batch")
 @handles(created("BatchMessage"))
 @logger
-class PublishBatchMessage:
+class PublishBatchMessage(object):
 
     def __init__(self, graph):
         self.sns_producer = graph.sns_producer
