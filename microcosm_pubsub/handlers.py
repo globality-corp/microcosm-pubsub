@@ -137,7 +137,7 @@ class PublishBatchMessage:
         self.sns_producer = graph.sns_producer
 
     def __call__(self, message):
-        messages = message['messages']
+        messages = message["messages"]
         for message in messages:
             self.sns_producer.publish_message(
                 message["media_type"],
