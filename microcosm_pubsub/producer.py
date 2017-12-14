@@ -13,7 +13,7 @@ from microcosm.errors import NotBoundError
 from microcosm_logging.decorators import logger
 from microcosm_logging.timing import elapsed_time
 
-from microcosm_pubsub.conventions import LifecycleChange, make_media_type
+from microcosm_pubsub.conventions import LifecycleChange, make_media_type, MessageBatchSchema
 from microcosm_pubsub.errors import TopicNotDefinedError
 
 
@@ -116,6 +116,27 @@ class DeferredProducer(object):
             self.producer.publish_message(media_type, message, topic_arn, opaque_data)
 
 
+class DeferredBatchProducer(DeferredProducer):
+    def __exit__(self, type, value, traceback):
+        if type is not None:
+            return
+
+        messages = [
+            dict(
+                media_type=media_type,
+                message=message,
+                topic_arn=topic_arn,
+                opaque_data=opaque_data,
+            )
+            for media_type, message, topic_arn, opaque_data in self.messages
+        ]
+
+        self.producer.produce(
+            MessageBatchSchema.MEDIA_TYPE,
+            messages=messages,
+        )
+
+
 def deferred(component, key="sns_producer"):
     """
     A decorator to defer message production until after the decorated function has completed
@@ -129,6 +150,28 @@ def deferred(component, key="sns_producer"):
         def wrapper(*args, **kwargs):
             try:
                 deferred_producer = DeferredProducer(sns_producer)
+                setattr(component, key, deferred_producer)
+                with deferred_producer:
+                    return func(*args, **kwargs)
+            finally:
+                setattr(component, key, sns_producer)
+        return wrapper
+    return decorator
+
+
+def deferred_batch(component, key="sns_producer"):
+    """
+    A decorator to defer batch message production until after the decorated function has completed
+
+    """
+    graph = component.graph
+    sns_producer = getattr(graph, key)
+
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            try:
+                deferred_producer = DeferredBatchProducer(sns_producer)
                 setattr(component, key, deferred_producer)
                 with deferred_producer:
                     return func(*args, **kwargs)
