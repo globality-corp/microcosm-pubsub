@@ -78,10 +78,11 @@ class SQSMessageDispatcher(object):
                 self.logger.debug("Skipping message with no registered handler: {}".format(media_type))
                 return False
 
-            extra = dict(
+            extra = self.sqs_message_context(content)
+            extra.update(dict(
                 handler=titleize(handler.__class__.__name__),
                 uri=content.get("uri"),
-            )
+            ))
             with elapsed_time(extra):
                 result = self.invoke_handler(handler, media_type, content)
             self.logger.info(
