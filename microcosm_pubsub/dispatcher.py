@@ -3,11 +3,13 @@ Process batches of messages.
 
 """
 from collections import namedtuple
+from inflection import titleize
 
 from microcosm.errors import NotBoundError
 from microcosm_logging.decorators import context_logger, logger
 
 from microcosm_pubsub.errors import Nack, SkipMessage
+from microcosm_logging.timing import elapsed_time
 
 
 DispatchResult = namedtuple("DispatchResult", ["message_count", "error_count", "ignore_count"])
@@ -76,7 +78,17 @@ class SQSMessageDispatcher(object):
                 self.logger.debug("Skipping message with no registered handler: {}".format(media_type))
                 return False
 
-            return self.invoke_handler(handler, media_type, content)
+            extra = dict(
+                handler=titleize(handler.__class__.__name__),
+                uri=content.get("uri"),
+            )
+            with elapsed_time(extra):
+                result = self.invoke_handler(handler, media_type, content)
+            self.logger.info(
+                "Handled {handler}",
+                extra=extra
+            )
+            return result
 
     def invoke_handler(self, handler, media_type, content):
         """

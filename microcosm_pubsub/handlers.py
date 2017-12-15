@@ -86,7 +86,7 @@ class URIHandler(object):
         )
 
     def on_handle(self, message, uri, resource):
-        self.logger.info(
+        self.logger.debug(
             "Handled {handler}",
             extra=dict(
                 handler=self.name,
