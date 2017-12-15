@@ -17,7 +17,7 @@ from microcosm.api import create_object_graph
 from microcosm.loaders import load_from_environ
 import microcosm.opaque  # noqa
 
-from microcosm_pubsub.conventions import created
+from microcosm_pubsub.conventions import created, MessageBatchSchema
 from microcosm_pubsub.errors import TopicNotDefinedError
 from microcosm_pubsub.producer import (
     deferred,
@@ -214,6 +214,9 @@ def test_deferred_batch_production():
         return dict(
             sns_topic_arns=dict(
                 default="topic",
+                mappings={
+                    MessageBatchSchema.MEDIA_TYPE: "batch-topic",
+                },
             )
         )
 
@@ -231,6 +234,34 @@ def test_deferred_batch_production():
     assert_that(graph.sns_producer.sns_client.publish.call_count, is_(equal_to(1)))
 
 
+def test_publish_batch_with_no_topic_fails():
+    """
+    Deferred production waits until the end of a block and publishes all
+    messages in one MessageBatchSchema
+
+    """
+    def loader(metadata):
+        return dict(
+            sns_topic_arns=dict(
+                default="topic",
+            )
+        )
+
+    graph = create_object_graph("example", testing=True, loader=loader)
+    graph.use("opaque")
+
+    # set up response
+    graph.sns_producer.sns_client.publish.return_value = dict(MessageId=MESSAGE_ID)
+
+    assert_that(
+        calling(graph.sns_producer.produce).with_args(
+            MessageBatchSchema.MEDIA_TYPE,
+            messages=[]
+        ),
+        raises(TopicNotDefinedError)
+    )
+
+
 def test_batch_deferred_production_decorator():
     """
     Deferred production can be used to decorate a function
@@ -240,6 +271,9 @@ def test_batch_deferred_production_decorator():
         return dict(
             sns_topic_arns=dict(
                 default="topic",
+                mappings={
+                    MessageBatchSchema.MEDIA_TYPE: "batch-topic",
+                },
             )
         )
 

@@ -221,6 +221,8 @@ def configure_sns_topic_arns(graph):
         sns_topic_arns = dict()
     else:
         sns_topic_arns = defaultdict(lambda: graph.config.sns_topic_arns.default)
+        # NB: Do not use the default for the batch schema
+        sns_topic_arns[MessageBatchSchema.MEDIA_TYPE] = None
 
     sns_topic_arns.update(graph.config.sns_topic_arns.mappings)
 
