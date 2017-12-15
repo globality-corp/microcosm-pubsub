@@ -236,8 +236,7 @@ def test_deferred_batch_production():
 
 def test_publish_batch_with_no_topic_fails():
     """
-    Deferred production waits until the end of a block and publishes all
-    messages in one MessageBatchSchema
+    Require explicit configuration of a topic for batch messages.
 
     """
     def loader(metadata):
