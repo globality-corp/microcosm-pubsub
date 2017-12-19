@@ -13,7 +13,8 @@ from microcosm.errors import NotBoundError
 from microcosm_logging.decorators import logger
 from microcosm_logging.timing import elapsed_time
 
-from microcosm_pubsub.conventions import LifecycleChange, make_media_type, MessageBatchSchema
+from microcosm_pubsub.batch import MessageBatchSchema
+from microcosm_pubsub.conventions import LifecycleChange, make_media_type
 from microcosm_pubsub.errors import TopicNotDefinedError
 
 

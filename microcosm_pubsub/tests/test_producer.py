@@ -17,7 +17,8 @@ from microcosm.api import create_object_graph
 from microcosm.loaders import load_from_environ
 import microcosm.opaque  # noqa
 
-from microcosm_pubsub.conventions import created, MessageBatchSchema
+from microcosm_pubsub.batch import MessageBatchSchema
+from microcosm_pubsub.conventions import created
 from microcosm_pubsub.errors import TopicNotDefinedError
 from microcosm_pubsub.producer import (
     deferred,

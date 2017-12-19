@@ -56,7 +56,8 @@ class PubSubMessageSchemaRegistry(object):
 
     def find(self, media_type):
         """
-        Create a codec or raise KeyError.
+        Create a codec or raise KeyError. If autoregistration is enabled, falls
+        back to the URIMessageSchema.
 
         """
         if media_type not in self._media_types:
