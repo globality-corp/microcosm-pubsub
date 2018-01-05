@@ -16,7 +16,7 @@ DispatchResult = namedtuple("DispatchResult", ["message_count", "error_count", "
 
 
 @logger
-class SQSMessageDispatcher(object):
+class SQSMessageDispatcher:
     """
     Dispatch batches of SQSMessages to handler functions.
 

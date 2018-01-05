@@ -5,7 +5,6 @@ Message producer.
 from collections import defaultdict
 from distutils.util import strtobool
 from functools import wraps
-from six import string_types
 
 from boto3 import Session
 from microcosm.api import defaults
@@ -19,7 +18,7 @@ from microcosm_pubsub.errors import TopicNotDefinedError
 
 
 @logger
-class SNSProducer(object):
+class SNSProducer:
     """
     Produces messages to SNS topics.
 
@@ -92,7 +91,7 @@ class SNSProducer(object):
         return topic_arn
 
 
-class DeferredProducer(object):
+class DeferredProducer:
     """
     A context manager to defer message production until the end of a block.
 
@@ -202,7 +201,7 @@ def collapse_dict(dct, prefix="", separator="."):
 
 def iter_topic_mappings(dct):
     for key, value in dct.items():
-        if isinstance(value, string_types):
+        if isinstance(value, str):
             yield key, value
         else:
             for nested_key, nested_value in collapse_dict(value, key):

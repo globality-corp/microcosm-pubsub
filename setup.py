@@ -2,7 +2,7 @@
 from setuptools import find_packages, setup
 
 project = "microcosm-pubsub"
-version = "0.41.1"
+version = "1.0.0"
 
 setup(
     name=project,
@@ -15,11 +15,11 @@ setup(
     include_package_data=True,
     zip_safe=False,
     install_requires=[
-        "boto3>=1.3.0",
-        "marshmallow>=2.12.1",
-        "microcosm>=0.17.2",
-        "microcosm-daemon>=0.13.0",
-        "microcosm-logging>=0.12.0",
+        "boto3>=1.5.8",
+        "marshmallow>=2.15.0",
+        "microcosm>=2.0.0",
+        "microcosm-daemon>=1.0.0",
+        "microcosm-logging>=1.0.0",
     ],
     setup_requires=[
         "nose>=1.3.6",

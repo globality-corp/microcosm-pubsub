@@ -5,7 +5,7 @@ A single SQS message.
 from microcosm_pubsub.errors import Nack
 
 
-class SQSMessage(object):
+class SQSMessage:
     """
     SQS message wrapper.
 

@@ -16,7 +16,7 @@ from microcosm_pubsub.tests.fixtures import (
 )
 
 
-class TestDecorators(object):
+class TestDecorators:
 
     def setup(self):
         self.daemon = ExampleDaemon.create_for_testing()

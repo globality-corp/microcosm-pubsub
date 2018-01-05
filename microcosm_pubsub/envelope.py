@@ -9,7 +9,6 @@ process this envelope, depending on the degree of validation and metadata desire
 from abc import ABCMeta, abstractmethod
 from json import loads
 from hashlib import md5
-from six import add_metaclass
 from uuid import uuid4
 
 from microcosm.api import defaults
@@ -18,8 +17,7 @@ from microcosm_pubsub.codecs import MediaTypeSchema, PubSubMessageCodec
 from microcosm_pubsub.message import SQSMessage
 
 
-@add_metaclass(ABCMeta)
-class MessageBodyParser(object):
+class MessageBodyParser(metaclass=ABCMeta):
     """
     Mixin for parsing the data from an SQS message.
 
@@ -35,8 +33,7 @@ class MessageBodyParser(object):
         pass
 
 
-@add_metaclass(ABCMeta)
-class MediaTypeAndContentParser(object):
+class MediaTypeAndContentParser(metaclass=ABCMeta):
     """
     Mixin for parsing a media type and content from a message body.
 

@@ -14,7 +14,7 @@ from microcosm_pubsub.decorators import handles
 from microcosm_pubsub.errors import Nack
 
 
-class URIHandler(object):
+class URIHandler:
     """
     Base handler for URI-driven events.
 
@@ -131,7 +131,7 @@ class URIHandler(object):
 @binding("publish_message_batch")
 @handles(created("BatchMessage"))
 @logger
-class PublishBatchMessage(object):
+class PublishBatchMessage:
 
     def __init__(self, graph):
         self.sns_producer = graph.sns_producer

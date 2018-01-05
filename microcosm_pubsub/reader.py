@@ -7,7 +7,7 @@ from json import loads
 from microcosm_daemon.error_policy import ExitError
 
 
-class SQSFileReader(object):
+class SQSFileReader:
     """
     Read message data from a file.
 

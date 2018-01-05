@@ -101,7 +101,7 @@ handlers will be a class with its own `@binding` to pass other collaborators:
 
     @binding("simple_handler")
     @handles(SimpleSchema)
-    class SimpleHandler(object):
+    class SimpleHandler:
         def __init__(self, graph):
             self.collaborator = graph.collaborator
 
