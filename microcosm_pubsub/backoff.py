@@ -4,15 +4,13 @@ Consumer backoff policy
 """
 from abc import ABCMeta, abstractmethod
 from random import randint
-from six import add_metaclass
 
 
 # we cannot go over 12 hours
 MAX_BACKOFF_TIMEOUT = 60 * 60 * 12
 
 
-@add_metaclass(ABCMeta)
-class BackoffPolicy(object):
+class BackoffPolicy(metaclass=ABCMeta):
 
     def __init__(self, visibility_timeout_seconds=None):
         self.visibility_timeout_seconds = visibility_timeout_seconds

@@ -21,7 +21,7 @@ from microcosm_pubsub.registry import AlreadyRegisteredError
 from microcosm_pubsub.tests.fixtures import DerivedSchema, ExampleDaemon, noop_handler
 
 
-class AnotherHandler(object):
+class AnotherHandler:
 
     def __init__(self, graph=None):
         pass
@@ -34,7 +34,7 @@ class AnotherSchema(PubSubMessageSchema):
     MEDIA_TYPE = "application/vnd.microcosm.another"
 
 
-class TestDerivedPubSubMessageCodecRegistry(object):
+class TestDerivedPubSubMessageCodecRegistry:
 
     def setup(self):
         self.graph = create_object_graph("test")
@@ -77,7 +77,7 @@ class TestDerivedPubSubMessageCodecRegistry(object):
         assert_that(schema.schema, is_(instance_of(DerivedSchema)))
 
 
-class TestDerivedSQSMessageHandlerRegistry(object):
+class TestDerivedSQSMessageHandlerRegistry:
 
     def setup(self):
         self.daemon = ExampleDaemon.create_for_testing()

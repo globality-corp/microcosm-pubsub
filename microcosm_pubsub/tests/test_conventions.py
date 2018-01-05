@@ -27,7 +27,7 @@ from microcosm_pubsub.tests.fixtures import (
 )
 
 
-class Foo(object):
+class Foo:
     pass
 
 

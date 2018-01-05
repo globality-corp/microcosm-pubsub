@@ -4,7 +4,6 @@ Registry of SQS message handlers.
 """
 from collections import defaultdict
 from inspect import isclass
-from six import string_types
 
 from microcosm.api import defaults
 from microcosm_logging.decorators import logger
@@ -18,7 +17,7 @@ class AlreadyRegisteredError(Exception):
 
 
 @logger
-class PubSubMessageSchemaRegistry(object):
+class PubSubMessageSchemaRegistry:
     """
     Keeps track of available message schemas.
 
@@ -39,7 +38,7 @@ class PubSubMessageSchemaRegistry(object):
         """
         self._media_types.add(media_type)
 
-        if isinstance(value, string_types):
+        if isinstance(value, str):
             # When using the @handles convention, there may not be a concrete schema class declared.
             # In this case, the media type itself is passed as the value.
             # thereby allowing handlers to be declared using convention-driven
@@ -82,7 +81,7 @@ class PubSubMessageSchemaRegistry(object):
 
 
 @logger
-class SQSMessageHandlerRegistry(object):
+class SQSMessageHandlerRegistry:
     """
     Keeps track of available handlers.
 
@@ -150,6 +149,6 @@ def media_type_for(schema_cls):
         return schema_cls.MEDIA_TYPE
     if hasattr(schema_cls, "infer_media_type"):
         return schema_cls.infer_media_type()
-    if isinstance(schema_cls, string_types):
+    if isinstance(schema_cls, str):
         return schema_cls
     raise Exception("Cannot infer media type for schema class: {}".format(schema_cls))

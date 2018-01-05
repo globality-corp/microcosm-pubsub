@@ -57,7 +57,7 @@ class MediaTypeSchema(Schema):
     mediaType = fields.String(required=True)
 
 
-class PubSubMessageCodec(object):
+class PubSubMessageCodec:
     """
     Message encoder/decoder.
 

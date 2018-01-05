@@ -4,7 +4,6 @@ Convention-driven pubsub.
 """
 from enum import Enum, unique
 from inspect import isclass
-from six import string_types
 
 from inflection import underscore
 from marshmallow import fields
@@ -40,7 +39,7 @@ def name_for(obj):
     Allows overriding of default names using the `__alias__` attribute.
 
     """
-    if isinstance(obj, string_types):
+    if isinstance(obj, str):
         return underscore(obj)
 
     cls = obj if isclass(obj) else obj.__class__
