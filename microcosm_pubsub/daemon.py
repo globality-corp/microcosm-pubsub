@@ -6,7 +6,8 @@ from microcosm.loaders import load_each, load_from_dict
 from microcosm_daemon.api import SleepNow
 from microcosm_daemon.daemon import Daemon
 
-from microcosm_pubsub.envelope import SQSEnvelope
+from microcosm_pubsub.envelope import SQSEnvelope, NaiveSQSEnvelope
+from microcosm_pubsub.consumer import STDIN
 
 
 class ConsumerDaemon(Daemon):
@@ -17,6 +18,7 @@ class ConsumerDaemon(Daemon):
 
     def make_arg_parser(self):
         parser = super(ConsumerDaemon, self).make_arg_parser()
+        parser.add_argument("--stdin", action="store_true")
         parser.add_argument("--sqs-queue-url")
         parser.add_argument("--envelope", choices=[
             envelope_cls.__name__
@@ -42,6 +44,17 @@ class ConsumerDaemon(Daemon):
     @property
     def defaults(self):
         config = dict()
+        print(self.args)
+
+        if self.args.stdin:
+            config.update(
+                sqs_envelope=dict(
+                    strategy_name=NaiveSQSEnvelope.__name__,
+                ),
+                sqs_consumer=dict(
+                    sqs_queue_url=STDIN,
+                ),
+            )
 
         if self.args.sqs_queue_url:
             config.update(
@@ -95,5 +108,6 @@ class ConsumerDaemon(Daemon):
             sqs_queue_url="queue",
             loader=loader,
             envelope=None,
+            stdin=False,
             **kwargs
         )

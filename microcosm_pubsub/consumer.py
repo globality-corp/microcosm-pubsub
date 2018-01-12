@@ -9,7 +9,10 @@ from boto3 import Session
 from microcosm.api import defaults
 
 from microcosm_pubsub.backoff import BackoffPolicy
-from microcosm_pubsub.reader import SQSFileReader
+from microcosm_pubsub.reader import SQSFileReader, SQSStdInReader
+
+
+STDIN = "STDIN"
 
 
 def is_file(url):
@@ -129,6 +132,8 @@ def configure_sqs_consumer(graph):
     if graph.metadata.testing or sqs_queue_url == "test":
         from mock import MagicMock
         sqs_client = MagicMock()
+    elif sqs_queue_url == STDIN:
+        sqs_client = SQSStdInReader()
     elif is_file(sqs_queue_url):
         sqs_client = SQSFileReader(sqs_queue_url)
     else:
