@@ -53,7 +53,6 @@ class SQSStdInReader:
             message = stdin.readline()
             if message == "":
                 break
-            print("appending: {}".format(message))
             messages.append(loads(message))
 
         if not messages:
