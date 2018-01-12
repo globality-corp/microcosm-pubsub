@@ -4,11 +4,13 @@ PubSub CLI
 """
 from __future__ import print_function
 from argparse import ArgumentParser
+from json import dumps
+from sys import stdout
 
 from microcosm.api import create_object_graph
 from microcosm.loaders import load_from_dict
 
-from microcosm_pubsub.conventions import created
+from microcosm_pubsub.conventions import created, changed
 
 
 def main():
@@ -115,3 +117,23 @@ def read(args):
             message.nack(args.nack_timeout)
         else:
             message.ack()
+
+
+def make_naive_message():
+    parser = ArgumentParser()
+
+    parser.add_argument(
+        "--action",
+        choices=["created", "changed"],
+    )
+    parser.add_argument(
+        "--resource-name",
+    )
+    parser.add_argument(
+        "--uri",
+    )
+    args = parser.parse_args()
+
+    action = dict(created=created, changed=changed)[args.action]
+
+    stdout.write(dumps(dict(mediaType=action(args.resource_name), uri=args.uri)))
