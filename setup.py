@@ -28,7 +28,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "make-naive-message = microcosm_pubsub.main:make_naive_message",
+            "publish-naive = microcosm_pubsub.main:make_naive_message",
             "pubsub = microcosm_pubsub.main:main",
         ],
         "microcosm.factories": [

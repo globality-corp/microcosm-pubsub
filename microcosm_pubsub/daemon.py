@@ -44,7 +44,6 @@ class ConsumerDaemon(Daemon):
     @property
     def defaults(self):
         config = dict()
-        print(self.args)
 
         if self.args.stdin:
             config.update(

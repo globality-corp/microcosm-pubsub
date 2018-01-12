@@ -5,6 +5,7 @@ PubSub CLI
 from __future__ import print_function
 from argparse import ArgumentParser
 from json import dumps
+from sys import stdout
 
 from microcosm.api import create_object_graph
 from microcosm.loaders import load_from_dict
@@ -123,7 +124,7 @@ def make_naive_message():
 
     parser.add_argument(
         "--action",
-        choices=["created", "updated"],
+        choices=["created", "changed"],
     )
     parser.add_argument(
         "--resource-name",
@@ -135,4 +136,4 @@ def make_naive_message():
 
     action = dict(created=created, changed=changed)[args.action]
 
-    print(dumps(dict(mediaType=action(args.resource_name), uri=args.uri)))
+    stdout.write(dumps(dict(mediaType=action(args.resource_name), uri=args.uri)))
