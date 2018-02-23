@@ -109,11 +109,6 @@ class SQSMessageHandlerRegistry(object):
             type(bound_component)
             for bound_component in bound_components
         ]
-        return {
-            media_type: handler
-            for media_type, handler in self.iter_handlers()
-            if handler in bound_components or handler in bound_component_types
-        }
 
         media_type_handlers = {}
         for media_type, handler in self.iter_handlers():
