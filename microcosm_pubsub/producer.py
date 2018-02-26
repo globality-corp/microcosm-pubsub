@@ -13,7 +13,7 @@ from microcosm_logging.decorators import logger
 from microcosm_logging.timing import elapsed_time
 
 from microcosm_pubsub.batch import MessageBatchSchema
-from microcosm_pubsub.conventions import LifecycleChange, make_media_type
+from microcosm_pubsub.conventions.naming import make_media_type
 from microcosm_pubsub.errors import TopicNotDefinedError
 
 
@@ -226,8 +226,8 @@ def configure_sns_topic_arns(graph):
 
     sns_topic_arns.update(graph.config.sns_topic_arns.mappings)
 
-    for lifecycle_change in LifecycleChange:
-        resource_dict = graph.config.sns_topic_arns.get(lifecycle_change.value, {})
+    for lifecycle_change in graph.pubsub_lifecycle_change:
+        resource_dict = graph.config.sns_topic_arns.get(lifecycle_change, {})
         for resource_name, topic in iter_topic_mappings(resource_dict):
             media_type = make_media_type(resource_name, lifecycle_change)
             sns_topic_arns[media_type] = topic

@@ -26,5 +26,5 @@ class SkipMessage(Exception):
 
     """
     def __init__(self, reason, extra=None):
-        super(SkipMessage, self).__init__(reason)
+        super().__init__(reason)
         self.extra = extra or dict()
