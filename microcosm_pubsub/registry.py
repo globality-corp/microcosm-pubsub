@@ -109,11 +109,19 @@ class SQSMessageHandlerRegistry:
             type(bound_component)
             for bound_component in bound_components
         ]
-        return {
-            media_type: handler
-            for media_type, handler in self.iter_handlers()
-            if handler in bound_components or handler in bound_component_types
-        }
+
+        bound_handlers = dict()
+        for media_type, handler in self.iter_handlers():
+            if handler in bound_components or handler in bound_component_types:
+                if bound_handlers.get(media_type):
+                    raise AlreadyRegisteredError(
+                        "Handler {} already registered for media type: {}".format(
+                            bound_handlers.get(media_type).__name__,
+                            media_type,
+                        )
+                    )
+                bound_handlers[media_type] = handler
+        return bound_handlers
 
     def find(self, media_type, bound_handlers):
         handler = bound_handlers[media_type]
