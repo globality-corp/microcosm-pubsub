@@ -27,8 +27,3 @@ def created(resource, **kwargs):
 
 def deleted(resource, **kwargs):
     return media_type(LifecycleChange.Deleted)(resource, **kwargs)
-
-
-# XXX deprecated
-def stopped(resource, **kwargs):
-    return media_type(LifecycleChange.Stopped)(resource, **kwargs)
