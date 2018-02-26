@@ -11,6 +11,7 @@ from hamcrest import (
     raises,
 )
 from microcosm.api import create_object_graph
+from microcosm.api import binding
 
 from microcosm_pubsub.codecs import (
     DEFAULT_MEDIA_TYPE,
@@ -28,6 +29,14 @@ class AnotherHandler:
 
     def __call__(self, message):
         return True
+
+    def __name__(self):
+        return "another_handler"
+
+
+@binding("another_handler")
+def configure_another_handler(graph):
+    return AnotherHandler()
 
 
 class AnotherSchema(PubSubMessageSchema):
@@ -104,12 +113,28 @@ class TestDerivedSQSMessageHandlerRegistry:
 
     def test_register_duplicate(self):
         """
-        No exception raises when re-registering ab existing handler.
+        No exception raises when re-registering an existing handler.
 
         """
         self.registry.register(DerivedSchema.MEDIA_TYPE, noop_handler)
 
-    def test_regiser_another(self):
+    def test_duplicate_bound_handler_found(self):
+        self.graph.unlock()
+        self.graph.use("another_handler")
+        self.graph.lock()
+
+        self.registry.register(DerivedSchema.MEDIA_TYPE, self.graph.another_handler)
+
+        assert_that(
+            calling(self.registry.compute_bound_handlers).with_args(
+                self.daemon.components + ["another_handler"]
+            ),
+            raises(
+                AlreadyRegisteredError,
+            )
+        )
+
+    def test_register_another(self):
         """
         OK to register another handler.
 

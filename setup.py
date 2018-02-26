@@ -2,7 +2,7 @@
 from setuptools import find_packages, setup
 
 project = "microcosm-pubsub"
-version = "1.1.0"
+version = "1.2.0"
 
 setup(
     name=project,
@@ -33,6 +33,7 @@ setup(
         ],
         "microcosm.factories": [
             "pubsub_message_schema_registry = microcosm_pubsub.registry:configure_schema_registry",
+            "pubsub_lifecycle_change = microcosm_pubsub.conventions:LifecycleChange",
             "sqs_message_context = microcosm_pubsub.context:configure_sqs_message_context",
             "sqs_consumer = microcosm_pubsub.consumer:configure_sqs_consumer",
             "sqs_envelope = microcosm_pubsub.envelope:configure_sqs_envelope",

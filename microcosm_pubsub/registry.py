@@ -9,7 +9,7 @@ from microcosm.api import defaults
 from microcosm_logging.decorators import logger
 
 from microcosm_pubsub.codecs import PubSubMessageCodec
-from microcosm_pubsub.conventions import LifecycleChange, IdentityMessageSchema, URIMessageSchema
+from microcosm_pubsub.conventions.messages import IdentityMessageSchema, URIMessageSchema
 
 
 class AlreadyRegisteredError(Exception):
@@ -26,6 +26,7 @@ class PubSubMessageSchemaRegistry:
         self._media_types = set()
         self._mappings = dict()
         self.graph = graph
+        self.lifecycle_change = graph.pubsub_lifecycle_change
         self.auto_register = graph.config.pubsub_message_schema_registry.auto_register
         self.strict = graph.config.pubsub_message_schema_registry.strict
 
@@ -60,7 +61,7 @@ class PubSubMessageSchemaRegistry:
 
         """
         if media_type not in self._media_types:
-            if self.auto_register and LifecycleChange.matches(media_type):
+            if self.auto_register and self.lifecycle_change.matches(media_type):
                 # When using convention-based media types, we may need to auto-register
                 self._media_types.add(media_type)
             else:
@@ -72,7 +73,7 @@ class PubSubMessageSchemaRegistry:
             schema = schema_cls(strict=self.strict)
         except KeyError:
             # use convention otherwise
-            if LifecycleChange.Deleted.value in media_type.split("."):
+            if self.lifecycle_change.Deleted in media_type.split("."):
                 schema = IdentityMessageSchema(media_type)
             else:
                 schema = URIMessageSchema(media_type)
@@ -109,11 +110,19 @@ class SQSMessageHandlerRegistry:
             type(bound_component)
             for bound_component in bound_components
         ]
-        return {
-            media_type: handler
-            for media_type, handler in self.iter_handlers()
-            if handler in bound_components or handler in bound_component_types
-        }
+
+        bound_handlers = dict()
+        for media_type, handler in self.iter_handlers():
+            if handler in bound_components or handler in bound_component_types:
+                if bound_handlers.get(media_type):
+                    raise AlreadyRegisteredError(
+                        "Handler {} already registered for media type: {}".format(
+                            bound_handlers.get(media_type).__name__,
+                            media_type,
+                        )
+                    )
+                bound_handlers[media_type] = handler
+        return bound_handlers
 
     def find(self, media_type, bound_handlers):
         handler = bound_handlers[media_type]

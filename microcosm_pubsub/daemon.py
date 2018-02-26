@@ -13,11 +13,11 @@ from microcosm_pubsub.consumer import STDIN
 class ConsumerDaemon(Daemon):
 
     def __init__(self):
-        super(ConsumerDaemon, self).__init__()
+        super().__init__()
         self.bound_handlers = None
 
     def make_arg_parser(self):
-        parser = super(ConsumerDaemon, self).make_arg_parser()
+        parser = super().make_arg_parser()
         parser.add_argument("--stdin", action="store_true")
         parser.add_argument("--sqs-queue-url")
         parser.add_argument("--envelope", choices=[
@@ -27,7 +27,7 @@ class ConsumerDaemon(Daemon):
         return parser
 
     def create_object_graph_components(self, graph):
-        super(ConsumerDaemon, self).create_object_graph_components(graph)
+        super().create_object_graph_components(graph)
         self.bound_handlers = graph.sqs_message_handler_registry.compute_bound_handlers(
             self.components,
         )
@@ -39,7 +39,7 @@ class ConsumerDaemon(Daemon):
                 handler.__name__,
             ))
 
-        super(ConsumerDaemon, self).run_state_machine()
+        super().run_state_machine()
 
     @property
     def defaults(self):
@@ -73,7 +73,7 @@ class ConsumerDaemon(Daemon):
 
     @property
     def components(self):
-        return super(ConsumerDaemon, self).components + [
+        return super().components + [
             "opaque",
             "pubsub_message_schema_registry",
             "sqs_message_handler_registry",
@@ -103,7 +103,7 @@ class ConsumerDaemon(Daemon):
         else:
             loader = load_each(loader, mock_config)
 
-        return super(ConsumerDaemon, cls).create_for_testing(
+        return super().create_for_testing(
             sqs_queue_url="queue",
             loader=loader,
             envelope=None,
