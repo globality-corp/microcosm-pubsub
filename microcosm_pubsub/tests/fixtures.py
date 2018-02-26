@@ -58,7 +58,7 @@ class ExampleDaemon(ConsumerDaemon):
 
     @property
     def components(self):
-        return super(ExampleDaemon, self).components + [
+        return super().components + [
             "noop_handler",
         ]
 
