@@ -77,7 +77,6 @@ class SQSMessageDispatcher:
                 # no handlers
                 self.logger.debug("Skipping message with no registered handler: {}".format(media_type))
                 return False
-
             extra = self.sqs_message_context(content)
             extra.update(dict(
                 handler=titleize(handler.__class__.__name__),
@@ -113,12 +112,15 @@ class SQSMessageDispatcher:
                 extra=extra,
             )
             return False
-        except Nack:
+        except Nack as nack:
+            extra = self.sqs_message_context(content)
+            extra.update(nack.extra)
             logger.info(
-                "Nacking SQS message: {}".format(
-                    media_type,
+                "Nacking SQS message {media_type} for reason: {reason}".format(
+                    media_type=media_type,
+                    reason=str(nack),
                 ),
-                extra=self.sqs_message_context(content)
+                extra=extra,
             )
             raise
         except Exception as error:
