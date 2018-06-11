@@ -101,6 +101,9 @@ class DeferredProducer:
         self.messages = []
 
     def produce(self, media_type, dct=None, **kwargs):
+        if self.producer.skip:
+            return
+
         message, topic_arn, opaque_data = self.producer.create_message(media_type, dct, **kwargs)
         self.messages.append((media_type, message, topic_arn, opaque_data))
 
