@@ -15,7 +15,7 @@ from microcosm_logging.timing import elapsed_time
 from microcosm_pubsub.batch import MessageBatchSchema
 from microcosm_pubsub.conventions.naming import make_media_type
 from microcosm_pubsub.errors import TopicNotDefinedError
-
+from inspect import stack
 
 @logger
 class SNSProducer:
@@ -23,12 +23,14 @@ class SNSProducer:
     Produces messages to SNS topics.
 
     """
-    def __init__(self, opaque, pubsub_message_schema_registry, sns_client, sns_topic_arns, skip):
+    def __init__(self, opaque, pubsub_message_schema_registry, sns_client, sns_topic_arns, skip, introspect=False):
         self.opaque = opaque
         self.pubsub_message_schema_registry = pubsub_message_schema_registry
         self.sns_client = sns_client
         self.sns_topic_arns = sns_topic_arns
         self.skip = skip
+        self.introspect = introspect
+        self.media_types = set()
 
     def produce(self, media_type, dct=None, **kwargs):
         """
@@ -37,10 +39,17 @@ class SNSProducer:
         :returns: the message id
 
         """
+        if self.introspect:
+            call_stack = stack()[1]
+            self.media_types.add((call_stack.filename, call_stack.function, media_type))
+
         if self.skip:
             return
         message, topic_arn, opaque_data = self.create_message(media_type, dct, **kwargs)
         return self.publish_message(media_type, message, topic_arn, opaque_data)
+
+    def get_media_types(self):
+        return self.media_types
 
     def create_message(self, media_type, dct, opaque_data=None, **kwargs):
         if opaque_data is None:
