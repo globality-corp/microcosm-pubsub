@@ -58,6 +58,10 @@ def test_publish_info():
         is_(equal_to(DerivedSchema.MEDIA_TYPE)),
     )
     assert_that(
+        decoded_response["items"][0]["count"],
+        is_(equal_to(2)),
+    )
+    assert_that(
         decoded_response["count"],
         is_(equal_to(1)),
     )

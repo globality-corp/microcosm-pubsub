@@ -10,3 +10,4 @@ class PublishInfoSchema(Schema):
     route = fields.String()
     callModule = fields.String(attribute="call_module")
     callFunction = fields.String(attribute="call_function")
+    count = fields.Integer()

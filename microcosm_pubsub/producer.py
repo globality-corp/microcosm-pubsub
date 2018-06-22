@@ -2,7 +2,7 @@
 Message producer.
 
 """
-from collections import defaultdict
+from collections import defaultdict, Counter
 from distutils.util import strtobool
 from functools import wraps
 
@@ -35,7 +35,7 @@ class SNSProducer:
         self.sns_topic_arns = sns_topic_arns
         self.skip = skip
         self.register = register
-        self.publish_info = set()
+        self.publish_info = Counter()
 
     def route_from(self, uri, method):
         appctx = _app_ctx_stack.top
@@ -53,14 +53,12 @@ class SNSProducer:
     def introspect(self, media_type, call_stack, uri):
         module_name = getmodule(call_stack.frame).__name__
         route = self.route_from(uri=uri, method="GET")
-        self.publish_info.add(
-            SNSIntrospection(
-                media_type=media_type,
-                route=route,
-                call_function=call_stack.function,
-                call_module=module_name,
-            )
-        )
+        self.publish_info.update([(
+            media_type,
+            route,
+            call_stack.function,
+            module_name,
+        )])
 
     def produce(self, media_type, dct=None, uri=None, **kwargs):
         """
@@ -80,7 +78,15 @@ class SNSProducer:
         return self.publish_message(media_type, message, topic_arn, opaque_data)
 
     def get_publish_info(self):
-        return self.publish_info
+        return [
+            SNSIntrospection(
+                media_type=key[0],
+                route=key[1],
+                call_function=key[2],
+                call_module=key[3],
+                count=value,
+            ) for key, value in self.publish_info.items()
+        ]
 
     def create_message(self, media_type, dct, uri=None, opaque_data=None, **kwargs):
         if opaque_data is None:
