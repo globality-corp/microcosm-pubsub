@@ -2,7 +2,7 @@
 Message producer.
 
 """
-from collections import defaultdict
+from collections import defaultdict, Counter
 from distutils.util import strtobool
 from functools import wraps
 
@@ -14,7 +14,12 @@ from microcosm_logging.timing import elapsed_time
 
 from microcosm_pubsub.batch import MessageBatchSchema
 from microcosm_pubsub.conventions.naming import make_media_type
+from microcosm_pubsub.models import SNSIntrospection
 from microcosm_pubsub.errors import TopicNotDefinedError
+from inspect import stack, getmodule
+
+from flask.globals import _app_ctx_stack, _request_ctx_stack
+from werkzeug.urls import url_parse
 
 
 @logger
@@ -23,26 +28,67 @@ class SNSProducer:
     Produces messages to SNS topics.
 
     """
-    def __init__(self, opaque, pubsub_message_schema_registry, sns_client, sns_topic_arns, skip):
+    def __init__(self, opaque, pubsub_message_schema_registry, sns_client, sns_topic_arns, skip, register=False):
         self.opaque = opaque
         self.pubsub_message_schema_registry = pubsub_message_schema_registry
         self.sns_client = sns_client
         self.sns_topic_arns = sns_topic_arns
         self.skip = skip
+        self.register = register
+        self.publish_info = Counter()
 
-    def produce(self, media_type, dct=None, **kwargs):
+    def route_from(self, uri, method):
+        appctx = _app_ctx_stack.top
+        reqctx = _request_ctx_stack.top
+        if reqctx is not None:
+            url_adapter = reqctx.url_adapter
+        elif appctx is not None:
+            url_adapter = appctx.url_adapter
+        else:
+            return None
+        parsed_url = url_parse(uri)
+        matched_urls = url_adapter.match(parsed_url.path, method)
+        return matched_urls[0] if matched_urls else None
+
+    def introspect(self, media_type, call_stack, uri):
+        module_name = getmodule(call_stack.frame).__name__
+        route = self.route_from(uri=uri, method="GET")
+        self.publish_info.update([(
+            media_type,
+            route,
+            call_stack.function,
+            module_name,
+        )])
+
+    def produce(self, media_type, dct=None, uri=None, **kwargs):
         """
         Produce a message.
 
         :returns: the message id
 
         """
+        if self.register:
+            # Get the call stack 1 level up (where produce is called from)
+            call_stack = stack()[1]
+            self.introspect(media_type=media_type, call_stack=call_stack, uri=uri)
+
         if self.skip:
             return
-        message, topic_arn, opaque_data = self.create_message(media_type, dct, **kwargs)
+        message, topic_arn, opaque_data = self.create_message(media_type, dct, uri, **kwargs)
         return self.publish_message(media_type, message, topic_arn, opaque_data)
 
-    def create_message(self, media_type, dct, opaque_data=None, **kwargs):
+    def get_publish_info(self):
+        return [
+            SNSIntrospection(
+                media_type=key[0],
+                route=key[1],
+                call_function=key[2],
+                call_module=key[3],
+                count=value,
+            ) for key, value in self.publish_info.items()
+        ]
+
+    def create_message(self, media_type, dct, uri=None, opaque_data=None, **kwargs):
         if opaque_data is None:
             opaque_data = dict()
 
@@ -53,6 +99,7 @@ class SNSProducer:
         message = self.pubsub_message_schema_registry.find(media_type).encode(
             dct,
             opaque_data=opaque_data,
+            uri=uri,
             **kwargs
         )
         return message, topic_arn, opaque_data
@@ -101,6 +148,9 @@ class DeferredProducer:
         self.messages = []
 
     def produce(self, media_type, dct=None, **kwargs):
+        if self.producer.skip:
+            return
+
         message, topic_arn, opaque_data = self.producer.create_message(media_type, dct, **kwargs)
         self.messages.append((media_type, message, topic_arn, opaque_data))
 
@@ -275,6 +325,11 @@ def configure_sns_producer(graph):
     except NotBoundError:
         opaque = None
 
+    try:
+        register = bool(graph.publish_info_convention)
+    except NotBoundError:
+        register = False
+
     if graph.config.sns_producer.skip is None:
         # In development mode, default to not publishing because there's typically
         # not anywhere to publish to (e.g. no SNS topic)
@@ -289,4 +344,5 @@ def configure_sns_producer(graph):
         sns_client=sns_client,
         sns_topic_arns=graph.sns_topic_arns,
         skip=skip,
+        register=register,
     )

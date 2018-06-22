@@ -14,15 +14,12 @@ class LifecycleChange(set):
     Changed = "changed"
     Created = "created"
     Deleted = "deleted"
-    # XXX deprecated
-    Stopped = "stopped"
 
     def __init__(self, graph):
         super().__init__([
             LifecycleChange.Changed,
             LifecycleChange.Created,
             LifecycleChange.Deleted,
-            LifecycleChange.Stopped,
         ])
 
     def matches(self, media_type):
