@@ -38,6 +38,9 @@ class SNSProducer:
         self.publish_info = Counter()
 
     def route_from(self, uri, method):
+        if not uri:
+            return None
+
         appctx = _app_ctx_stack.top
         reqctx = _request_ctx_stack.top
         if reqctx is not None:
