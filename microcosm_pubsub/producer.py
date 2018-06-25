@@ -333,8 +333,8 @@ def configure_sns_producer(graph):
         opaque = None
 
     try:
-        register = bool(graph.publish_info_convention)
-    except NotBoundError:
+        register = bool(graph._cache.__getitem__('publish_info_convention'))
+    except KeyError:
         register = False
 
     if graph.config.sns_producer.skip is None:

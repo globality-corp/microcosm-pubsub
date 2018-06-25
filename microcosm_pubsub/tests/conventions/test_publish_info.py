@@ -25,12 +25,11 @@ def test_publish_info():
             ),
         )
     graph = create_object_graph(name="example", testing=True, loader=loader)
+    graph.use("publish_info_convention")
+    graph.use("sns_producer")
 
     # set up response
     graph.sns_producer.sns_client.publish.return_value = dict(MessageId="message-id")
-
-    # graph.use("sns_producer")
-    graph.use("publish_info_convention")
 
     # Publish two of the same message (testing to maintain a unique set of pubsub calls)
     graph.sns_producer.produce(
