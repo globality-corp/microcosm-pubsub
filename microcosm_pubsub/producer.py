@@ -298,6 +298,7 @@ def configure_sns_topic_arns(graph):
     endpoint_url=None,
     mock_sns=True,
     skip=None,
+    register=True,
 )
 def configure_sns_producer(graph):
     """
@@ -332,10 +333,7 @@ def configure_sns_producer(graph):
     except NotBoundError:
         opaque = None
 
-    try:
-        register = bool(graph._cache.__getitem__('publish_info_convention'))
-    except KeyError:
-        register = False
+    register = graph.config.sns_producer.register
 
     if graph.config.sns_producer.skip is None:
         # In development mode, default to not publishing because there's typically
