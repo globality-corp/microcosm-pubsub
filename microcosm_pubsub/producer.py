@@ -20,6 +20,7 @@ from inspect import stack, getmodule
 
 from flask.globals import _app_ctx_stack, _request_ctx_stack
 from werkzeug.urls import url_parse
+from werkzeug.exceptions import NotFound
 
 
 @logger
@@ -50,7 +51,10 @@ class SNSProducer:
         else:
             return None
         parsed_url = url_parse(uri)
-        matched_urls = url_adapter.match(parsed_url.path, method)
+        try:
+            matched_urls = url_adapter.match(parsed_url.path, method)
+        except NotFound:
+            return None
         return matched_urls[0] if matched_urls else None
 
     def introspect(self, media_type, call_stack, uri):
@@ -294,6 +298,7 @@ def configure_sns_topic_arns(graph):
     endpoint_url=None,
     mock_sns=True,
     skip=None,
+    register=True,
 )
 def configure_sns_producer(graph):
     """
@@ -328,10 +333,7 @@ def configure_sns_producer(graph):
     except NotBoundError:
         opaque = None
 
-    try:
-        register = bool(graph.publish_info_convention)
-    except NotBoundError:
-        register = False
+    register = graph.config.sns_producer.register
 
     if graph.config.sns_producer.skip is None:
         # In development mode, default to not publishing because there's typically
