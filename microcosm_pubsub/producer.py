@@ -42,13 +42,15 @@ class SNSProducer:
         if not uri:
             return None
 
+        url_adapter = None
         appctx = _app_ctx_stack.top
         reqctx = _request_ctx_stack.top
         if reqctx is not None:
             url_adapter = reqctx.url_adapter
         elif appctx is not None:
             url_adapter = appctx.url_adapter
-        else:
+
+        if url_adapter is None:
             return None
         parsed_url = url_parse(uri)
         try:
