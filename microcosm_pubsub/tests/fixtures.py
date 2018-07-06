@@ -5,6 +5,7 @@ Test fixtures.
 from marshmallow import fields, Schema
 
 from microcosm.api import binding
+
 from microcosm_pubsub.codecs import PubSubMessageSchema
 from microcosm_pubsub.conventions import created, deleted
 from microcosm_pubsub.daemon import ConsumerDaemon
