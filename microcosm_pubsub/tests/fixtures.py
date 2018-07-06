@@ -2,9 +2,15 @@
 Test fixtures.
 
 """
+from collections import namedtuple
 from marshmallow import fields, Schema
 
 from microcosm.api import binding
+from microcosm_flask.conventions.base import EndpointDefinition
+from microcosm_flask.conventions.crud import configure_crud
+from microcosm_flask.operations import Operation
+from microcosm_flask.namespaces import Namespace
+
 from microcosm_pubsub.codecs import PubSubMessageSchema
 from microcosm_pubsub.conventions import created, deleted
 from microcosm_pubsub.daemon import ConsumerDaemon
@@ -66,3 +72,47 @@ class ExampleDaemon(ConsumerDaemon):
 @binding("noop_handler")
 def configure_noop_handler(graph):
     return noop_handler
+
+
+class CompanyController:
+    def __init__(self, graph):
+        self.sns_producer = graph.sns_producer
+        self.ns = Namespace(
+            subject="company",
+            version="v1",
+        )
+        self.identifier_key = "company_id"
+
+    def retrieve(sel):
+        Company = namedtuple("Company", "id name")
+        return Company("ID", "Name")
+
+
+@binding("configure_company_v1")
+def configure_company(graph):
+    ns = Namespace(
+        subject="company",
+        version="v1",
+    )
+    mappings = {
+        Operation.Create: EndpointDefinition(),
+        Operation.Retrieve: EndpointDefinition(),
+        Operation.Search: EndpointDefinition(),
+    }
+
+    configure_crud(graph, ns, mappings)
+    return ns
+
+
+@binding("configure_user_v1")
+def configure_user(graph):
+    ns = Namespace(
+        subject="user",
+        version="v1",
+    )
+    mappings = {
+        Operation.Retrieve: EndpointDefinition(),
+    }
+
+    configure_crud(graph, ns, mappings)
+    return ns
