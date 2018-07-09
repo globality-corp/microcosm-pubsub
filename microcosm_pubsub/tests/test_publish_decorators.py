@@ -43,7 +43,7 @@ class TestPublishDecorator:
         self.graph.lock()
 
     def test_set_media_type(self):
-        decorator = publish(media_type=created("company"))
+        decorator = publish(created("company"))
         create_controller(self.graph, decorator).retrieve()
         assert_that(loads(self.graph.sns_producer.sns_client.publish.call_args[1]["Message"]), is_(equal_to({
             "mediaType": "application/vnd.globality.pubsub._.created.company",
@@ -51,7 +51,7 @@ class TestPublishDecorator:
         })))
 
     def test_set_media_type_extractor(self):
-        decorator = publish(media_type_extractor=lambda ctrl, model: created(ctrl.subject))
+        decorator = publish(lambda ctrl, result: created(ctrl.subject))
         controller = create_controller(self.graph, decorator)
         setattr(controller, "subject", "company")
         controller.retrieve()
@@ -62,9 +62,8 @@ class TestPublishDecorator:
 
     def test_uri_message_params(self):
         decorator = publish(
-            media_type=created("company"),
-            uri=lambda ctrl, model: f"http://example.com/{model.id}",
-            quack=lambda ctrl, model: model.name,
+            created("company"),
+            uri=lambda ctrl, result: f"http://example.com/{result.id}",
         )
         create_controller(self.graph, decorator).retrieve()
         assert_that(loads(self.graph.sns_producer.sns_client.publish.call_args[1]["Message"]), is_(equal_to({
@@ -75,23 +74,22 @@ class TestPublishDecorator:
 
     def test_custom_message_params(self):
         decorator = publish(
-            media_type=DuckTypeSchema.MEDIA_TYPE,
-            uri=lambda ctrl, model: f"http://example.com/{model.id}",
-            quack=lambda ctrl, model: model.name,
+            DuckTypeSchema.MEDIA_TYPE,
+            quack="quack",
         )
         create_controller(self.graph, decorator).retrieve()
         assert_that(loads(self.graph.sns_producer.sns_client.publish.call_args[1]["Message"]), is_(equal_to({
-            "quack": "Name",
+            "quack": "quack",
         })))
 
     def test_missing_producer_key(self):
-        decorator = publish(media_type=created("company"))
+        decorator = publish(created("company"))
         controller = create_controller(self.graph, decorator)
         controller.sns_producer = None
         assert_that(calling(controller.retrieve), raises(AttributeError))
 
     def test_get_producer_key_from_graph(self):
-        decorator = publish(media_type=created("company"))
+        decorator = publish(created("company"))
         controller = create_controller(self.graph, decorator)
         controller.sns_producer = None
         setattr(controller, "graph", self.graph)
@@ -99,7 +97,7 @@ class TestPublishDecorator:
         assert_that(self.graph.sns_producer.sns_client.publish.call_count, is_(equal_to(1)))
 
     def test_set_producer_key(self):
-        decorator = publish(media_type=created("company"), producer_key="sns_producer2")
+        decorator = publish(created("company"), producer_key="sns_producer2")
         controller = create_controller(self.graph, decorator)
         controller.sns_producer = None
         setattr(controller, "sns_producer2", self.graph.sns_producer)
@@ -108,9 +106,3 @@ class TestPublishDecorator:
 
     def test_missing_media_type(self):
         assert_that(calling(publish), raises(TypeError))
-
-    def test_missing_dual_media_type_keys(self):
-        assert_that(calling(publish).with_args(
-            media_type=created("company"),
-            media_type_extractor=lambda ctrl, model: created(ctrl.subject),
-        ), raises(TypeError))
