@@ -80,14 +80,40 @@ class TryStatement:
 
 
 def extract_(name, from_, property_=None):
+    """
+    Extract an argument from a context to another context key
+
+    :param name: new context key
+    :param from_: old context key
+    :param property_: propery of the context key
+
+    """
     return ArgumentExtractor(name, from_, property_)
 
 
 def if_(name, then_=None, else_=None):
+    """
+    Run one of two chains - based on a condition
+
+    :param name: context key
+    :param then_: Chain
+    :param else_: Chain
+
+    """
+
     return IfStatement(name, then_, else_)
 
 
 def switch_(name, else_=None, cases=None, **kwargs):
+    """
+    Run one of number of chains chains - based on a key value
+
+    :param name: context key
+    :param cases: dict / list of tuple - Chains to run based on keys
+    :param **kwargs: Chain to run based on string keys
+    :param else_: Chain to run if no case was matched
+
+    """
     cases_ = kwargs
     if cases:
         cases_.update(cases)
@@ -95,5 +121,13 @@ def switch_(name, else_=None, cases=None, **kwargs):
 
 
 def try_(try_, except_=None, else_=None):
+    """
+    Run one of two chains - based on a condition
+
+    :param try_: Chain to run
+    :param except_: dict / list of tuple - Chains to run if an exception was raised
+    :param else_: Chain to run if no exption was raised
+
+    """
     cases_ = dict(except_) if except_ else dict()
     return TryStatement(try_, cases_, else_)

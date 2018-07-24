@@ -6,6 +6,11 @@ from microcosm_pubsub.chain.decorators import EXTRACTS, BINDS
 
 
 def get_from_context(context, func):
+    """
+    Decorate a function - pass to the function the relevant arguments
+    from a context (dictionary) - based on the function arg names
+
+    """
     include_self = int(ismethod(func) or not isfunction(func))
     args_names = getfullargspec(func)[0]
 
@@ -21,6 +26,11 @@ def get_from_context(context, func):
 
 
 def save_to_context(context, func):
+    """
+    Decorate a function - save to a context (dictionary) the function return value
+    if the function is marked by @extracts decorator
+
+    """
     extracts = getattr(func, EXTRACTS, None)
     if not extracts:
         return func
@@ -39,6 +49,11 @@ def save_to_context(context, func):
 
 
 def save_to_context_by_func_name(context, func):
+    """
+    Decorate a function - save to a context (dictionary) the function return value
+    if the function is not signed by EXTRACTS and it's name starts with "extracts_"
+
+    """
     if (
         hasattr(func, EXTRACTS) or
         not hasattr(func, "__name__") or
@@ -58,6 +73,11 @@ def save_to_context_by_func_name(context, func):
 
 
 def temporary_replace_context_keys(context, func):
+    """
+    Decorate a function - temporary updates the context keys while running the function
+    Updates the context if the function is marked by @binds decorator.
+
+    """
     binds = getattr(func, BINDS, None)
     if not binds:
         return func
