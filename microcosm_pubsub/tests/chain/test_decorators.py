@@ -27,20 +27,20 @@ class TestDecorators:
         context = dict()
 
         @extracts("arg")
-        def extract_arg(number):
+        def extractarg(number):
             return number
 
         @extracts("arg1", "arg2")
-        def extract_arg1_and_arg2(num1, num2):
+        def extractarg1_and_arg2(num1, num2):
             return num1, num2
 
         @extracts("args")
-        def extract_args(num1, num2):
+        def extractargs(num1, num2):
             return num1, num2
 
-        save_to_context(context, extract_arg)(0)
-        save_to_context(context, extract_arg1_and_arg2)(1, 2)
-        save_to_context(context, extract_args)(1, 2)
+        save_to_context(context, extractarg)(0)
+        save_to_context(context, extractarg1_and_arg2)(1, 2)
+        save_to_context(context, extractargs)(1, 2)
 
         assert_that(context, is_(equal_to(dict(arg=0, arg1=1, arg2=2, args=(1, 2)))))
 
@@ -48,10 +48,10 @@ class TestDecorators:
         context = dict()
 
         @extracts("arg")
-        def extract_arg(number):
+        def extractarg(number):
             return number
 
-        func = extracts("param")(extract_arg)
+        func = extracts("param")(extractarg)
 
         save_to_context(context, func)(10)
 

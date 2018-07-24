@@ -2,10 +2,10 @@ from marshmallow import ValidationError
 
 
 class ArgumentExtractor:
-    def __init__(self, name, from_, property_=None):
+    def __init__(self, name, key, key_property=None):
         self.name = name
-        self.from_ = from_
-        self.property_ = property_
+        self.key = key
+        self.key_property = key_property
 
     def __str__(self):
         return f"extract_{self.name}"
@@ -14,39 +14,39 @@ class ArgumentExtractor:
         if self.name in context:
             raise ValidationError(f"Variable '{self.name}'' alredy extracted")
 
-        obj = context[self.from_]
-        if self.property_ is None:
+        obj = context[self.key]
+        if self.key_property is None:
             value = obj
-        elif hasattr(obj, self.property_):
-            value = getattr(obj, self.property_)
+        elif hasattr(obj, self.key_property):
+            value = getattr(obj, self.key_property)
         else:
-            value = obj[self.property_]
+            value = obj[self.key_property]
 
         context[self.name] = value
         return value
 
 
 class IfStatement:
-    def __init__(self, name, then_=None, else_=None):
+    def __init__(self, name, chain=None, other=None):
         self.name = name
-        self.then_ = then_
-        self.else_ = else_
+        self.chain = chain
+        self.other = other
 
     def __str__(self):
         return f"if_{self.name}"
 
     def __call__(self, context):
         if context[self.name]:
-            if self.then_:
-                return self.then_(context)
-        elif self.else_:
-            return self.else_(context)
+            if self.chain:
+                return self.chain(context)
+        elif self.other:
+            return self.other(context)
 
 
 class SwitchStatement:
-    def __init__(self, name, cases, else_=None):
+    def __init__(self, name, cases, other=None):
         self.name = name
-        self.else_ = else_
+        self.other = other
         self.cases = cases
 
     def __str__(self):
@@ -54,32 +54,32 @@ class SwitchStatement:
 
     def __call__(self, context):
         key = context[self.name]
-        action = self.cases.get(key, self.else_)
+        action = self.cases.get(key, self.other)
         if action:
             return action(context)
 
 
 class TryStatement:
-    def __init__(self, try_, except_, else_=None):
-        self.try_ = try_
-        self.except_ = except_
-        self.else_ = else_
+    def __init__(self, chain, catch, other=None):
+        self.chain = chain
+        self.catch = catch
+        self.other = other
 
     def __call__(self, context):
         try:
-            res = self.try_(context)
+            res = self.chain(context)
         except Exception as excption:
-            handle = self.except_.get(type(excption))
+            handle = self.catch.get(type(excption))
             if not handle:
                 raise excption
             return handle(context)
         else:
-            if self.else_:
-                return self.else_(context)
+            if self.other:
+                return self.other(context)
             return res
 
 
-def extract_(name, from_, property_=None):
+def extract(name, key, key_property=None):
     """
     Extract an argument from a context to another context key
 
@@ -88,46 +88,46 @@ def extract_(name, from_, property_=None):
     :param property_: propery of the context key
 
     """
-    return ArgumentExtractor(name, from_, property_)
+    return ArgumentExtractor(name, key, key_property)
 
 
-def if_(name, then_=None, else_=None):
+def if_(name, chain=None, other=None):
     """
     Run one of two chains - based on a condition
 
     :param name: context key
-    :param then_: Chain
-    :param else_: Chain
+    :param chain: Chain
+    :param other: Chain
 
     """
 
-    return IfStatement(name, then_, else_)
+    return IfStatement(name, chain, other)
 
 
-def switch_(name, else_=None, cases=None, **kwargs):
+def switch(name, other=None, cases=None, **kwargs):
     """
     Run one of number of chains chains - based on a key value
 
     :param name: context key
     :param cases: dict / list of tuple - Chains to run based on keys
     :param **kwargs: Chain to run based on string keys
-    :param else_: Chain to run if no case was matched
+    :param other: Chain to run if no case was matched
 
     """
     cases_ = kwargs
     if cases:
         cases_.update(cases)
-    return SwitchStatement(name, cases_, else_)
+    return SwitchStatement(name, cases_, other)
 
 
-def try_(try_, except_=None, else_=None):
+def try_chain(chain, catch=None, other=None):
     """
     Run one of two chains - based on a condition
 
-    :param try_: Chain to run
-    :param except_: dict / list of tuple - Chains to run if an exception was raised
-    :param else_: Chain to run if no exption was raised
+    :param chain: Chain to run
+    :param catch: dict / list of tuple - Chains to run if an exception was raised
+    :param other: Chain to run if no exption was raised
 
     """
-    cases_ = dict(except_) if except_ else dict()
-    return TryStatement(try_, cases_, else_)
+    cases_ = dict(catch) if catch else dict()
+    return TryStatement(chain, cases_, other)

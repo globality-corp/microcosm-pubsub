@@ -7,14 +7,14 @@ from hamcrest import (
 )
 
 from microcosm_pubsub.chain import Chain
-from microcosm_pubsub.chain.statements import extract_, if_, switch_, try_
+from microcosm_pubsub.chain.statements import extract, if_, switch, try_chain
 
 
 class TestStatements:
 
-    def test_extract_(self):
+    def test_extract(self):
         chain = Chain(
-            extract_("param", "arg"),
+            extract("param", "arg"),
             lambda param: param,
         )
         assert_that(
@@ -22,27 +22,27 @@ class TestStatements:
             is_(equal_to(200)),
         )
 
-    def test_extract_return_value(self):
+    def test_extractreturn_value(self):
         chain = Chain(
-            extract_("param", "arg"),
+            extract("param", "arg"),
         )
         assert_that(
             chain.resolve(arg=200),
             is_(equal_to(200)),
         )
 
-    def test_extract_with_propery(self):
+    def test_extractwith_propery(self):
         chain = Chain(
-            extract_("param", "arg", "data"),
+            extract("param", "arg", "data"),
         )
         assert_that(
             chain.resolve(arg=dict(data=200)),
             is_(equal_to(200)),
         )
 
-    def test_extract_with_attribute(self):
+    def test_extractwith_attribute(self):
         chain = Chain(
-            extract_("param", "arg", "__class__"),
+            extract("param", "arg", "__class__"),
         )
         assert_that(
             chain.resolve(arg=dict()),
@@ -51,7 +51,7 @@ class TestStatements:
 
     def test_if_(self):
         chain = Chain(
-            if_("arg", then_=Chain(lambda: 200), else_=Chain(lambda: 400)),
+            if_("arg", chain=Chain(lambda: 200), other=Chain(lambda: 400)),
         )
         assert_that(
             chain.resolve(arg=True),
@@ -75,15 +75,15 @@ class TestStatements:
             is_(equal_to(None)),
         )
 
-    def test_switch_(self):
+    def test_switch(self):
         chain = Chain(
-            switch_(
+            switch(
                 "arg",
                 cases=[
                     (True, Chain(lambda: 201)),
                     (False, Chain(lambda: 401)),
                 ],
-                else_=Chain(lambda: 400),
+                other=Chain(lambda: 400),
                 yes=Chain(lambda: 200),
             ),
         )
@@ -104,9 +104,9 @@ class TestStatements:
             is_(equal_to(200)),
         )
 
-    def test_empty_switch_(self):
+    def test_empty_switch(self):
         chain = Chain(
-            switch_(
+            switch(
                 "arg",
                 yes=Chain(lambda: 200),
             ),
@@ -116,16 +116,16 @@ class TestStatements:
             is_(equal_to(None)),
         )
 
-    def test_try_(self):
+    def test_try_chain(self):
         def function(exception):
             if exception is not None:
                 raise exception()
             return 400
 
         chain = Chain(
-            try_(
-                try_=Chain(function),
-                except_=[
+            try_chain(
+                Chain(function),
+                catch=[
                     (ValueError, Chain(lambda: 501)),
                     (KeyError, Chain(lambda: 502)),
                 ],
@@ -144,14 +144,14 @@ class TestStatements:
             raises(ArithmeticError),
         )
 
-    def test_try_else_(self):
+    def test_try_other(self):
         def function(exception):
             return 400
 
         chain = Chain(
-            try_(
-                try_=Chain(function),
-                else_=Chain(lambda: 200),
+            try_chain(
+                Chain(function),
+                other=Chain(lambda: 200),
             ),
         )
         assert_that(
