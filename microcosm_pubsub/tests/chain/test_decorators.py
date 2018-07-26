@@ -5,7 +5,6 @@ from hamcrest import (
     is_,
     raises,
 )
-from marshmallow import ValidationError
 
 from microcosm_pubsub.chain.decorators import binds, extracts
 from microcosm_pubsub.chain.context_decorators import (
@@ -148,4 +147,4 @@ class TestDecorators:
         wrapped = get_from_context(context, func)
         wrapped = temporarily_replace_context_keys(context, wrapped)
 
-        assert_that(calling(wrapped), raises(ValidationError))
+        assert_that(calling(wrapped), raises(KeyError))

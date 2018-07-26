@@ -1,5 +1,4 @@
-from marshmallow import ValidationError
-
+from microcosm_pubsub.chain.context import SafeContext
 from microcosm_pubsub.chain.context_decorators import (
     get_from_context,
     save_to_context,
@@ -23,6 +22,10 @@ class Chain:
 
     @property
     def context_decorators(self):
+        """
+        Decorators to apply to the chain links
+
+        """
         return [
             # Order matter - get_from_context should be first
             get_from_context,
@@ -31,10 +34,17 @@ class Chain:
             save_to_context_by_func_name,
         ]
 
+    def create_context(self):
+        """
+        Context to create
+
+        """
+        return SafeContext()
+
     def __call__(self, context=None):
         """
         Resolve the chain and return the last chain function result
-        :param context: optional argument - dictionary to share the context
+        :param context: use existing context instead of creating a new one
 
         """
         return self.resolve(context=context)
@@ -42,19 +52,20 @@ class Chain:
     def resolve(self, context=None, **kwargs):
         """
         Resolve the chain and return the last chain function result
-        :param context: optional argument - dictionary to share the context
+        :param context: use existing context instead of creating a new one
         :param **kwargs: initialize the context with some values
 
         """
-        context = context or dict()
+        context = context or self.create_context()
 
         for key, value in kwargs.items():
-            if key in context:
-                raise ValidationError(f"{key} already in the context")
             context[key] = value
 
         # Allow self refrence
-        context.update(context=context)
+        if "context" not in context:
+            context.update(context=context)
+        elif context["context"] is not context:
+            raise ValueError("context should be set as context")
 
         for link in self.links:
             res = self.apply_decorators(context, link)()

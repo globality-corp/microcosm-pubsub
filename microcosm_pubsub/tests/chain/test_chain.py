@@ -5,7 +5,6 @@ from hamcrest import (
     is_,
     raises,
 )
-from marshmallow import ValidationError
 
 from microcosm_pubsub.chain import Chain
 from microcosm_pubsub.chain.decorators import extracts
@@ -56,7 +55,7 @@ class TestChain:
             extracts("arg")(lambda: 20),
             extracts("arg")(lambda: 21),
         )
-        assert_that(calling(chain.resolve), raises(ValidationError))
+        assert_that(calling(chain.resolve), raises(ValueError))
 
     def test_chain_in_a_chain(self):
         chain = Chain(

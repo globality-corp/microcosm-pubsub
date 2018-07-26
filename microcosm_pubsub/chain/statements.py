@@ -1,6 +1,3 @@
-from marshmallow import ValidationError
-
-
 class ArgumentExtractor:
     def __init__(self, name, key, key_property=None):
         self.name = name
@@ -11,9 +8,6 @@ class ArgumentExtractor:
         return f"extract_{self.name}"
 
     def __call__(self, context):
-        if self.name in context:
-            raise ValidationError(f"Variable '{self.name}'' already extracted")
-
         obj = context[self.key]
         if self.key_property is None:
             value = obj

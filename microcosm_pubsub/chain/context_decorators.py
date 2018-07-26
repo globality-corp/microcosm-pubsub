@@ -1,5 +1,4 @@
 from functools import wraps
-from marshmallow import ValidationError
 from inspect import getfullargspec, ismethod, isfunction
 
 from microcosm_pubsub.chain.decorators import EXTRACTS, BINDS
@@ -45,8 +44,6 @@ def save_to_context(context, func):
         if extracts_one_value:
             value = [value]
         for index, name in enumerate(extracts):
-            if name in context:
-                raise ValidationError(f"Variable '{name}'' already extracted")
             context[name] = value[index]
         return value
     return decorate
@@ -69,8 +66,6 @@ def save_to_context_by_func_name(context, func):
     @wraps(func)
     def decorate(*args, **kwargs):
         value = func(*args, **kwargs)
-        if name in context:
-            raise ValidationError(f"Variable '{name}'' already extracted")
         context[name] = value
         return value
     return decorate
@@ -90,9 +85,9 @@ def temporarily_replace_context_keys(context, func):
     def decorate(*args, **kwargs):
         for old_key, new_key in binds.items():
             if old_key not in context:
-                raise ValidationError(f"Variable '{old_key}'' not set")
+                raise KeyError(f"Variable '{old_key}'' not set")
             if new_key in context:
-                raise ValidationError(f"Variable '{new_key}'' already set")
+                raise ValueError(f"Variable '{new_key}'' already set")
         try:
             for old_key, new_key in binds.items():
                 context[new_key] = context[old_key]
