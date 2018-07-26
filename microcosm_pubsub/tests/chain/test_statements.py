@@ -51,7 +51,11 @@ class TestStatements:
 
     def test_when(self):
         chain = Chain(
-            when("arg", chain=Chain(lambda: 200), otherwise=Chain(lambda: 400)),
+            when("arg").then(
+                Chain(lambda: 200)
+            ).otherwise(
+                Chain(lambda: 400)
+            ),
         )
         assert_that(
             chain(arg=True),
@@ -77,39 +81,30 @@ class TestStatements:
 
     def test_switch(self):
         chain = Chain(
-            switch(
-                "arg",
-                cases=[
-                    (True, Chain(lambda: 201)),
-                    (False, Chain(lambda: 401)),
-                ],
-                otherwise=Chain(lambda: 400),
-                yes=Chain(lambda: 200),
+            switch("arg").case(
+                True, Chain(lambda: 200)
+            ).case(
+                False, Chain(lambda: 400)
+            ).otherwise(
+                Chain(lambda: 500)
             ),
         )
         assert_that(
             chain(arg=True),
-            is_(equal_to(201)),
+            is_(equal_to(200)),
         )
         assert_that(
             chain(arg=False),
-            is_(equal_to(401)),
-        )
-        assert_that(
-            chain(arg=None),
             is_(equal_to(400)),
         )
         assert_that(
-            chain(arg="yes"),
-            is_(equal_to(200)),
+            chain(arg=None),
+            is_(equal_to(500)),
         )
 
     def test_empty_switch(self):
         chain = Chain(
-            switch(
-                "arg",
-                yes=Chain(lambda: 200),
-            ),
+            switch("arg"),
         )
         assert_that(
             chain(arg=None),
@@ -125,11 +120,11 @@ class TestStatements:
         chain = Chain(
             try_chain(
                 Chain(function),
-                catch=[
-                    (ValueError, Chain(lambda: 501)),
-                    (KeyError, Chain(lambda: 502)),
-                ],
-            ),
+            ).catch(
+                ValueError, Chain(lambda: 501),
+            ).catch(
+                KeyError, Chain(lambda: 502),
+            )
         )
         assert_that(
             chain(exception=None),
@@ -151,7 +146,8 @@ class TestStatements:
         chain = Chain(
             try_chain(
                 Chain(function),
-                otherwise=Chain(lambda: 200),
+            ).otherwise(
+                Chain(lambda: 200),
             ),
         )
         assert_that(

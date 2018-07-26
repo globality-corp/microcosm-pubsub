@@ -20,56 +20,80 @@ class ArgumentExtractor:
         return value
 
 
-class IfStatement:
-    def __init__(self, name, chain=None, otherwise=None):
-        self.name = name
-        self.chain = chain
-        self.otherwise = otherwise
+class WhenStatement:
+    def __init__(self, key):
+        self.key = key
+        self._then = None
+        self._otherwise = None
+
+    def then(self, chain):
+        self._then = chain
+        return self
+
+    def otherwise(self, chain):
+        self._otherwise = chain
+        return self
 
     def __str__(self):
-        return f"when_{self.name}"
+        return f"when_{self.key}"
 
     def __call__(self, context):
-        if context[self.name]:
-            if self.chain:
-                return self.chain(context)
-        elif self.otherwise:
-            return self.otherwise(context)
+        if context[self.key]:
+            if self._then:
+                return self._then(context)
+        elif self._otherwise:
+            return self._otherwise(context)
 
 
 class SwitchStatement:
-    def __init__(self, name, cases, otherwise=None):
-        self.name = name
-        self.otherwise = otherwise
-        self.cases = cases
+    def __init__(self, key):
+        self.key = key
+        self._otherwise = None
+        self._cases = dict()
 
     def __str__(self):
-        return f"switch_{self.name}"
+        return f"switch_{self.key}"
+
+    def case(self, key, chain):
+        self._cases[key] = chain
+        return self
+
+    def otherwise(self, chain):
+        self._otherwise = chain
+        return self
 
     def __call__(self, context):
-        key = context[self.name]
-        action = self.cases.get(key, self.otherwise)
+        key = context[self.key]
+        action = self._cases.get(key, self._otherwise)
         if action:
             return action(context)
 
 
 class TryStatement:
-    def __init__(self, chain, catch, otherwise=None):
+    def __init__(self, chain):
         self.chain = chain
-        self.catch = catch
-        self.otherwise = otherwise
+        self._cases = dict()
+        self._otherwise = None
+
+    def catch(self, key, chain):
+        self._cases[key] = chain
+        return self
+
+    def otherwise(self, chain):
+        self._otherwise = chain
+        return self
 
     def __call__(self, context):
         try:
             res = self.chain(context)
         except Exception as excption:
-            handle = self.catch.get(type(excption))
+            handle = self._cases.get(type(excption))
             if not handle:
                 raise excption
             return handle(context)
         else:
-            if self.otherwise:
-                return self.otherwise(context)
+            if self._otherwise:
+                return self._otherwise(context)
             return res
 
 
@@ -85,43 +109,39 @@ def extract(name, key, key_property=None):
     return ArgumentExtractor(name, key, key_property)
 
 
-def when(name, chain=None, otherwise=None):
+def when(key):
     """
     Run one of two chains - based on a condition
 
-    :param name: context key
-    :param chain: Chain
-    :param otherwise: Chain
+    Example: when("arg")
+        .then(Chain(...))
+        .otherwise(Chain(...))
 
     """
 
-    return IfStatement(name, chain, otherwise)
+    return WhenStatement(key)
 
 
-def switch(name, otherwise=None, cases=None, **kwargs):
+def switch(key):
     """
     Run one of number of chains chains - based on a key value
-
-    :param name: context key
-    :param cases: dict / list of tuple - Chains to run based on keys
-    :param **kwargs: Chain to run based on string keys
-    :param otherwise: Chain to run if no case was matched
+    Example: when("arg")
+        .case(100, Chain(...))
+        .case(200, Chain(...))
+        .otherwise(Chain(...))
 
     """
-    cases_ = kwargs
-    if cases:
-        cases_.update(cases)
-    return SwitchStatement(name, cases_, otherwise)
+    return SwitchStatement(key)
 
 
-def try_chain(chain, catch=None, otherwise=None):
+def try_chain(chain):
     """
     Run one of two chains - based on a condition
 
-    :param chain: Chain to run
-    :param catch: dict / list of tuple - Chains to run if an exception was raised
-    :param otherwise: Chain to run if no exption was raised
+    Example: when(Chain(...))
+        .case(ValueError, Chain(...))
+        .case(KeyError, Chain(...))
+        .otherwise(Chain(...))
 
     """
-    cases_ = dict(catch) if catch else dict()
-    return TryStatement(chain, cases_, otherwise)
+    return TryStatement(chain)
