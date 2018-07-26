@@ -41,15 +41,7 @@ class Chain:
         """
         return SafeContext()
 
-    def __call__(self, context=None):
-        """
-        Resolve the chain and return the last chain function result
-        :param context: use existing context instead of creating a new one
-
-        """
-        return self.resolve(context=context)
-
-    def resolve(self, context=None, **kwargs):
+    def __call__(self, context=None, **kwargs):
         """
         Resolve the chain and return the last chain function result
         :param context: use existing context instead of creating a new one

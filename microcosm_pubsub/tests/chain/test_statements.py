@@ -18,7 +18,7 @@ class TestStatements:
             lambda param: param,
         )
         assert_that(
-            chain.resolve(arg=200),
+            chain(arg=200),
             is_(equal_to(200)),
         )
 
@@ -27,7 +27,7 @@ class TestStatements:
             extract("param", "arg"),
         )
         assert_that(
-            chain.resolve(arg=200),
+            chain(arg=200),
             is_(equal_to(200)),
         )
 
@@ -36,7 +36,7 @@ class TestStatements:
             extract("param", "arg", "data"),
         )
         assert_that(
-            chain.resolve(arg=dict(data=200)),
+            chain(arg=dict(data=200)),
             is_(equal_to(200)),
         )
 
@@ -45,7 +45,7 @@ class TestStatements:
             extract("param", "arg", "__class__"),
         )
         assert_that(
-            chain.resolve(arg=dict()),
+            chain(arg=dict()),
             is_(equal_to(dict)),
         )
 
@@ -54,11 +54,11 @@ class TestStatements:
             when("arg", chain=Chain(lambda: 200), otherwise=Chain(lambda: 400)),
         )
         assert_that(
-            chain.resolve(arg=True),
+            chain(arg=True),
             is_(equal_to(200)),
         )
         assert_that(
-            chain.resolve(arg=False),
+            chain(arg=False),
             is_(equal_to(400)),
         )
 
@@ -67,11 +67,11 @@ class TestStatements:
             when("arg"),
         )
         assert_that(
-            chain.resolve(arg=True),
+            chain(arg=True),
             is_(equal_to(None)),
         )
         assert_that(
-            chain.resolve(arg=False),
+            chain(arg=False),
             is_(equal_to(None)),
         )
 
@@ -88,19 +88,19 @@ class TestStatements:
             ),
         )
         assert_that(
-            chain.resolve(arg=True),
+            chain(arg=True),
             is_(equal_to(201)),
         )
         assert_that(
-            chain.resolve(arg=False),
+            chain(arg=False),
             is_(equal_to(401)),
         )
         assert_that(
-            chain.resolve(arg=None),
+            chain(arg=None),
             is_(equal_to(400)),
         )
         assert_that(
-            chain.resolve(arg="yes"),
+            chain(arg="yes"),
             is_(equal_to(200)),
         )
 
@@ -112,7 +112,7 @@ class TestStatements:
             ),
         )
         assert_that(
-            chain.resolve(arg=None),
+            chain(arg=None),
             is_(equal_to(None)),
         )
 
@@ -132,15 +132,15 @@ class TestStatements:
             ),
         )
         assert_that(
-            chain.resolve(exception=None),
+            chain(exception=None),
             is_(equal_to(400)),
         )
         assert_that(
-            chain.resolve(exception=ValueError),
+            chain(exception=ValueError),
             is_(equal_to(501)),
         )
         assert_that(
-            calling(chain.resolve).with_args(exception=ArithmeticError),
+            calling(chain).with_args(exception=ArithmeticError),
             raises(ArithmeticError),
         )
 
@@ -155,6 +155,6 @@ class TestStatements:
             ),
         )
         assert_that(
-            chain.resolve(exception=None),
+            chain(exception=None),
             is_(equal_to(200)),
         )

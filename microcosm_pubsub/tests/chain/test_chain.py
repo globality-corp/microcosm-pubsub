@@ -1,9 +1,7 @@
 from hamcrest import (
     assert_that,
-    calling,
     equal_to,
     is_,
-    raises,
 )
 
 from microcosm_pubsub.chain import Chain
@@ -18,7 +16,7 @@ class TestChain:
             lambda: 200,
         )
         assert_that(
-            chain.resolve(),
+            chain(),
             is_(equal_to(200)),
         )
 
@@ -27,7 +25,7 @@ class TestChain:
             lambda arg: arg,
         )
         assert_that(
-            chain.resolve(arg=200),
+            chain(arg=200),
             is_(equal_to(200)),
         )
 
@@ -36,7 +34,7 @@ class TestChain:
             lambda context: context["arg"],
         )
         assert_that(
-            chain.resolve(arg=200),
+            chain(arg=200),
             is_(equal_to(200)),
         )
 
@@ -46,16 +44,9 @@ class TestChain:
             lambda arg: arg * 10,
         )
         assert_that(
-            chain.resolve(),
+            chain(),
             is_(equal_to(200)),
         )
-
-    def test_cannot_override_value(self):
-        chain = Chain(
-            extracts("arg")(lambda: 20),
-            extracts("arg")(lambda: 21),
-        )
-        assert_that(calling(chain.resolve), raises(ValueError))
 
     def test_chain_in_a_chain(self):
         chain = Chain(
@@ -65,6 +56,6 @@ class TestChain:
             ),
         )
         assert_that(
-            chain.resolve(),
+            chain(),
             is_(equal_to(200)),
         )

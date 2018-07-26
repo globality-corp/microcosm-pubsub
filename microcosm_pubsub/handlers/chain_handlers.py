@@ -13,11 +13,7 @@ class ChainHandler(metaclass=ABCMeta):
         pass
 
     def __call__(self, message):
-        return Chain(
-            self.get_chain(),
-        ).resolve(
-            message=message,
-        )
+        return Chain(self.get_chain())(message=message)
 
 
 class ChainURIHandler(URIHandler, metaclass=ABCMeta):
@@ -38,10 +34,6 @@ class ChainURIHandler(URIHandler, metaclass=ABCMeta):
     def handle(self, message, uri, resource):
         kwargs = dict(message=message)
         kwargs[self.resource_name] = resource
+        Chain(self.get_chain())(**kwargs)
 
-        Chain(
-            self.get_chain(),
-        ).resolve(
-            **kwargs,
-        )
         return True
