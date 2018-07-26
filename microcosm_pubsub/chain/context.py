@@ -26,3 +26,6 @@ class SafeContext(MutableMapping):
 
     def __len__(self):
         return len(self.store)
+
+    def __getattr__(self, key):
+        return self[key]

@@ -31,7 +31,7 @@ class TestChain:
 
     def test_chain_functions_has_access_to_context(self):
         chain = Chain(
-            lambda context: context["arg"],
+            lambda context: context.arg,
         )
         assert_that(
             chain(arg=200),
