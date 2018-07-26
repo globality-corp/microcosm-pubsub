@@ -19,8 +19,8 @@ def extracts(*extract):
 
 def binds(**binds):
     """
-    On resolving this function with temporary_replace_context_keys decorator -
-    Temporary updates the context keys.
+    On resolving this function with temporarily_replace_context_keys decorator -
+    temporarily updates the context keys.
 
     Note: The decorator just marks the function.
     :param **binds: (old_context_key, new_context_key) - context keys to rename

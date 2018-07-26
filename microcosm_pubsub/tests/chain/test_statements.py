@@ -7,7 +7,7 @@ from hamcrest import (
 )
 
 from microcosm_pubsub.chain import Chain
-from microcosm_pubsub.chain.statements import extract, if_, switch, try_chain
+from microcosm_pubsub.chain.statements import extract, when, switch, try_chain
 
 
 class TestStatements:
@@ -49,9 +49,9 @@ class TestStatements:
             is_(equal_to(dict)),
         )
 
-    def test_if_(self):
+    def test_when(self):
         chain = Chain(
-            if_("arg", chain=Chain(lambda: 200), other=Chain(lambda: 400)),
+            when("arg", chain=Chain(lambda: 200), otherwise=Chain(lambda: 400)),
         )
         assert_that(
             chain.resolve(arg=True),
@@ -62,9 +62,9 @@ class TestStatements:
             is_(equal_to(400)),
         )
 
-    def test_empty_if_(self):
+    def test_empty_when(self):
         chain = Chain(
-            if_("arg"),
+            when("arg"),
         )
         assert_that(
             chain.resolve(arg=True),
@@ -83,7 +83,7 @@ class TestStatements:
                     (True, Chain(lambda: 201)),
                     (False, Chain(lambda: 401)),
                 ],
-                other=Chain(lambda: 400),
+                otherwise=Chain(lambda: 400),
                 yes=Chain(lambda: 200),
             ),
         )
@@ -151,7 +151,7 @@ class TestStatements:
         chain = Chain(
             try_chain(
                 Chain(function),
-                other=Chain(lambda: 200),
+                otherwise=Chain(lambda: 200),
             ),
         )
         assert_that(

@@ -4,7 +4,7 @@ from microcosm_pubsub.chain.context_decorators import (
     get_from_context,
     save_to_context,
     save_to_context_by_func_name,
-    temporary_replace_context_keys,
+    temporarily_replace_context_keys,
 )
 
 
@@ -19,12 +19,14 @@ class Chain:
         :param *args: callable functions, Chain statemnts or other Chains
 
         """
-        self.pieces = args
+        self.links = list(args)
 
-        self.context_decorators = [
+    @property
+    def context_decorators(self):
+        return [
             # Order matter - get_from_context should be first
             get_from_context,
-            temporary_replace_context_keys,
+            temporarily_replace_context_keys,
             save_to_context,
             save_to_context_by_func_name,
         ]
@@ -48,18 +50,18 @@ class Chain:
 
         for key, value in kwargs.items():
             if key in context:
-                raise ValidationError(f"{key} alredy in the context")
+                raise ValidationError(f"{key} already in the context")
             context[key] = value
 
         # Allow self refrence
-        context["context"] = context
+        context.update(context=context)
 
-        for piece in self.pieces:
-            res = self.apply_decorators(context, piece)()
+        for link in self.links:
+            res = self.apply_decorators(context, link)()
         return res
 
-    def apply_decorators(self, context, func):
-        decorated_func = func
+    def apply_decorators(self, context, link):
+        decorated_link = link
         for decorator in self.context_decorators:
-            decorated_func = decorator(context, decorated_func)
-        return decorated_func
+            decorated_link = decorator(context, decorated_link)
+        return decorated_link

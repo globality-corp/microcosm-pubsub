@@ -12,7 +12,7 @@ from microcosm_pubsub.chain.context_decorators import (
     get_from_context,
     save_to_context,
     save_to_context_by_func_name,
-    temporary_replace_context_keys,
+    temporarily_replace_context_keys,
 )
 
 
@@ -26,21 +26,25 @@ class TestDecorators:
     def test_save_to_context(self):
         context = dict()
 
+        def dont_extract(number):
+            return number
+
         @extracts("arg")
-        def extractarg(number):
+        def extract_arg(number):
             return number
 
         @extracts("arg1", "arg2")
-        def extractarg1_and_arg2(num1, num2):
+        def extract_arg1_and_arg2(num1, num2):
             return num1, num2
 
         @extracts("args")
-        def extractargs(num1, num2):
+        def extract_args(num1, num2):
             return num1, num2
 
-        save_to_context(context, extractarg)(0)
-        save_to_context(context, extractarg1_and_arg2)(1, 2)
-        save_to_context(context, extractargs)(1, 2)
+        save_to_context(context, dont_extract)(-1)
+        save_to_context(context, extract_arg)(0)
+        save_to_context(context, extract_arg1_and_arg2)(1, 2)
+        save_to_context(context, extract_args)(1, 2)
 
         assert_that(context, is_(equal_to(dict(arg=0, arg1=1, arg2=2, args=(1, 2)))))
 
@@ -116,32 +120,32 @@ class TestDecorators:
         wrapped_class_method_ref = get_from_context(context, example.class_method)
         assert_that(wrapped_class_method_ref(), is_(323))
 
-    def test_temporary_replace_context_keys(self):
+    def test_temporarily_replace_context_keys(self):
         context = dict(arg=123)
 
         func = binds(arg="param")(lambda param: param)
 
         wrapped = get_from_context(context, func)
-        wrapped = temporary_replace_context_keys(context, wrapped)
+        wrapped = temporarily_replace_context_keys(context, wrapped)
 
         assert_that(wrapped(), is_(123))
 
-    def test_temporary_replace_context_keys_wring_order(self):
+    def test_temporarily_replace_context_keys_wring_order(self):
         context = dict(arg=123)
 
         func = binds(arg="param")(lambda param: param)
 
-        wrapped = temporary_replace_context_keys(context, func)
+        wrapped = temporarily_replace_context_keys(context, func)
         wrapped = get_from_context(context, wrapped)
 
         assert_that(calling(wrapped), raises(TypeError))
 
-    def test_temporary_replace_missing_keys(self):
+    def test_temporarily_replace_missing_keys(self):
         context = dict()
 
         func = binds(arg="param")(lambda param: param)
 
         wrapped = get_from_context(context, func)
-        wrapped = temporary_replace_context_keys(context, wrapped)
+        wrapped = temporarily_replace_context_keys(context, wrapped)
 
         assert_that(calling(wrapped), raises(ValidationError))

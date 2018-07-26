@@ -27,7 +27,6 @@ class ChainURIHandler(URIHandler, metaclass=ABCMeta):
     Pass to the chain the message and the fetched resource.
 
     """
-
     @abstractmethod
     def get_chain(self):
         pass
@@ -40,10 +39,9 @@ class ChainURIHandler(URIHandler, metaclass=ABCMeta):
         kwargs = dict(message=message)
         kwargs[self.resource_name] = resource
 
-        res = Chain(
+        Chain(
             self.get_chain(),
         ).resolve(
             **kwargs,
         )
-        if res is None:
-            return True
+        return True
