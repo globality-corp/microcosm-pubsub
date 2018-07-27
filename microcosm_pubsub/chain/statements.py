@@ -138,9 +138,9 @@ def try_chain(chain):
     """
     Run one of two chains - based on a condition
 
-    Example: when(Chain(...))
-        .case(ValueError, Chain(...))
-        .case(KeyError, Chain(...))
+    Example: try_chain(Chain(...))
+        .catch(ValueError, Chain(...))
+        .catch(KeyError, Chain(...))
         .otherwise(Chain(...))
 
     """

@@ -34,6 +34,7 @@ class ChainURIHandler(URIHandler, metaclass=ABCMeta):
     def handle(self, message, uri, resource):
         kwargs = dict(message=message)
         kwargs[self.resource_name] = resource
-        Chain(self.get_chain())(**kwargs)
+        chain = self.get_chain()
+        chain(**kwargs)
 
         return True

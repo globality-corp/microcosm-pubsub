@@ -90,11 +90,9 @@ def temporarily_replace_context_keys(context, func):
                 raise ValueError(f"Variable '{new_key}'' already set")
         try:
             for old_key, new_key in binds.items():
-                context[new_key] = context[old_key]
-                del context[old_key]
+                context[new_key] = context.pop(old_key)
             return func(*args, **kwargs)
         finally:
             for old_key, new_key in binds.items():
-                context[old_key] = context[new_key]
-                del context[new_key]
+                context[old_key] = context.pop(new_key)
     return decorate

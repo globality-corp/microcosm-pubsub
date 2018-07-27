@@ -34,12 +34,13 @@ class Chain:
             save_to_context_by_func_name,
         ]
 
-    def create_context(self):
+    @property
+    def new_context_type(self):
         """
-        Context to create
+        Context type to create
 
         """
-        return SafeContext()
+        return SafeContext
 
     def __call__(self, context=None, **kwargs):
         """
@@ -48,12 +49,10 @@ class Chain:
         :param **kwargs: initialize the context with some values
 
         """
-        context = context or self.create_context()
+        context = context or self.new_context_type()
+        context.update(kwargs)
 
-        for key, value in kwargs.items():
-            context[key] = value
-
-        # Allow self refrence
+        # Allow self reference
         if "context" not in context:
             context.update(context=context)
         elif context["context"] is not context:
