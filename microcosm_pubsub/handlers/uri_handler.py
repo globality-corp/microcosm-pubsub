@@ -1,5 +1,5 @@
 """
-Handler base classes.
+Uri Handler base classes.
 
 """
 from abc import ABCMeta
@@ -7,10 +7,6 @@ from inflection import titleize
 
 from requests import codes, get
 
-from microcosm.api import binding
-from microcosm_logging.decorators import logger
-from microcosm_pubsub.conventions import created
-from microcosm_pubsub.decorators import handles
 from microcosm_pubsub.errors import Nack
 
 
@@ -126,22 +122,3 @@ class URIHandler:
 
     def handle(self, message, uri, resource):
         return True
-
-
-@binding("publish_message_batch")
-@handles(created("BatchMessage"))
-@logger
-class PublishBatchMessage:
-
-    def __init__(self, graph):
-        self.sns_producer = graph.sns_producer
-
-    def __call__(self, message):
-        messages = message["messages"]
-        for message in messages:
-            self.sns_producer.publish_message(
-                message["media_type"],
-                message["message"],
-                message["topic_arn"],
-                message["opaque_data"],
-            )
