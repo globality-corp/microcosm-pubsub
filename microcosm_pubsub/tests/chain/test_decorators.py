@@ -63,14 +63,14 @@ class TestDecorators:
     def test_save_to_context_by_func_name(self):
         context = dict()
 
-        def extracts_arg(number):
+        def extract_arg(number):
             return number
 
-        def extracts_args(num1, num2):
+        def extract_args(num1, num2):
             return num1, num2
 
-        save_to_context_by_func_name(context, extracts_arg)(0)
-        save_to_context_by_func_name(context, extracts_args)(1, 2)
+        save_to_context_by_func_name(context, extract_arg)(0)
+        save_to_context_by_func_name(context, extract_args)(1, 2)
         assert_that(context, is_(equal_to(dict(arg=0, args=(1, 2)))))
 
     def test_get_from_context_multiple_args(self):
