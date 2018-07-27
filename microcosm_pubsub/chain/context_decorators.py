@@ -4,7 +4,7 @@ from inspect import getfullargspec, ismethod, isfunction
 from microcosm_pubsub.chain.decorators import EXTRACTS, BINDS
 
 
-EXTRACTS_PREFIX = "extracts_"
+EXTRACT_PREFIX = "extract_"
 
 
 def get_from_context(context, func):
@@ -52,16 +52,16 @@ def save_to_context(context, func):
 def save_to_context_by_func_name(context, func):
     """
     Decorate a function - save to a context (dictionary) the function return value
-    if the function is not signed by EXTRACTS and it's name starts with "extracts_"
+    if the function is not signed by EXTRACTS and it's name starts with "extract_"
 
     """
     if (
         hasattr(func, EXTRACTS) or
         not hasattr(func, "__name__") or
-        not func.__name__.startswith(EXTRACTS_PREFIX)
+        not func.__name__.startswith(EXTRACT_PREFIX)
     ):
         return func
-    name = func.__name__[len(EXTRACTS_PREFIX):]
+    name = func.__name__[len(EXTRACT_PREFIX):]
 
     @wraps(func)
     def decorate(*args, **kwargs):
