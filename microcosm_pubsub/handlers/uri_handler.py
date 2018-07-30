@@ -123,7 +123,7 @@ class URIHandler:
             raise Nack(self.nack_timeout)
         response.raise_for_status()
         body = response.json()
-        if type(body) is self.resource_type:
+        if isinstance(body, self.resource_type):
             return body
         return self.resource_type(**body)
 
