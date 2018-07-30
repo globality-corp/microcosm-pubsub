@@ -44,6 +44,10 @@ class URIHandler:
     def nack_if_not_found(self):
         return True
 
+    @property
+    def resource_type(self):
+        return dict
+
     def __call__(self, message):
         uri = message["uri"]
         self.on_call(message, uri)
@@ -118,7 +122,10 @@ class URIHandler:
         if response.status_code == codes.not_found and self.nack_if_not_found:
             raise Nack(self.nack_timeout)
         response.raise_for_status()
-        return response.json()
+        body = response.json()
+        if type(body) is self.resource_type:
+            return body
+        return self.resource_type(**body)
 
     def handle(self, message, uri, resource):
         return True
