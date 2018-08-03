@@ -2,7 +2,7 @@
 from setuptools import find_packages, setup
 
 project = "microcosm-pubsub"
-version = "1.3.6"
+version = "1.4.0"
 
 setup(
     name=project,
@@ -19,7 +19,6 @@ setup(
         "marshmallow>=2.15.0",
         "microcosm>=2.0.0",
         "microcosm-daemon>=1.0.0",
-        "microcosm-flask>=1.0.1",
         "microcosm-logging>=1.0.0",
     ],
     setup_requires=[
@@ -35,7 +34,6 @@ setup(
         "microcosm.factories": [
             "pubsub_message_schema_registry = microcosm_pubsub.registry:configure_schema_registry",
             "pubsub_lifecycle_change = microcosm_pubsub.conventions:LifecycleChange",
-            "publish_info_convention = microcosm_pubsub.conventions.publish_info.convention:configure_publish_info",
             "sqs_message_context = microcosm_pubsub.context:configure_sqs_message_context",
             "sqs_consumer = microcosm_pubsub.consumer:configure_sqs_consumer",
             "sqs_envelope = microcosm_pubsub.envelope:configure_sqs_envelope",
