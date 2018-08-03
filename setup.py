@@ -19,7 +19,6 @@ setup(
         "marshmallow>=2.15.0",
         "microcosm>=2.0.0",
         "microcosm-daemon>=1.0.0",
-        "microcosm-flask>=1.0.1",
         "microcosm-logging>=1.0.0",
     ],
     setup_requires=[
