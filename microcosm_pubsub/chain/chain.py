@@ -4,6 +4,7 @@ from microcosm_pubsub.chain.context_decorators import (
     save_to_context,
     save_to_context_by_func_name,
     temporarily_replace_context_keys,
+    DEFAULT_ASSIGNED,
 )
 
 
@@ -33,6 +34,16 @@ class Chain:
             save_to_context,
             save_to_context_by_func_name,
         ]
+
+    @property
+    def context_decorators_assigned(self):
+        """
+        Tuple naming attributes that self.context_decorators attributes should keep
+        It should contain all attributes that set by relevant decorators
+        (such as @extracs)
+
+        """
+        return DEFAULT_ASSIGNED
 
     @property
     def new_context_type(self):
@@ -65,5 +76,5 @@ class Chain:
     def apply_decorators(self, context, link):
         decorated_link = link
         for decorator in self.context_decorators:
-            decorated_link = decorator(context, decorated_link)
+            decorated_link = decorator(context, decorated_link, self.context_decorators_assigned)
         return decorated_link
