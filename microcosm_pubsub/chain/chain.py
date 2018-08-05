@@ -40,7 +40,7 @@ class Chain:
         """
         Tuple naming attributes that self.context_decorators attributes should keep
         It should contain all attributes that set by relevant decorators
-        (such as @extracs)
+        (such as @extracts)
 
         """
         return DEFAULT_ASSIGNED
