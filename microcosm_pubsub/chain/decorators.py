@@ -1,5 +1,25 @@
+from inspect import ismethod
+from functools import wraps
+
+
 EXTRACTS = "_extracts"
 BINDS = "_binds"
+
+
+def to_function(callable_object):
+    """
+    In python, we can't use setattr on a method
+    We can instead wrap the method in a function.
+    This function will wrap only methods.
+
+    """
+    if not ismethod(callable_object):
+        return callable_object
+
+    @wraps(callable_object)
+    def decorated_method(*args, **kwargs):
+        return callable_object(*args, **kwargs)
+    return decorated_method
 
 
 def extracts(*extract):
@@ -12,8 +32,9 @@ def extracts(*extract):
 
     """
     def decorate(func):
-        setattr(func, EXTRACTS, extract)
-        return func
+        function = to_function(func)
+        setattr(function, EXTRACTS, extract)
+        return function
     return decorate
 
 
@@ -27,6 +48,7 @@ def binds(**binds):
 
     """
     def decorate(func):
-        setattr(func, BINDS, binds)
-        return func
+        function = to_function(func)
+        setattr(function, BINDS, binds)
+        return function
     return decorate

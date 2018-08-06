@@ -5,7 +5,7 @@ from hamcrest import (
 )
 
 from microcosm_pubsub.chain import Chain
-from microcosm_pubsub.chain.decorators import extracts
+from microcosm_pubsub.chain.decorators import extracts, binds
 
 
 class TestChain:
@@ -54,6 +54,28 @@ class TestChain:
             Chain(
                 lambda arg: arg * 10,
             ),
+        )
+        assert_that(
+            chain(),
+            is_(equal_to(200)),
+        )
+
+    def test_chain_link_with_multiple_decorators(self):
+
+        @extracts("param")
+        class Extractor:
+            def __call__(self):
+                return 20
+
+        class Transformer:
+            @extracts("res")
+            def transform(self, arg):
+                return arg * 10
+
+        chain = Chain(
+            Extractor(),
+            binds(param="arg")(Transformer().transform),
+            lambda res: res,
         )
         assert_that(
             chain(),

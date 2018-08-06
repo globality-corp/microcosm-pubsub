@@ -1,33 +1,48 @@
-from functools import wraps
-from inspect import getfullargspec, ismethod, isfunction
+from functools import wraps, WRAPPER_ASSIGNMENTS
+from inspect import signature, _POSITIONAL_ONLY, _POSITIONAL_OR_KEYWORD, _empty
 
 from microcosm_pubsub.chain.decorators import EXTRACTS, BINDS
 
 
+DEFAULT_ASSIGNED = (EXTRACTS, BINDS)
 EXTRACT_PREFIX = "extract_"
 
 
-def get_from_context(context, func):
+def get_positional_args(func):
+    """
+    Returns all the POSITIONAL argument names of a function
+    * If func is a method, do not return "self" argument
+    * Handle wrapped functions too
+
+    """
+    return [
+        (arg, parameter.default)
+        for arg, parameter
+        in signature(func).parameters.items()
+        if parameter.kind in (_POSITIONAL_ONLY, _POSITIONAL_OR_KEYWORD)
+    ]
+
+
+def get_from_context(context, func, assigned=DEFAULT_ASSIGNED):
     """
     Decorate a function - pass to the function the relevant arguments
     from a context (dictionary) - based on the function arg names
 
     """
-    include_self = ismethod(func) or not isfunction(func)
-    args_names = getfullargspec(func)[0]
+    positional_args = get_positional_args(func)
 
-    @wraps(func)
+    @wraps(func, assigned=assigned + WRAPPER_ASSIGNMENTS)
     def decorate(*args, **kwargs):
         context_kwargs = {
-            arg_name: context[arg_name]
-            for arg_name in args_names[int(include_self) + len(args):]
+            arg_name: (context[arg_name] if default is _empty else context.get(arg_name, default))
+            for arg_name, default in positional_args[len(args):]
             if arg_name not in kwargs
         }
         return func(*args, **kwargs, **context_kwargs)
     return decorate
 
 
-def save_to_context(context, func):
+def save_to_context(context, func, assigned=DEFAULT_ASSIGNED):
     """
     Decorate a function - save to a context (dictionary) the function return value
     if the function is marked by @extracts decorator
@@ -38,7 +53,7 @@ def save_to_context(context, func):
         return func
     extracts_one_value = len(extracts) == 1
 
-    @wraps(func)
+    @wraps(func, assigned=assigned + WRAPPER_ASSIGNMENTS)
     def decorate(*args, **kwargs):
         value = func(*args, **kwargs)
         if extracts_one_value:
@@ -49,7 +64,7 @@ def save_to_context(context, func):
     return decorate
 
 
-def save_to_context_by_func_name(context, func):
+def save_to_context_by_func_name(context, func, assigned=DEFAULT_ASSIGNED):
     """
     Decorate a function - save to a context (dictionary) the function return value
     if the function is not signed by EXTRACTS and it's name starts with "extract_"
@@ -63,7 +78,7 @@ def save_to_context_by_func_name(context, func):
         return func
     name = func.__name__[len(EXTRACT_PREFIX):]
 
-    @wraps(func)
+    @wraps(func, assigned=assigned + WRAPPER_ASSIGNMENTS)
     def decorate(*args, **kwargs):
         value = func(*args, **kwargs)
         context[name] = value
@@ -71,7 +86,7 @@ def save_to_context_by_func_name(context, func):
     return decorate
 
 
-def temporarily_replace_context_keys(context, func):
+def temporarily_replace_context_keys(context, func, assigned=DEFAULT_ASSIGNED):
     """
     Decorate a function - temporarily updates the context keys while running the function
     Updates the context if the function is marked by @binds decorator.
@@ -81,7 +96,7 @@ def temporarily_replace_context_keys(context, func):
     if not binds:
         return func
 
-    @wraps(func)
+    @wraps(func, assigned=assigned + WRAPPER_ASSIGNMENTS)
     def decorate(*args, **kwargs):
         for old_key, new_key in binds.items():
             if old_key not in context:
