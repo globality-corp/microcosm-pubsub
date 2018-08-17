@@ -7,7 +7,7 @@ from hamcrest import (
 )
 
 from microcosm_pubsub.chain import Chain
-from microcosm_pubsub.chain.statements import extract, when, switch, try_chain, for_chain
+from microcosm_pubsub.chain.statements import extract, when, switch, try_chain, for_each
 
 
 class TestStatements:
@@ -102,7 +102,7 @@ class TestStatements:
             is_(equal_to(500)),
         )
 
-    def test_for(self):
+    def test_for_each(self):
         def function(item):
             return item.upper()
 
@@ -111,15 +111,15 @@ class TestStatements:
 
         items = ["a", "b", "c"]
         chain = Chain(
-            for_chain("item").in_(items).do(
-                Chain(function)
+            for_each("item").in_("items").do(
+                Chain(function),
             ),
-            Chain(reverse_list)
+            Chain(reverse_list),
         )
         upper_reversed_items = ["C", "B", "A"]
 
         assert_that(
-            chain(),
+            chain(items=items),
             is_(equal_to(upper_reversed_items)),
         )
 

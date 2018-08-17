@@ -100,7 +100,7 @@ class TryStatement:
 class ForStatement:
     def __init__(self, key):
         self.key = key
-        self.items = []
+        self.items = None
         self.chain = None
 
     def __str__(self):
@@ -116,16 +116,16 @@ class ForStatement:
 
     def __call__(self, context):
         # Validate to ensure the key is not used in the context
-        # as we override the regular set function in the loop
+        # as we use assign in the loop
         context[self.key] = None
 
         responses = []
-        for item in self.items:
-            context.hard_set(self.key, item)
+        for item in context[self.items]:
+            context.assign(self.key, item)
             responses.append(self.chain(context))
 
         # Set the responses in the context
-        context[self.key + '_list'] = responses
+        context[f"{self.key}_list"] = responses
 
         return responses
 
@@ -180,14 +180,14 @@ def try_chain(chain):
     return TryStatement(chain)
 
 
-def for_chain(key):
+def for_each(key):
     """
     Run the chain for all items in array
     Each items will be accessible as "item" name
 
     Example: for("item")
-    .in_(items)
-    .do(Chain(...))
+        .in_(items)
+        .do(Chain(...))
 
     """
     return ForStatement(key)
