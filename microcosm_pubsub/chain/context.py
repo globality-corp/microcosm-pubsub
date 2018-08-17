@@ -18,6 +18,10 @@ class SafeContext(MutableMapping):
             raise ValueError(f"Key '{key}' already set")
         self.store[key] = value
 
+    def assign(self, key, value):
+        # Skip validation
+        self.store[key] = value
+
     def __delitem__(self, key):
         del self.store[key]
 
