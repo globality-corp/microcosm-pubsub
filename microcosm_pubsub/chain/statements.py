@@ -97,6 +97,39 @@ class TryStatement:
             return res
 
 
+class ForStatement:
+    def __init__(self, key):
+        self.key = key
+        self.items = []
+        self.chain = None
+
+    def __str__(self):
+        return f"for_{self.key}"
+
+    def in_(self, items):
+        self.items = items
+        return self
+
+    def do(self, chain):
+        self.chain = chain
+        return self
+
+    def __call__(self, context):
+        # Validate to ensure the key is not used in the context
+        # as we override the regular set function in the loop
+        context[self.key] = None
+
+        responses = []
+        for item in self.items:
+            context.hard_set(self.key, item)
+            responses.append(self.chain(context))
+
+        # Set the responses in the context
+        context[self.key + '_list'] = responses
+
+        return responses
+
+
 def extract(name, key, key_property=None):
     """
     Extract an argument from a context to anotherwise context key
@@ -145,3 +178,16 @@ def try_chain(chain):
 
     """
     return TryStatement(chain)
+
+
+def for_chain(key):
+    """
+    Run the chain for all items in array
+    Each items will be accessible as "item" name
+
+    Example: for("item")
+    .in_(items)
+    .do(Chain(...))
+
+    """
+    return ForStatement(key)
