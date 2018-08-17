@@ -97,7 +97,7 @@ class TryStatement:
             return res
 
 
-class ForStatement:
+class ForEachStatement:
     def __init__(self, key):
         self.key = key
         self.items = None
@@ -190,4 +190,4 @@ def for_each(key):
         .do(Chain(...))
 
     """
-    return ForStatement(key)
+    return ForEachStatement(key)
