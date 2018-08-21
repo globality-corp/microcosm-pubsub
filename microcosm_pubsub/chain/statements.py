@@ -14,6 +14,10 @@ class ArgumentExtractor:
         self.that = that
         return self
 
+    def to(self, that):
+        self.that = that
+        return self
+
     @property
     def key(self):
         return self.parts[0]
