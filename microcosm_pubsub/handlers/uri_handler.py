@@ -57,7 +57,9 @@ class URIHandler:
             self.on_skip(message, uri, skip_reason)
             return False
 
-        resource = self.get_resource(message, uri)
+        resource = self.convert_resource(
+            self.get_resource(message, uri),
+        )
 
         if self.handle(message, uri, resource):
             self.on_handle(message, uri, resource)
@@ -122,10 +124,12 @@ class URIHandler:
         if response.status_code == codes.not_found and self.nack_if_not_found:
             raise Nack(self.nack_timeout)
         response.raise_for_status()
-        body = response.json()
-        if isinstance(body, self.resource_type):
-            return body
-        return self.resource_type(**body)
+        return response.json()
+
+    def convert_resource(self, resource):
+        if isinstance(resource, self.resource_type):
+            return resource
+        return self.resource_type(**resource)
 
     def handle(self, message, uri, resource):
         return True
