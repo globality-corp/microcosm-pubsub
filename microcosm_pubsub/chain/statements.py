@@ -10,10 +10,6 @@ class ArgumentExtractor:
         self.parts = this.split(".")
         self.that = that
 
-    def as_(self, that):
-        self.that = that
-        return self
-
     def to(self, that):
         self.that = that
         return self
