@@ -63,18 +63,28 @@ class Chain:
         context = context or self.new_context_type()
         context.update(kwargs)
 
-        # Allow self reference
-        if "context" not in context:
-            context.update(context=context)
-        elif context["context"] is not context:
-            raise ValueError("context should be set as context")
-
         for link in self.links:
-            res = self.apply_decorators(context, link)()
+            func = self.apply_decorators(context, link)
+            res = func()
+
         return res
+
+    def __len__(self):
+        return len(self.links)
 
     def apply_decorators(self, context, link):
         decorated_link = link
         for decorator in self.context_decorators:
             decorated_link = decorator(context, decorated_link, self.context_decorators_assigned)
         return decorated_link
+
+    @classmethod
+    def make(cls, *args, chain=None, links=None, **kwargs):
+        if chain is not None:
+            return chain
+        elif links is not None:
+            return cls(*links)
+        elif args:
+            return cls(*args)
+        else:
+            raise ValueError("Must define one of 'chain', 'links', or '*args'")
