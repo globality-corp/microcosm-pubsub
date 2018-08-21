@@ -14,7 +14,7 @@ from microcosm_pubsub.chain.statements.case import CaseStatement
 
 class SwitchStatement:
     """
-    Switch on one more cases.
+    Switch on one or more cases.
 
     """
     def __init__(self, key):
