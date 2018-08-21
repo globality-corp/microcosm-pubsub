@@ -76,7 +76,7 @@ class TestStatements:
 
     def test_assign_property(self):
         chain = Chain(
-            assign("arg.data").as_("param"),
+            assign("arg.data").to("param"),
         )
         assert_that(
             chain(arg=dict(data=200)),
@@ -85,7 +85,7 @@ class TestStatements:
 
     def test_assign_attribute(self):
         chain = Chain(
-            assign("arg.__class__").as_("param"),
+            assign("arg.__class__").to("param"),
         )
         assert_that(
             chain(arg=dict()),
