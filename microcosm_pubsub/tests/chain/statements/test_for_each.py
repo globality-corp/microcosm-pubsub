@@ -36,3 +36,16 @@ def test_for_each_simplified():
         chain(items=["a", "b", "c"]),
         is_(equal_to(["C", "B", "A"])),
     )
+
+
+def test_for_each_when():
+    chain = Chain(
+        for_each("item").in_("items").do(
+            lambda item: None if item % 2 else item,
+        ).when_not_none(),
+    )
+
+    assert_that(
+        chain(items=[0, 1, 2, 3, 4, 5]),
+        is_(equal_to([0, 2, 4])),
+    )
