@@ -5,12 +5,21 @@ for_each("item").in_("items").do(...)
 from microcosm_pubsub.chain import Chain
 
 
+def yes(value):
+    return True
+
+
+def not_none(value):
+    return value is not None
+
+
 class ForEachStatement:
     def __init__(self, key, list_key=None):
         self.key = key
         self.items = None
         self.chain = None
         self.list_key = list_key or f"{self.key}_list"
+        self.filter_func = yes
 
     def __str__(self):
         return f"for_{self.key}"
@@ -23,22 +32,30 @@ class ForEachStatement:
         self.list_key = list_key
         return self
 
+    def when(self, filter_func):
+        self.filter_func = filter_func
+        return self
+
+    def when_not_none(self):
+        return self.when(not_none)
+
     def do(self, *args, **kwargs):
         self.chain = Chain.make(*args, **kwargs)
         return self
 
     def __call__(self, context):
-        responses = [
+        values = [
             self.chain(context.local(**{
                 self.key: item,
             }))
             for item in context[self.items]
         ]
 
-        # Set the responses in the context
-        context[self.list_key] = responses
+        filtered_values = list(filter(self.filter_func, values))
 
-        return responses
+        # Set the responses in the context
+        context[self.list_key] = filtered_values
+        return filtered_values
 
 
 def for_each(key):
