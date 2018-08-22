@@ -6,20 +6,21 @@ from microcosm_pubsub.chain import Chain
 
 
 class ForEachStatement:
-    def __init__(self, key):
+    def __init__(self, key, list_key=None):
         self.key = key
         self.items = None
         self.chain = None
+        self.list_key = list_key or f"{self.key}_list"
 
     def __str__(self):
         return f"for_{self.key}"
 
-    @property
-    def list_key(self):
-        return f"{self.key}_list"
-
     def in_(self, items):
         self.items = items
+        return self
+
+    def as_(self, list_key):
+        self.list_key = list_key
         return self
 
     def do(self, *args, **kwargs):

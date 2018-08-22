@@ -28,8 +28,8 @@ def test_for_each_simplified():
     chain = Chain(
         for_each("item").in_("items").do(
             lambda item: item.upper(),
-        ),
-        lambda item_list: list(reversed(item_list)),
+        ).as_("lst"),
+        lambda lst: list(reversed(lst)),
     )
 
     assert_that(
