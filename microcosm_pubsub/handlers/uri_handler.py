@@ -127,7 +127,7 @@ class URIHandler:
         return response.json()
 
     def convert_resource(self, resource):
-        if isinstance(resource, self.resource_type):
+        if isinstance(self.resource_type, type) and isinstance(resource, self.resource_type):
             return resource
         return self.resource_type(**resource)
 
