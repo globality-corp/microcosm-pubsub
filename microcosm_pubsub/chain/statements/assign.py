@@ -2,31 +2,17 @@
 assign("foo.bar").to("baz")
 
 """
+from inspect import getfullargspec
 
 
-class AssignStatement:
-    """
-    Assign `this` value as `that`.
+class Reference:
 
-    """
-    def __init__(self, this, that=None):
-        self.parts = this.split(".")
-        self.that = that
-
-    def to(self, that):
-        self.that = that
-        return self
+    def __init__(self, name):
+        self.parts = name.split(".")
 
     @property
     def key(self):
         return self.parts[0]
-
-    @property
-    def name(self):
-        return self.that
-
-    def __str__(self):
-        return f"assign_{self.name}"
 
     def __call__(self, context):
         value = context[self.key]
@@ -37,12 +23,67 @@ class AssignStatement:
             else:
                 value = value[part]
 
+        return value
+
+
+class Constant:
+
+    def __init__(self, value):
+        self.value = value
+
+    def __call__(self, context):
+        return self.value
+
+
+class Function:
+
+    def __init__(self, func):
+        self.func = func
+        self.argspec = getfullargspec(func)
+
+    def __call__(self, context):
+        if self.argspec.args:
+            return self.func(context)
+        else:
+            return self.func()
+
+
+class AssignStatement:
+    """
+    Assign `this` value as `that`.
+
+    """
+    def __init__(self, this, that=None):
+        self.this = this
+        self.that = that
+
+    def to(self, that):
+        self.that = that
+        return self
+
+    @property
+    def name(self):
+        return self.that
+
+    def __str__(self):
+        return f"assign_{self.name}"
+
+    def __call__(self, context):
+        value = self.this(context)
         context[self.name] = value
         return value
 
 
 def assign(this):
-    return AssignStatement(this)
+    return AssignStatement(Reference(this))
+
+
+def assign_constant(this):
+    return AssignStatement(Constant(this))
+
+
+def assign_function(this):
+    return AssignStatement(Function(this))
 
 
 def extract(name, key, key_property=None):
@@ -57,4 +98,4 @@ def extract(name, key, key_property=None):
     if key_property:
         key = ".".join([key, key_property])
 
-    return AssignStatement(key, name)
+    return AssignStatement(Reference(key), name)

@@ -8,6 +8,8 @@ from hamcrest import (
 from microcosm_pubsub.chain import Chain
 from microcosm_pubsub.chain.statements import (
     assign,
+    assign_constant,
+    assign_function,
     extract,
 )
 
@@ -90,4 +92,50 @@ def test_assign_attribute():
     assert_that(
         chain(arg=dict()),
         is_(equal_to(dict)),
+    )
+
+
+def test_assign_constant():
+    chain = Chain(
+        assign_constant("arg").to("param"),
+    )
+    assert_that(
+        chain(),
+        is_(equal_to("arg")),
+    )
+
+
+def test_assign_function_with_context_arg():
+    def func(context):
+        return "value"
+
+    chain = Chain(
+        assign_function(func).to("param"),
+    )
+    assert_that(
+        chain(),
+        is_(equal_to("value")),
+    )
+
+
+def test_assign_function_with_context_kwarg():
+    def func(context=None):
+        return "value"
+
+    chain = Chain(
+        assign_function(func).to("param"),
+    )
+    assert_that(
+        chain(),
+        is_(equal_to("value")),
+    )
+
+
+def test_assign_function_with_noargs():
+    chain = Chain(
+        assign_function(lambda: dict()).to("param"),
+    )
+    assert_that(
+        chain(),
+        is_(equal_to(dict())),
     )
