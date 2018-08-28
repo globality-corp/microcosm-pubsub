@@ -39,10 +39,21 @@ class Function:
 
     def __init__(self, func):
         self.func = func
-        self.argspec = getfullargspec(func)
+        try:
+            self.args = getfullargspec(func).args
+        except TypeError:
+            # NB: getfullargspec fails for builtins like 'dict'
+            #
+            # And oddly `inspect.isbuiltin` doesn't work as expected either. We could instead
+            # check `func.__module__ == 'builtins'` but that feels more fragile than just assuming
+            # an error indictates a builtin... and that a builtin won't take our 'context' argument
+            # in any useful way.
+            #
+            # See: https://bugs.python.org/issue1748064
+            self.args = ()
 
     def __call__(self, context):
-        if self.argspec.args:
+        if self.args:
             return self.func(context)
         else:
             return self.func()

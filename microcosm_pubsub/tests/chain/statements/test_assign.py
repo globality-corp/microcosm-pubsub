@@ -139,3 +139,13 @@ def test_assign_function_with_noargs():
         chain(),
         is_(equal_to(dict())),
     )
+
+
+def test_assign_function_with_builtin():
+    chain = Chain(
+        assign_function(dict).to("param"),
+    )
+    assert_that(
+        chain(),
+        is_(equal_to(dict())),
+    )
