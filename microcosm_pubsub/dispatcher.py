@@ -27,7 +27,7 @@ class SQSMessageDispatcher:
         self.sqs_message_context = self._find_sqs_message_context(graph)
         self.sqs_message_handler_registry = graph.sqs_message_handler_registry
         self.enable_ttl = graph.config.sqs_message_context.enable_ttl
-        self.initial_ttl = int(graph.config.sqs_message_context.initial_ttl)
+        self.initial_ttl = graph.config.sqs_message_context.initial_ttl
 
     def _find_sqs_message_context(self, graph):
         try:

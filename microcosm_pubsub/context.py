@@ -3,7 +3,7 @@ Message context.
 
 """
 
-from microcosm.api import defaults
+from microcosm.api import defaults, typed
 
 
 def sqs_message_context(message_dct, **kwargs):
@@ -18,8 +18,8 @@ def sqs_message_context(message_dct, **kwargs):
 
 
 @defaults(
-    enable_ttl=True,
-    initial_ttl=32,
+    enable_ttl=typed(bool, default_value=True),
+    initial_ttl=typed(int, default_value=32),
 )
 def configure_sqs_message_context(graph):
     """
