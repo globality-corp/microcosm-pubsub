@@ -91,7 +91,7 @@ class SQSMessageDispatcher:
                 if ttl == -1:
                     self.logger.warning(
                         f"Error handling SQS message: {media_type} - TTL expired",
-                        extra=extra
+                        extra=extra,
                     )
                     raise TTLExpired(extra=extra)
                 content["X-Request-TTL"] = ttl
