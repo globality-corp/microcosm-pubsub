@@ -4,6 +4,7 @@ Message context.
 """
 
 from microcosm.api import defaults, typed
+from microcosm.config.types import boolean
 
 
 def sqs_message_context(message_dct, **kwargs):
@@ -18,7 +19,7 @@ def sqs_message_context(message_dct, **kwargs):
 
 
 @defaults(
-    enable_ttl=typed(bool, default_value=True),
+    enable_ttl=typed(boolean, default_value=True),
     initial_ttl=typed(int, default_value=32),
 )
 def configure_sqs_message_context(graph):
