@@ -8,7 +8,7 @@ from inflection import titleize
 from microcosm.errors import NotBoundError
 from microcosm_logging.decorators import context_logger, logger
 
-from microcosm_pubsub.errors import Nack, SkipMessage
+from microcosm_pubsub.errors import Nack, SkipMessage, TTLExpired
 from microcosm_logging.timing import elapsed_time
 
 
@@ -26,6 +26,8 @@ class SQSMessageDispatcher:
         self.sqs_consumer = graph.sqs_consumer
         self.sqs_message_context = self._find_sqs_message_context(graph)
         self.sqs_message_handler_registry = graph.sqs_message_handler_registry
+        self.enable_ttl = graph.config.sqs_message_context.enable_ttl
+        self.initial_ttl = graph.config.sqs_message_context.initial_ttl
 
     def _find_sqs_message_context(self, graph):
         try:
@@ -83,6 +85,17 @@ class SQSMessageDispatcher:
                 handler=titleize(handler.__class__.__name__),
                 uri=content.get("uri"),
             ))
+
+            if self.enable_ttl:
+                ttl = content.get("X-Request-TTL", self.initial_ttl) - 1
+                if ttl == -1:
+                    self.logger.warning(
+                        f"Error handling SQS message: {media_type} - TTL expired",
+                        extra=extra,
+                    )
+                    raise TTLExpired(extra=extra)
+                content["X-Request-TTL"] = ttl
+
             with elapsed_time(extra):
                 result = self.invoke_handler(handler, media_type, content)
             self.logger.info(
@@ -120,7 +133,7 @@ class SQSMessageDispatcher:
                 ),
                 extra=self.sqs_message_context(content)
             )
-            raise
+            raise TTLExpired()
         except Exception as error:
             logger.warning(
                 "Error handling SQS message: {}".format(
