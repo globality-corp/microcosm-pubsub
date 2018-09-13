@@ -3,6 +3,9 @@ Message context.
 
 """
 
+from microcosm.api import defaults, typed
+from microcosm.config.types import boolean
+
 
 def sqs_message_context(message_dct, **kwargs):
     context = message_dct.get("opaque_data", dict())
@@ -15,6 +18,10 @@ def sqs_message_context(message_dct, **kwargs):
     return context
 
 
+@defaults(
+    enable_ttl=typed(boolean, default_value=True),
+    initial_ttl=typed(int, default_value=32),
+)
 def configure_sqs_message_context(graph):
     """
     Configure the message context function which controls what data you want to associate
