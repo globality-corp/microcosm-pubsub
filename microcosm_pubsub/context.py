@@ -5,17 +5,45 @@ Message context.
 
 from microcosm.api import defaults, typed
 from microcosm.config.types import boolean
+from microcosm_logging.decorators import logger
+
+from microcosm_pubsub.errors import TTLExpired
 
 
-def sqs_message_context(message_dct, **kwargs):
-    context = message_dct.get("opaque_data", dict())
+@logger
+class SQSMessageContext:
+    """
+    The message context controls what data you want to associate
+    with your daemon handler context, e.g. some combination of keys from the message or
+    additional metadata fetched from elsewhere.
 
-    # If there is a uri add it to the context
-    if message_dct.get("uri"):
-        context["uri"] = message_dct.get("uri")
+    """
+    def __init__(self, graph):
+        self.enable_ttl = graph.config.sqs_message_context.enable_ttl
+        self.initial_ttl = graph.config.sqs_message_context.initial_ttl
 
-    context.update(**kwargs)
-    return context
+    def __call__(self, message_dct, **kwargs):
+        context = message_dct.get("opaque_data", dict())
+
+        # If there is a uri add it to the context
+        if message_dct.get("uri"):
+            context["uri"] = message_dct.get("uri")
+
+        if self.enable_ttl:
+            try:
+                ttl = int(context["X-Request-Ttl"])
+            except KeyError:
+                ttl = self.initial_ttl
+            if ttl == 0:
+                self.logger.warning(
+                    "Error handling SQS message - TTL expired",
+                    extra=context,
+                )
+                raise TTLExpired(extra=context)
+            context["X-Request-Ttl"] = str(ttl - 1)
+
+        context.update(**kwargs)
+        return context
 
 
 @defaults(
@@ -24,12 +52,10 @@ def sqs_message_context(message_dct, **kwargs):
 )
 def configure_sqs_message_context(graph):
     """
-    Configure the message context function which controls what data you want to associate
-    with your daemon handler context, e.g. some combination of keys from the message or
-    additional metadata fetched from elsewhere.
+    Configure the message context object.
 
     Usage:
         graph.message_context()
 
     """
-    return sqs_message_context
+    return SQSMessageContext(graph)
