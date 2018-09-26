@@ -69,7 +69,7 @@ class URIHandler:
             return False
 
     def on_call(self, message, uri):
-        self.logger.debug(
+        self.logger.info(
             "Starting {handler}",
             extra=dict(
                 handler=self.name,
@@ -88,7 +88,7 @@ class URIHandler:
         )
 
     def on_handle(self, message, uri, resource):
-        self.logger.debug(
+        self.logger.info(
             "Handled {handler}",
             extra=dict(
                 handler=self.name,
