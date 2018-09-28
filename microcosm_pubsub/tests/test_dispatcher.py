@@ -74,7 +74,9 @@ def test_handle_with_no_context():
     )
 
     assert_that(result, is_(equal_to(True)))
-    assert_that(graph.sqs_message_dispatcher.sqs_message_context(content), is_(equal_to(dict())))
+    assert_that(graph.sqs_message_dispatcher.sqs_message_context(content), is_(equal_to({
+        "X-Request-Ttl": "31",
+    })))
 
 
 def test_handle_with_skipping():

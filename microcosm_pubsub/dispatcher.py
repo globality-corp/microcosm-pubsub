@@ -5,7 +5,6 @@ Process batches of messages.
 from collections import namedtuple
 from inflection import titleize
 
-from microcosm.errors import NotBoundError
 from microcosm_logging.decorators import context_logger, logger
 
 from microcosm_pubsub.errors import Nack, SkipMessage, TTLExpired
@@ -24,18 +23,10 @@ class SQSMessageDispatcher:
     def __init__(self, graph):
         self.opaque = graph.opaque
         self.sqs_consumer = graph.sqs_consumer
-        self.sqs_message_context = self._find_sqs_message_context(graph)
+        self.sqs_message_context = graph.sqs_message_context
         self.sqs_message_handler_registry = graph.sqs_message_handler_registry
         self.enable_ttl = graph.config.sqs_message_context.enable_ttl
         self.initial_ttl = graph.config.sqs_message_context.initial_ttl
-
-    def _find_sqs_message_context(self, graph):
-        try:
-            return graph.sqs_message_context
-        except NotBoundError:
-            def context(message):
-                return dict()
-            return context
 
     def handle_batch(self, bound_handlers):
         """
