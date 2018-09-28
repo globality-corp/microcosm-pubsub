@@ -25,10 +25,18 @@ class SQSMessageContext:
     def __call__(self, message_dct, **kwargs):
         context = message_dct.get("opaque_data", dict())
 
+        self.update_context_uri(context, message_dct)
+        self.update_context_ttl(context)
+
+        context.update(**kwargs)
+        return context
+
+    def update_context_uri(self, context, message_dct):
         # If there is a uri add it to the context
         if message_dct.get("uri"):
             context["uri"] = message_dct.get("uri")
 
+    def update_context_ttl(self, context):
         if self.enable_ttl:
             try:
                 ttl = int(context["X-Request-Ttl"])
@@ -41,9 +49,6 @@ class SQSMessageContext:
                 )
                 raise TTLExpired(extra=context)
             context["X-Request-Ttl"] = str(ttl - 1)
-
-        context.update(**kwargs)
-        return context
 
 
 @defaults(
