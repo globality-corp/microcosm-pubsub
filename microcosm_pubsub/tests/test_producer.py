@@ -233,6 +233,55 @@ def test_deferred_batch_production():
         assert_that(graph.sns_producer.sns_client.publish.call_count, is_(equal_to(0)))
 
     assert_that(graph.sns_producer.sns_client.publish.call_count, is_(equal_to(1)))
+    assert_that(
+        loads(graph.sns_producer.sns_client.publish.call_args[1]["Message"])["mediaType"],
+        is_(equal_to("application/vnd.globality.pubsub._.created.batch_message")),
+    )
+
+
+def test_deferred_batch_with_single_message():
+    def loader(metadata):
+        return dict(
+            sns_topic_arns=dict(
+                default="topic",
+                mappings={
+                    MessageBatchSchema.MEDIA_TYPE: "batch-topic",
+                },
+            )
+        )
+
+    graph = create_object_graph("example", testing=True, loader=loader)
+    graph.use("opaque")
+
+    with DeferredBatchProducer(graph.sns_producer) as producer:
+        assert_that(producer.produce(DerivedSchema.MEDIA_TYPE, data="data"), is_(none()))
+        assert_that(graph.sns_producer.sns_client.publish.call_count, is_(equal_to(0)))
+
+    assert_that(graph.sns_producer.sns_client.publish.call_count, is_(equal_to(1)))
+    assert_that(
+        loads(graph.sns_producer.sns_client.publish.call_args[1]["Message"])["mediaType"],
+        is_(equal_to("application/vnd.microcosm.derived")),
+    )
+
+
+def test_deferred_batch_with_no_message():
+    def loader(metadata):
+        return dict(
+            sns_topic_arns=dict(
+                default="topic",
+                mappings={
+                    MessageBatchSchema.MEDIA_TYPE: "batch-topic",
+                },
+            )
+        )
+
+    graph = create_object_graph("example", testing=True, loader=loader)
+    graph.use("opaque")
+
+    with DeferredBatchProducer(graph.sns_producer):
+        pass
+
+    assert_that(graph.sns_producer.sns_client.publish.call_count, is_(equal_to(0)))
 
 
 def test_publish_batch_with_no_topic_fails():
