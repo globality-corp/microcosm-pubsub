@@ -136,10 +136,13 @@ class DeferredBatchProducer(DeferredProducer):
             for media_type, message, topic_arn, opaque_data in self.messages
         ]
 
-        self.producer.produce(
-            MessageBatchSchema.MEDIA_TYPE,
-            messages=messages,
-        )
+        if len(messages) > 1:
+            self.producer.produce(
+                MessageBatchSchema.MEDIA_TYPE,
+                messages=messages,
+            )
+        elif len(messages) == 1:
+            self.producer.publish_message(**messages[0])
 
 
 def deferred(component, key="sns_producer"):
