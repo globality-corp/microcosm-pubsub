@@ -32,10 +32,15 @@ class URIHandler:
     """
     __metaclass__ = ABCMeta
 
-    def __init__(self, graph, nack_timeout=1, resource_nack_timeout=1):
+    def __init__(self, graph, retry_nack_timeout=1, resource_nack_timeout=1):
         self.sqs_message_context = graph.sqs_message_context
-        self.nack_timeout = nack_timeout
+        self.retry_nack_timeout = retry_nack_timeout
         self.resource_nack_timeout = resource_nack_timeout
+
+    @property
+    def nack_timeout(self):
+        """Deprecated, use retry_nack_timeout"""
+        return self.retry_nack_timeout
 
     @property
     def name(self):
