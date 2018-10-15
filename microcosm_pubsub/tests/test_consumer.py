@@ -10,10 +10,7 @@ from hamcrest import (
     is_,
     has_length,
 )
-from mock import patch
 
-from microcosm_pubsub.errors import Nack
-from microcosm_pubsub.message import SQSMessage
 from microcosm_pubsub.tests.fixtures import DerivedSchema, ExampleDaemon
 
 
@@ -61,99 +58,3 @@ def test_consume():
         data="data",
         media_type=DerivedSchema.MEDIA_TYPE,
     ))))
-
-
-def test_nack_without_visibility_timeout():
-    """
-    Consumer passes
-
-    """
-    graph = ExampleDaemon.create_for_testing().graph
-    message = SQSMessage(
-        consumer=graph.sqs_consumer,
-        content=None,
-        media_type=DerivedSchema.MEDIA_TYPE,
-        message_id=MESSAGE_ID,
-        receipt_handle=RECEIPT_HANDLE,
-    )
-    message.nack()
-    graph.sqs_consumer.sqs_client.change_message_visibility.assert_not_called()
-
-
-def test_nack_with_visibility_timeout():
-    """
-    Consumer delegates to SQS client with visibility timeout
-
-    """
-    message_retry_visibility_timeout_seconds = 2
-    graph = ExampleDaemon.create_for_testing().graph
-    message = SQSMessage(
-        consumer=graph.sqs_consumer,
-        content=None,
-        media_type=DerivedSchema.MEDIA_TYPE,
-        message_id=MESSAGE_ID,
-        receipt_handle=RECEIPT_HANDLE,
-    )
-    with patch.object(
-        graph.sqs_consumer.backoff_policy,
-        "message_retry_visibility_timeout_seconds",
-        message_retry_visibility_timeout_seconds,
-    ):
-        message.nack()
-        graph.sqs_consumer.sqs_client.change_message_visibility.assert_called_with(
-            QueueUrl="queue",
-            ReceiptHandle=RECEIPT_HANDLE,
-            VisibilityTimeout=message_retry_visibility_timeout_seconds,
-        )
-
-
-def test_nack_with_visibility_timeout_via_exception():
-    """
-    Consumer raises Nack; calls nack with visibility timeout
-
-    """
-    message_retry_visibility_timeout_seconds = 2
-    graph = ExampleDaemon.create_for_testing().graph
-    message = SQSMessage(
-        consumer=graph.sqs_consumer,
-        content=None,
-        media_type=DerivedSchema.MEDIA_TYPE,
-        message_id=MESSAGE_ID,
-        receipt_handle=RECEIPT_HANDLE,
-    )
-    with patch.object(
-        graph.sqs_consumer.backoff_policy,
-        "message_retry_visibility_timeout_seconds",
-        message_retry_visibility_timeout_seconds,
-    ):
-        try:
-            with message:
-                raise Nack(message_retry_visibility_timeout_seconds)
-        except Nack:
-            pass
-
-    graph.sqs_consumer.sqs_client.change_message_visibility.assert_called_with(
-        QueueUrl="queue",
-        ReceiptHandle=RECEIPT_HANDLE,
-        VisibilityTimeout=message_retry_visibility_timeout_seconds,
-    )
-
-
-def test_ack():
-    """
-    Consumer delegates to SQS client.
-
-    """
-    graph = ExampleDaemon.create_for_testing().graph
-    message = SQSMessage(
-        consumer=graph.sqs_consumer,
-        content=None,
-        media_type=DerivedSchema.MEDIA_TYPE,
-        message_id=MESSAGE_ID,
-        receipt_handle=RECEIPT_HANDLE,
-    )
-    message.ack()
-    graph.sqs_consumer.sqs_client.delete_message.assert_called_with(
-        QueueUrl="queue",
-        ReceiptHandle=RECEIPT_HANDLE,
-    )

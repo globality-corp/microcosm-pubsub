@@ -2,16 +2,14 @@
 Process batches of messages.
 
 """
-from collections import namedtuple
 from inflection import titleize
+from typing import List
 
 from microcosm_logging.decorators import context_logger, logger
-
-from microcosm_pubsub.errors import Nack, SkipMessage, TTLExpired
 from microcosm_logging.timing import elapsed_time
 
-
-DispatchResult = namedtuple("DispatchResult", ["message_count", "error_count", "ignore_count"])
+from microcosm_pubsub.errors import Nack, SkipMessage, TTLExpired
+from microcosm_pubsub.result import MessageHandlingResult
 
 
 @logger
@@ -28,27 +26,19 @@ class SQSMessageDispatcher:
         self.enable_ttl = graph.config.sqs_message_context.enable_ttl
         self.initial_ttl = graph.config.sqs_message_context.initial_ttl
 
-    def handle_batch(self, bound_handlers):
+    def handle_batch(self, bound_handlers) -> List[MessageHandlingResult]:
         """
         Send a batch of messages to a function.
 
-        :returns: a `DispatchResult` with metrics around message consumption
         """
-        message_count = error_count = ignore_count = 0
-        for message in self.sqs_consumer.consume():
-            message_count += 1
-            try:
-                with message:
-                    handled = self.handle_message(
-                        message=message,
-                        bound_handlers=bound_handlers,
-                    )
-                    if not handled:
-                        ignore_count += 1
-            except Exception:
-                error_count += 1
-
-        return DispatchResult(message_count, error_count, ignore_count)
+        return [
+            MessageHandlingResult.invoke(
+                func=self.handle_message,
+                message=message,
+                bound_handlers=bound_handlers
+            )
+            for message in self.sqs_consumer.consume()
+        ]
 
     def handle_message(self, message, bound_handlers):
         """

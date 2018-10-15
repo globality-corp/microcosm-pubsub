@@ -86,8 +86,8 @@ class ConsumerDaemon(Daemon):
         Implement daemon by sinking messages from the consumer to a dispatcher function.
 
         """
-        result = graph.sqs_message_dispatcher.handle_batch(self.bound_handlers)
-        if not result.message_count:
+        results = graph.sqs_message_dispatcher.handle_batch(self.bound_handlers)
+        if not results:
             raise SleepNow()
 
     @classmethod

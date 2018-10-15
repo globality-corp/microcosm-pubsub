@@ -2,6 +2,8 @@
 Dispatcher tests.
 
 """
+from unittest.mock import Mock
+
 from hamcrest import (
     assert_that,
     calling,
@@ -9,7 +11,6 @@ from hamcrest import (
     is_,
     raises,
 )
-from mock import Mock
 
 from microcosm_pubsub.conventions import created
 from microcosm_pubsub.message import SQSMessage

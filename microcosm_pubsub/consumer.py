@@ -77,13 +77,29 @@ class SQSConsumer:
         """
         Acknowledge that a message was NOT processed successfully.
 
-        Sets the visibility timeout if present
+        (Re)sets the retry visibility timeout on the message.
+
+        There are three cases here:
+         1.  We raised `Nack`; in this case, we explicitly wish to reprocess the message in the
+             near future; setting the visibility timeout is the right thing to do.
+
+         2a. We raised some non-`Nack` error and the `BackoffPolicy` HAS a configured value for its
+             `message_retry_visibility_timeout_seconds` meaning an operator has chosen to reprocess
+             all messages within that time limit; setting the visibility timeout is the right thing to do.
+
+         2b. We raised some non-`Nack` error and the `BackoffPolicy` DOES NOT HAVE a configured value for its
+             `message_retry_visibility_timeout_seconds` config meaning that the system will fallback to
+             its default behavior. We can either fallback to the SQS queue default (usually 30s) -- meaning
+             not setting the visibility timeout -- or we can enforce a default in this library -- using
+             the sqs consumer's config and override the SQS queue's visibility with a known, smallish value.
+
+             We choose the latter under the assumption that 30s is too long to reprocess most messages
+             as a defult and that long-running handlers will be configured accordingly (see: 2a).
+
+        Therefore: we always invoke `change_message_visibility`
 
         """
         timeout = self.backoff_policy.compute_backoff_timeout(message, visibility_timeout_seconds)
-        if timeout is None:
-            return
-
         self.sqs_client.change_message_visibility(
             QueueUrl=self.sqs_queue_url,
             ReceiptHandle=message.receipt_handle,
@@ -113,8 +129,8 @@ def configure_sqs_client(graph):
     limit=typed(int, default_value=10),
     # SQS will only return a few messages at time unless long polling is enabled (>0)
     wait_seconds=typed(int, default_value=1),
-    # By default, don't change message visibility when nacking with unspecified timeout
-    message_retry_visibility_timeout_seconds=typed(int, default_value=None)
+    # On error, change the visibility timeout when nacking
+    message_retry_visibility_timeout_seconds=typed(int, default_value=5)
 )
 def configure_sqs_consumer(graph):
     """
@@ -124,7 +140,7 @@ def configure_sqs_consumer(graph):
     sqs_queue_url = graph.config.sqs_consumer.sqs_queue_url
 
     if graph.metadata.testing or sqs_queue_url == "test":
-        from mock import MagicMock
+        from unittest.mock import MagicMock
         sqs_client = MagicMock()
     elif sqs_queue_url == STDIN:
         sqs_client = SQSStdInReader()

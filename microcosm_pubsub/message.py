@@ -2,7 +2,6 @@
 A single SQS message.
 
 """
-from microcosm_pubsub.errors import Nack
 
 
 class SQSMessage:
@@ -39,14 +38,3 @@ class SQSMessage:
 
         """
         self.consumer.nack(self, visibility_timeout_seconds)
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, type, value, traceback):
-        if type is None:
-            self.ack()
-        elif isinstance(value, Nack):
-            self.nack(value.visibility_timeout_seconds)
-        else:
-            self.nack()
