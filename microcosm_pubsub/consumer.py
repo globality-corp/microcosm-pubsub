@@ -6,7 +6,7 @@ from os.path import exists
 from urllib.parse import urlparse
 
 from boto3 import Session
-from microcosm.api import defaults
+from microcosm.api import defaults, typed
 
 from microcosm_pubsub.backoff import BackoffPolicy
 from microcosm_pubsub.reader import SQSFileReader, SQSStdInReader
@@ -110,11 +110,11 @@ def configure_sqs_client(graph):
     # backoff policy
     backoff_policy="NaiveBackoffPolicy",
     # SQS will not return more than ten messages at a time
-    limit=10,
+    limit=typed(int, default_value=10),
     # SQS will only return a few messages at time unless long polling is enabled (>0)
-    wait_seconds=1,
-    # By default, don't change message visibility on nack
-    visibility_timeout_seconds=None,
+    wait_seconds=typed(int, default_value=1),
+    # By default, don't change message visibility when nacking with unspecified timeout
+    message_retry_visibility_timeout_seconds=typed(int, default_value=None)
 )
 def configure_sqs_consumer(graph):
     """
@@ -122,12 +122,6 @@ def configure_sqs_consumer(graph):
 
     """
     sqs_queue_url = graph.config.sqs_consumer.sqs_queue_url
-
-    limit = int(graph.config.sqs_consumer.limit)
-    wait_seconds = int(graph.config.sqs_consumer.wait_seconds)
-    visibility_timeout_seconds = graph.config.sqs_consumer.visibility_timeout_seconds
-    if visibility_timeout_seconds:
-        visibility_timeout_seconds = int(visibility_timeout_seconds)
 
     if graph.metadata.testing or sqs_queue_url == "test":
         from mock import MagicMock
@@ -144,14 +138,14 @@ def configure_sqs_consumer(graph):
     )
 
     backoff_policy = backoff_policy_class(
-        visibility_timeout_seconds=visibility_timeout_seconds,
+        message_retry_visibility_timeout_seconds=graph.config.sqs_consumer.message_retry_visibility_timeout_seconds,
     )
 
     return SQSConsumer(
+        backoff_policy=backoff_policy,
+        limit=graph.config.sqs_consumer.limit,
         sqs_client=sqs_client,
         sqs_envelope=graph.sqs_envelope,
         sqs_queue_url=sqs_queue_url,
-        limit=limit,
-        wait_seconds=wait_seconds,
-        backoff_policy=backoff_policy,
+        wait_seconds=graph.config.sqs_consumer.wait_seconds,
     )

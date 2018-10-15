@@ -12,8 +12,8 @@ MAX_BACKOFF_TIMEOUT = 60 * 60 * 12
 
 class BackoffPolicy(metaclass=ABCMeta):
 
-    def __init__(self, visibility_timeout_seconds=None):
-        self.visibility_timeout_seconds = visibility_timeout_seconds
+    def __init__(self, message_retry_visibility_timeout_seconds=None):
+        self.message_retry_visibility_timeout_seconds = message_retry_visibility_timeout_seconds
 
     @abstractmethod
     def compute_backoff_timeout(self, message, message_timeout):
@@ -35,7 +35,7 @@ class NaiveBackoffPolicy(BackoffPolicy):
 
     """
     def compute_backoff_timeout(self, message, message_timeout):
-        backoff_timeout = message_timeout or self.visibility_timeout_seconds
+        backoff_timeout = message_timeout or self.message_retry_visibility_timeout_seconds
         # we can only set integer timeouts
         return int(backoff_timeout) if backoff_timeout is not None else backoff_timeout
 
@@ -44,7 +44,7 @@ class ExponentialBackoffPolicy(BackoffPolicy):
     """
     Exponential backoff policy.
 
-    Uses a timeout scaled between 1 and an expontential limit.
+    Uses a timeout scaled between 1 and an exponential limit.
 
     """
     def compute_backoff_timeout(self, message, message_timeout):
