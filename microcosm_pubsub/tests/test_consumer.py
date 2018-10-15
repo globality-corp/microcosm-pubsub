@@ -85,7 +85,7 @@ def test_nack_with_visibility_timeout():
     Consumer delegates to SQS client with visibility timeout
 
     """
-    visibility_timeout_seconds = 2
+    message_retry_visibility_timeout_seconds = 2
     graph = ExampleDaemon.create_for_testing().graph
     message = SQSMessage(
         consumer=graph.sqs_consumer,
@@ -94,12 +94,16 @@ def test_nack_with_visibility_timeout():
         message_id=MESSAGE_ID,
         receipt_handle=RECEIPT_HANDLE,
     )
-    with patch.object(graph.sqs_consumer.backoff_policy, "visibility_timeout_seconds", visibility_timeout_seconds):
+    with patch.object(
+        graph.sqs_consumer.backoff_policy,
+        "message_retry_visibility_timeout_seconds",
+        message_retry_visibility_timeout_seconds,
+    ):
         message.nack()
         graph.sqs_consumer.sqs_client.change_message_visibility.assert_called_with(
             QueueUrl="queue",
             ReceiptHandle=RECEIPT_HANDLE,
-            VisibilityTimeout=visibility_timeout_seconds,
+            VisibilityTimeout=message_retry_visibility_timeout_seconds,
         )
 
 
@@ -108,7 +112,7 @@ def test_nack_with_visibility_timeout_via_exception():
     Consumer raises Nack; calls nack with visibility timeout
 
     """
-    visibility_timeout_seconds = 2
+    message_retry_visibility_timeout_seconds = 2
     graph = ExampleDaemon.create_for_testing().graph
     message = SQSMessage(
         consumer=graph.sqs_consumer,
@@ -117,17 +121,21 @@ def test_nack_with_visibility_timeout_via_exception():
         message_id=MESSAGE_ID,
         receipt_handle=RECEIPT_HANDLE,
     )
-    with patch.object(graph.sqs_consumer.backoff_policy, "visibility_timeout_seconds", visibility_timeout_seconds):
+    with patch.object(
+        graph.sqs_consumer.backoff_policy,
+        "message_retry_visibility_timeout_seconds",
+        message_retry_visibility_timeout_seconds,
+    ):
         try:
             with message:
-                raise Nack(visibility_timeout_seconds)
+                raise Nack(message_retry_visibility_timeout_seconds)
         except Nack:
             pass
 
     graph.sqs_consumer.sqs_client.change_message_visibility.assert_called_with(
         QueueUrl="queue",
         ReceiptHandle=RECEIPT_HANDLE,
-        VisibilityTimeout=visibility_timeout_seconds,
+        VisibilityTimeout=message_retry_visibility_timeout_seconds,
     )
 
 
