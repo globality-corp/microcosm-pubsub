@@ -6,11 +6,14 @@ from unittest.mock import Mock
 
 from hamcrest import (
     assert_that,
+    calling,
     equal_to,
     is_,
+    raises,
 )
 
 from microcosm_pubsub.conventions import created
+from microcosm_pubsub.errors import IgnoreMessage
 from microcosm_pubsub.message import SQSMessage
 from microcosm_pubsub.tests.fixtures import (
     ExampleDaemon,
@@ -77,23 +80,25 @@ def test_handle_with_no_context():
     })))
 
 
-def test_handle_with_skipping():
+def test_handle_unsupported_media_type():
     """
-    Test that skipping works
+    Unsupported media types are ignored.
 
     """
     daemon = ExampleDaemon.create_for_testing()
     graph = daemon.graph
 
     content = dict(bar="baz")
-    result = graph.sqs_message_dispatcher.handle_message(
-        message=SQSMessage(
-            consumer=None,
-            content=content,
-            media_type=created("bar"),
-            message_id=MESSAGE_ID,
-            receipt_handle=None,
+    assert_that(
+        calling(graph.sqs_message_dispatcher.handle_message).with_args(
+            message=SQSMessage(
+                consumer=None,
+                content=content,
+                media_type=created("bar"),
+                message_id=MESSAGE_ID,
+                receipt_handle=None,
+            ),
+            bound_handlers=daemon.bound_handlers,
         ),
-        bound_handlers=daemon.bound_handlers,
+        raises(IgnoreMessage),
     )
-    assert_that(result, is_(equal_to(False)))

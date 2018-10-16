@@ -7,7 +7,7 @@ from hamcrest import (
     has_properties,
 )
 
-from microcosm_pubsub.errors import Nack, SkipMessage
+from microcosm_pubsub.errors import IgnoreMessage, Nack, SkipMessage, TTLExpired
 from microcosm_pubsub.message import SQSMessage
 from microcosm_pubsub.result import MessageHandlingResult, MessageHandlingResultType
 from microcosm_pubsub.tests.fixtures import DerivedSchema, ExampleDaemon
@@ -96,6 +96,28 @@ class TestMessageHandlingResult:
             ReceiptHandle=RECEIPT_HANDLE,
         )
 
+    def test_ignored_exception(self):
+        def func(message):
+            raise IgnoreMessage("ignorance is bliss")
+
+        result = MessageHandlingResult.invoke(
+            func=func,
+            message=self.message,
+        )
+
+        assert_that(
+            result,
+            has_properties(
+                media_type="application/vnd.microcosm.derived",
+                result=MessageHandlingResultType.IGNORED,
+            ),
+        )
+        # ack
+        self.graph.sqs_consumer.sqs_client.delete_message.assert_called_with(
+            QueueUrl="queue",
+            ReceiptHandle=RECEIPT_HANDLE,
+        )
+
     def test_retried_nack(self):
         def func(message):
             raise Nack(3)
@@ -117,6 +139,28 @@ class TestMessageHandlingResult:
             QueueUrl="queue",
             ReceiptHandle=RECEIPT_HANDLE,
             VisibilityTimeout=3,
+        )
+
+    def test_ttl_expired(self):
+        def func(message):
+            raise TTLExpired("too many attempts")
+
+        result = MessageHandlingResult.invoke(
+            func=func,
+            message=self.message,
+        )
+
+        assert_that(
+            result,
+            has_properties(
+                media_type="application/vnd.microcosm.derived",
+                result=MessageHandlingResultType.EXPIRED,
+            ),
+        )
+        # ack
+        self.graph.sqs_consumer.sqs_client.delete_message.assert_called_with(
+            QueueUrl="queue",
+            ReceiptHandle=RECEIPT_HANDLE,
         )
 
     def test_failed_exception(self):

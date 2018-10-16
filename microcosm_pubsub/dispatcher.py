@@ -8,7 +8,7 @@ from typing import List
 from microcosm_logging.decorators import context_logger, logger
 from microcosm_logging.timing import elapsed_time
 
-from microcosm_pubsub.errors import Nack, SkipMessage
+from microcosm_pubsub.errors import IgnoreMessage, Nack, SkipMessage
 from microcosm_pubsub.result import MessageHandlingResult
 
 
@@ -45,18 +45,9 @@ class SQSMessageDispatcher:
         """
         message_id = message.message_id
         media_type = message.media_type
-        content = message.content
 
-        if content is None:
-            self.logger.debug(f"Skipping message with unparsed type: {media_type}")
-            return False
-
-        try:
-            handler = self.sqs_message_handler_registry.find(media_type, bound_handlers)
-        except KeyError:
-            # no handlers
-            self.logger.debug(f"Skipping message with no registered handler: {media_type}")
-            return False
+        content = self.validate_content(message)
+        handler = self.find_handler(message, bound_handlers)
 
         with self.opaque.initialize(self.sqs_message_context, content, message_id=message_id):
             extra = self.sqs_message_context(content)
@@ -73,6 +64,31 @@ class SQSMessageDispatcher:
                 extra=extra,
             )
             return result
+
+    def validate_content(self, message):
+        """
+        Extract message content.
+
+        The `CodecMediaTypeAndContentParser` (used by the default `CodecSQSEnvelope`) will return
+        `None` for content if it doesn't have a registered media type schema. In most cases, this
+        condition will coincide with not having a registerd handler as well. Plus, we can't handle
+        absent content.
+
+        """
+        if message.content is None:
+            raise IgnoreMessage(f"Could not parse message for: {message.media_type}")
+
+        return message.content
+
+    def find_handler(self, message, bound_handlers):
+        """
+        Find the handler for a message.
+
+        """
+        try:
+            return self.sqs_message_handler_registry.find(message.media_type, bound_handlers)
+        except KeyError:
+            raise IgnoreMessage(f"No handler was registered for: {message.media_type}")
 
     def invoke_handler(self, handler, media_type, content):
         """
