@@ -26,16 +26,12 @@ class SQSMessageContext:
         self.enable_ttl = graph.config.sqs_message_context.enable_ttl
         self.initial_ttl = graph.config.sqs_message_context.initial_ttl
 
-    def __call__(self, context, **kwargs) -> Dict[str, str]:
+    def __call__(self, context: SQSMessage, **kwargs) -> Dict[str, str]:
         """
         Create a new context from a message.
 
         """
-        if isinstance(context, SQSMessage):
-            return self.from_sqs_message(context, **kwargs)
-
-        # XXX we want to remove this
-        return self.from_dict(context, **kwargs)
+        return self.from_sqs_message(context, **kwargs)
 
     def from_sqs_message(self, message, **kwargs):
         context = dict(
@@ -56,9 +52,3 @@ class SQSMessageContext:
             context[URI_KEY] = message.uri
 
         return context
-
-    def from_dict(self, dct, **kwargs):
-        return dict(
-            **dct.get("opaque_data", {}),
-            **kwargs,
-        )

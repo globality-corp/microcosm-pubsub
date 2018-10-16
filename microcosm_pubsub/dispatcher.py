@@ -9,7 +9,7 @@ from microcosm_logging.decorators import context_logger, logger
 from microcosm_logging.timing import elapsed_time
 
 from microcosm_pubsub.context import TTL_KEY
-from microcosm_pubsub.errors import IgnoreMessage, Nack, SkipMessage, TTLExpired
+from microcosm_pubsub.errors import IgnoreMessage, TTLExpired
 from microcosm_pubsub.result import MessageHandlingResult
 
 
@@ -49,7 +49,11 @@ class SQSMessageDispatcher:
                     message=message,
                     bound_handlers=bound_handlers,
                 )
+            # save elapsed time
             message_handling_result.elapsed_time = self.opaque["elapsed_time"]
+            # log handler outcome
+            logger = self.choose_logger(message.handler)
+            message_handling_result.log(logger, self.opaque)
         return message_handling_result
 
     def _handle_message(self, message, bound_handlers) -> bool:
@@ -64,13 +68,8 @@ class SQSMessageDispatcher:
         content = self.validate_content(message)
         handler = self.find_handler(message, bound_handlers)
 
-        # we might want to handle the message
-        result = self.invoke_handler(handler, message.media_type, content)
-
-        self.logger.info(
-            "Handled {handler}",
-            extra=self.opaque.as_dict(),
-        )
+        # handle the message
+        result = handler(content)
         return bool(result)
 
     def validate_ttl(self):
@@ -107,60 +106,24 @@ class SQSMessageDispatcher:
         """
         try:
             handler = self.sqs_message_handler_registry.find(message.media_type, bound_handlers)
+            # XXX awkward
+            message.handler = handler
             self.opaque["handler"] = titleize(handler.__class__.__name__)
-            return handler
-        except KeyError:
-            raise IgnoreMessage(f"No handler was registered for: {message.media_type}")
-
-    def invoke_handler(self, handler, media_type, content):
-        """
-        Invoke handler with logging and error handling.
-
-        """
-        logger = self.choose_logger(handler)
-
-        try:
-            handler_with_context = context_logger(
-                self.sqs_message_context,
+            return context_logger(
+                lambda *args, **kwargs: self.opaque,
                 handler,
                 parent=handler,
             )
-            return handler_with_context(content)
-        except SkipMessage as skipped:
-            self.opaque.update(skipped.extra)
-            logger.info(
-                "Skipping message for reason: {}".format(str(skipped)),
-                extra=self.opaque.as_dict(),
-            )
-            return False
-        except Nack:
-            logger.info(
-                "Nacking SQS message: {}".format(
-                    media_type,
-                ),
-                extra=self.opaque.as_dict(),
-            )
-            raise
-        except TTLExpired:
-            self.logger.warning(
-                "Error handling SQS message - TTL expired",
-                extra=self.opaque.as_dict(),
-            )
-            raise
-        except Exception as error:
-            logger.warning(
-                "Error handling SQS message: {}".format(
-                    media_type,
-                ),
-                exc_info=True,
-                extra=self.opaque.as_dict(),
-            )
-            raise error
+        except KeyError:
+            raise IgnoreMessage(f"No handler was registered for: {message.media_type}")
 
     def choose_logger(self, handler):
-        # NB if possible, log with the handler's logger to make it easier
-        # to tell which handler failed in the logs.
+        """
+        Choose a logger to use for handler results.
+
+        """
         try:
+            # use the handler's logger, if possible
             return handler.logger
         except AttributeError:
             return self.logger

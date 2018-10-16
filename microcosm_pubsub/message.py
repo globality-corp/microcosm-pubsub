@@ -17,7 +17,8 @@ class SQSMessage:
                  message_id,
                  receipt_handle,
                  topic_arn=None,
-                 approximate_receive_count=None):
+                 approximate_receive_count=None,
+                 handler=None):
         self.consumer = consumer
         self.content = content
         self.media_type = media_type
@@ -25,6 +26,7 @@ class SQSMessage:
         self.receipt_handle = receipt_handle
         self.topic_arn = topic_arn
         self.approximate_receive_count = approximate_receive_count
+        self.handler = handler
 
     def ack(self):
         """
