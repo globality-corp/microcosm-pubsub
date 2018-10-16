@@ -35,11 +35,12 @@ class MessageHandlingResultType(Enum):
 
 @dataclass
 class MessageHandlingResult:
+    elapsed_time: float
     media_type: str
     result: MessageHandlingResultType
 
     @classmethod
-    def invoke(cls, func, message, **kwargs):
+    def invoke(cls, func, message, opaque=None, **kwargs):
         try:
             success = func(message=message, **kwargs)
             if success:
@@ -64,6 +65,8 @@ class MessageHandlingResult:
             message.nack()
 
         return cls(
+            # XXX will not yet work because `invoke` is called outside of timing loop
+            elapsed_time=opaque.as_dict().get("elapsed_time") if opaque else None,
             media_type=message.media_type,
             result=result,
         )
