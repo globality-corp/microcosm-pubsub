@@ -5,13 +5,19 @@ Message handling result.
 from dataclasses import dataclass
 from enum import Enum, unique
 
-from microcosm_pubsub.errors import Nack, SkipMessage
+from microcosm_pubsub.errors import IgnoreMessage, Nack, SkipMessage, TTLExpired
 
 
 @unique
 class MessageHandlingResultType(Enum):
+    # Messaging handling aborted due to too many attempts.
+    EXPIRED = "EXPIRED"
+
     # Messaging handling failed.
     FAILED = "FAILED"
+
+    # Message was not handled.
+    IGNORED = "IGNORED"
 
     # Messaging handling was intentionally retried.
     RETRIED = "RETRIED"
@@ -41,8 +47,14 @@ class MessageHandlingResult:
             else:
                 result = MessageHandlingResultType.SKIPPED
             message.ack()
+        except IgnoreMessage:
+            result = MessageHandlingResultType.IGNORED
+            message.ack()
         except SkipMessage:
             result = MessageHandlingResultType.SKIPPED
+            message.ack()
+        except TTLExpired:
+            result = MessageHandlingResultType.EXPIRED
             message.ack()
         except Nack as nack:
             result = MessageHandlingResultType.RETRIED
