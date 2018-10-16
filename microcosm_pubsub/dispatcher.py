@@ -114,7 +114,7 @@ class SQSMessageDispatcher:
                 ),
                 extra=self.sqs_message_context(content)
             )
-            raise TTLExpired()
+            raise
         except Exception as error:
             logger.warning(
                 "Error handling SQS message: {}".format(
