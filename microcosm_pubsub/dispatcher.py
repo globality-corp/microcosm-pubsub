@@ -8,7 +8,7 @@ from typing import List
 from microcosm_logging.decorators import context_logger, logger
 from microcosm_logging.timing import elapsed_time
 
-from microcosm_pubsub.errors import Nack, SkipMessage, TTLExpired
+from microcosm_pubsub.errors import Nack, SkipMessage
 from microcosm_pubsub.result import MessageHandlingResult
 
 
@@ -23,8 +23,6 @@ class SQSMessageDispatcher:
         self.sqs_consumer = graph.sqs_consumer
         self.sqs_message_context = graph.sqs_message_context
         self.sqs_message_handler_registry = graph.sqs_message_handler_registry
-        self.enable_ttl = graph.config.sqs_message_context.enable_ttl
-        self.initial_ttl = graph.config.sqs_message_context.initial_ttl
 
     def handle_batch(self, bound_handlers) -> List[MessageHandlingResult]:
         """
@@ -50,38 +48,29 @@ class SQSMessageDispatcher:
         content = message.content
 
         if content is None:
-            self.logger.debug("Skipping message with unparsed type: {}".format(media_type))
+            self.logger.debug(f"Skipping message with unparsed type: {media_type}")
+            return False
+
+        try:
+            handler = self.sqs_message_handler_registry.find(media_type, bound_handlers)
+        except KeyError:
+            # no handlers
+            self.logger.debug(f"Skipping message with no registered handler: {media_type}")
             return False
 
         with self.opaque.initialize(self.sqs_message_context, content, message_id=message_id):
-            try:
-                handler = self.sqs_message_handler_registry.find(media_type, bound_handlers)
-            except KeyError:
-                # no handlers
-                self.logger.debug("Skipping message with no registered handler: {}".format(media_type))
-                return False
-
             extra = self.sqs_message_context(content)
-            extra.update(dict(
+            extra.update(
                 handler=titleize(handler.__class__.__name__),
                 uri=content.get("uri"),
-            ))
-
-            if self.enable_ttl:
-                ttl = content.get("X-Request-TTL", self.initial_ttl) - 1
-                if ttl == -1:
-                    self.logger.warning(
-                        f"Error handling SQS message: {media_type} - TTL expired",
-                        extra=extra,
-                    )
-                    raise TTLExpired(extra=extra)
-                content["X-Request-TTL"] = ttl
+            )
 
             with elapsed_time(extra):
                 result = self.invoke_handler(handler, media_type, content)
+
             self.logger.info(
                 "Handled {handler}",
-                extra=extra
+                extra=extra,
             )
             return result
 
