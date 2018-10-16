@@ -33,7 +33,7 @@ class URIHandler:
     __metaclass__ = ABCMeta
 
     def __init__(self, graph, retry_nack_timeout=1, resource_nack_timeout=1):
-        self.sqs_message_context = graph.sqs_message_context
+        self.opaque = graph.opaque
         self.retry_nack_timeout = retry_nack_timeout
         self.resource_nack_timeout = resource_nack_timeout
 
@@ -125,13 +125,19 @@ class URIHandler:
         Passes message context.
 
         """
-        # XXX we only want X-Request headers
-        headers = self.opaque.as_dict()
+        headers = self.get_headers(message)
         response = get(uri, headers=headers)
         if response.status_code == codes.not_found and self.nack_if_not_found:
             raise Nack(self.resource_nack_timeout)
         response.raise_for_status()
         return response.json()
+
+    def get_headers(self, message):
+        """
+        Generate headers to pass to downstream services.
+
+        """
+        return self.opaque.as_dict()
 
     def convert_resource(self, resource):
         if isinstance(self.resource_type, type) and isinstance(resource, self.resource_type):
