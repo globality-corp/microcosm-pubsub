@@ -37,6 +37,7 @@ class MessageHandlingResultType(Enum):
 class MessageHandlingResult:
     media_type: str
     result: MessageHandlingResultType
+    elapsed_time: float = None
 
     @classmethod
     def invoke(cls, func, message, **kwargs):

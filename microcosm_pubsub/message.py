@@ -2,6 +2,7 @@
 A single SQS message.
 
 """
+from microcosm_pubsub.constants import TTL_KEY
 
 
 class SQSMessage:
@@ -38,3 +39,21 @@ class SQSMessage:
 
         """
         self.consumer.nack(self, visibility_timeout_seconds)
+
+    @property
+    def opaque_data(self):
+        if not self.content:
+            return dict()
+        return self.content.get("opaque_data", {})
+
+    @property
+    def ttl(self):
+        if TTL_KEY not in self.opaque_data:
+            return None
+        return int(self.opaque_data[TTL_KEY])
+
+    @property
+    def uri(self):
+        if not self.content:
+            return None
+        return self.content.get("uri")

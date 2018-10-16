@@ -2,13 +2,14 @@
 Process batches of messages.
 
 """
-from inflection import titleize
 from typing import List
 
+from inflection import titleize
 from microcosm_logging.decorators import context_logger, logger
 from microcosm_logging.timing import elapsed_time
 
-from microcosm_pubsub.errors import IgnoreMessage, Nack, SkipMessage
+from microcosm_pubsub.context import TTL_KEY
+from microcosm_pubsub.errors import IgnoreMessage, Nack, SkipMessage, TTLExpired
 from microcosm_pubsub.result import MessageHandlingResult
 
 
@@ -30,40 +31,59 @@ class SQSMessageDispatcher:
 
         """
         return [
-            MessageHandlingResult.invoke(
-                func=self.handle_message,
-                message=message,
-                bound_handlers=bound_handlers
-            )
+            self.handle_message(message, bound_handlers)
             for message in self.sqs_consumer.consume()
         ]
 
-    def handle_message(self, message, bound_handlers):
+    def handle_message(self, message, bound_handlers) -> MessageHandlingResult:
+        """
+        Handle a message.
+
+        """
+        # initialize a context for the current message
+        with self.opaque.initialize(self.sqs_message_context, message):
+            # save elapsed time information to the context
+            with elapsed_time(self.opaque):
+                message_handling_result = MessageHandlingResult.invoke(
+                    func=self._handle_message,
+                    message=message,
+                    bound_handlers=bound_handlers,
+                )
+            message_handling_result.elapsed_time = self.opaque["elapsed_time"]
+        return message_handling_result
+
+    def _handle_message(self, message, bound_handlers) -> bool:
         """
         Handle a single message.
 
-        """
-        message_id = message.message_id
-        media_type = message.media_type
+        :raises: Nack, IgnoreMessage, SkipMessage, TTLExpired
 
+        """
+        # we might just want to ignore the message
+        self.validate_ttl()
         content = self.validate_content(message)
         handler = self.find_handler(message, bound_handlers)
 
-        with self.opaque.initialize(self.sqs_message_context, content, message_id=message_id):
-            extra = self.sqs_message_context(content)
-            extra.update(
-                handler=titleize(handler.__class__.__name__),
-                uri=content.get("uri"),
-            )
+        # we might want to handle the message
+        result = self.invoke_handler(handler, message.media_type, content)
 
-            with elapsed_time(extra):
-                result = self.invoke_handler(handler, media_type, content)
+        self.logger.info(
+            "Handled {handler}",
+            extra=self.opaque.as_dict(),
+        )
+        return bool(result)
 
-            self.logger.info(
-                "Handled {handler}",
-                extra=extra,
-            )
-            return result
+    def validate_ttl(self):
+        """
+        Validate that the current message is not expired.
+
+        :raises TTLExpired
+        """
+        if TTL_KEY not in self.opaque:
+            return
+
+        if int(self.opaque[TTL_KEY]) <= 0:
+            raise TTLExpired()
 
     def validate_content(self, message):
         """
@@ -86,7 +106,9 @@ class SQSMessageDispatcher:
 
         """
         try:
-            return self.sqs_message_handler_registry.find(message.media_type, bound_handlers)
+            handler = self.sqs_message_handler_registry.find(message.media_type, bound_handlers)
+            self.opaque["handler"] = titleize(handler.__class__.__name__)
+            return handler
         except KeyError:
             raise IgnoreMessage(f"No handler was registered for: {message.media_type}")
 
@@ -105,11 +127,10 @@ class SQSMessageDispatcher:
             )
             return handler_with_context(content)
         except SkipMessage as skipped:
-            extra = self.sqs_message_context(content)
-            extra.update(skipped.extra)
+            self.opaque.update(skipped.extra)
             logger.info(
                 "Skipping message for reason: {}".format(str(skipped)),
-                extra=extra,
+                extra=self.opaque.as_dict(),
             )
             return False
         except Nack:
@@ -117,7 +138,13 @@ class SQSMessageDispatcher:
                 "Nacking SQS message: {}".format(
                     media_type,
                 ),
-                extra=self.sqs_message_context(content)
+                extra=self.opaque.as_dict(),
+            )
+            raise
+        except TTLExpired:
+            self.logger.warning(
+                "Error handling SQS message - TTL expired",
+                extra=self.opaque.as_dict(),
             )
             raise
         except Exception as error:
@@ -126,7 +153,7 @@ class SQSMessageDispatcher:
                     media_type,
                 ),
                 exc_info=True,
-                extra=self.sqs_message_context(content)
+                extra=self.opaque.as_dict(),
             )
             raise error
 

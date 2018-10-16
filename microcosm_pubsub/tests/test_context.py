@@ -1,14 +1,13 @@
 """
-Context tests.
+SQSMessageContext tests.
 
 """
 from hamcrest import (
     assert_that,
-    calling,
     has_entries,
-    raises,
 )
-from microcosm_pubsub.errors import TTLExpired
+
+from microcosm_pubsub.message import SQSMessage
 from microcosm_pubsub.tests.fixtures import ExampleDaemon
 
 
@@ -20,25 +19,48 @@ class TestSQSMessageContext:
 
     def setup(self):
         self.graph = ExampleDaemon.create_for_testing().graph
-
-    def test_handle(self):
-        message = dict(
-            opaque_data=dict(foo="bar"),
-            uri=MESSAGE_URI,
+        self.message = SQSMessage(
+            consumer=self.graph.sqs_consumer,
+            content=dict(
+                opaque_data=dict(
+                    foo="bar",
+                ),
+                uri=MESSAGE_URI,
+            ),
+            media_type=None,
+            message_id=MESSAGE_ID,
+            receipt_handle=None,
         )
 
-        with self.graph.opaque.initialize(self.graph.sqs_message_context, message, message_id=MESSAGE_ID):
+    def test_includes_opaque_data(self):
+        with self.graph.opaque.initialize(self.graph.sqs_message_context, self.message):
             assert_that(
                 self.graph.opaque.as_dict(),
                 has_entries(
                     foo="bar",
+                ),
+            )
+
+    def test_includes_message_id(self):
+        with self.graph.opaque.initialize(self.graph.sqs_message_context, self.message):
+            assert_that(
+                self.graph.opaque.as_dict(),
+                has_entries(
                     message_id=MESSAGE_ID,
+                ),
+            )
+
+    def test_includes_message_uri(self):
+        with self.graph.opaque.initialize(self.graph.sqs_message_context, self.message):
+            assert_that(
+                self.graph.opaque.as_dict(),
+                has_entries(
                     uri=MESSAGE_URI,
                 ),
             )
 
-    def test_sets_ttl(self):
-        with self.graph.opaque.initialize(self.graph.sqs_message_context, {}, message_id=MESSAGE_ID):
+    def test_sets_initial_ttl(self):
+        with self.graph.opaque.initialize(self.graph.sqs_message_context, self.message):
             assert_that(
                 self.graph.opaque.as_dict(),
                 has_entries({
@@ -46,21 +68,13 @@ class TestSQSMessageContext:
                 }),
             )
 
-    def test_updates_ttl(self):
-        message = {"opaque_data": {"X-Request-Ttl": "10"}}
+    def test_updates_existing_ttl(self):
+        self.message.opaque_data["X-Request-Ttl"] = "10"
 
-        with self.graph.opaque.initialize(self.graph.sqs_message_context, message, message_id=MESSAGE_ID):
+        with self.graph.opaque.initialize(self.graph.sqs_message_context, self.message):
             assert_that(
                 self.graph.opaque.as_dict(),
                 has_entries({
                     "X-Request-Ttl": "9",
                 }),
             )
-
-    def test_zero_ttl(self):
-        message = {"opaque_data": {"X-Request-Ttl": "0"}}
-
-        assert_that(
-            calling(self.graph.sqs_message_context).with_args(message),
-            raises(TTLExpired),
-        )

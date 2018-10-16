@@ -2,19 +2,15 @@
 Dispatcher tests.
 
 """
-from unittest.mock import Mock
-
 from hamcrest import (
     assert_that,
-    calling,
-    equal_to,
-    is_,
-    raises,
+    greater_than,
+    has_properties,
 )
 
 from microcosm_pubsub.conventions import created
-from microcosm_pubsub.errors import IgnoreMessage
 from microcosm_pubsub.message import SQSMessage
+from microcosm_pubsub.result import MessageHandlingResultType
 from microcosm_pubsub.tests.fixtures import (
     ExampleDaemon,
     DerivedSchema,
@@ -24,81 +20,71 @@ from microcosm_pubsub.tests.fixtures import (
 MESSAGE_ID = "message-id"
 
 
-def test_handle():
-    """
-    Test that the dispatcher handles a message and assigns context.
+class TestDispatcher:
 
-    """
-    daemon = ExampleDaemon.create_for_testing()
-    graph = daemon.graph
+    def setup(self):
+        self.daemon = ExampleDaemon.create_for_testing()
+        self.graph = self.daemon.graph
 
-    content = dict(bar="baz")
-    sqs_message_context = Mock(return_value=dict())
-    with graph.opaque.initialize(sqs_message_context, content):
-        result = graph.sqs_message_dispatcher.handle_message(
-            message=SQSMessage(
-                consumer=None,
-                content=content,
-                media_type=DerivedSchema.MEDIA_TYPE,
-                message_id=MESSAGE_ID,
-                receipt_handle=None,
-            ),
-            bound_handlers=daemon.bound_handlers,
-        )
+        self.dispatcher = self.graph.sqs_message_dispatcher
 
-    assert_that(result, is_(equal_to(True)))
-    sqs_message_context.assert_called_once_with(content)
-
-
-def test_handle_with_no_context():
-    """
-    Test that when no context is added the dispatcher behaves sanely.
-
-    """
-    daemon = ExampleDaemon.create_for_testing()
-    graph = daemon.graph
-
-    # remove the sqs_message_context from the graph so we can test the dispatcher
-    # defaulting logic
-    graph._registry.entry_points.pop("sqs_message_context")
-
-    content = dict(bar="baz")
-    result = graph.sqs_message_dispatcher.handle_message(
-        message=SQSMessage(
-            consumer=None,
-            content=content,
+        self.content = dict(bar="baz", uri="http://example.com")
+        self.message = SQSMessage(
+            consumer=self.graph.sqs_consumer,
+            content=self.content,
             media_type=DerivedSchema.MEDIA_TYPE,
             message_id=MESSAGE_ID,
             receipt_handle=None,
-        ),
-        bound_handlers=daemon.bound_handlers,
-    )
+        )
+        self.graph.sqs_consumer.sqs_client.reset_mock()
 
-    assert_that(result, is_(equal_to(True)))
-    assert_that(graph.sqs_message_dispatcher.sqs_message_context(content), is_(equal_to({
-        "X-Request-Ttl": "31",
-    })))
-
-
-def test_handle_unsupported_media_type():
-    """
-    Unsupported media types are ignored.
-
-    """
-    daemon = ExampleDaemon.create_for_testing()
-    graph = daemon.graph
-
-    content = dict(bar="baz")
-    assert_that(
-        calling(graph.sqs_message_dispatcher.handle_message).with_args(
-            message=SQSMessage(
-                consumer=None,
-                content=content,
-                media_type=created("bar"),
-                message_id=MESSAGE_ID,
-                receipt_handle=None,
+    def test_handle_message_succeeded(self):
+        result = self.dispatcher.handle_message(
+            message=self.message,
+            bound_handlers=self.daemon.bound_handlers,
+        )
+        assert_that(
+            result,
+            has_properties(
+                elapsed_time=greater_than(0.0),
+                result=MessageHandlingResultType.SUCCEEDED,
             ),
-            bound_handlers=daemon.bound_handlers,
-        ),
-        raises(IgnoreMessage),
-    )
+        )
+
+    def test_handle_message_ignored(self):
+        """
+        Unsupported media types are ignored.
+
+        """
+        self.message.media_type = created("bar")
+        assert_that(
+            self.dispatcher.handle_message(
+                message=self.message,
+                bound_handlers=self.daemon.bound_handlers,
+            ),
+            has_properties(
+                elapsed_time=greater_than(0.0),
+                result=MessageHandlingResultType.IGNORED,
+            ),
+        )
+
+    def test_handle_message_expired(self):
+        """
+        Unsupported media types are ignored.
+
+        """
+        self.message.content = dict(
+            opaque_data={
+                "X-Request-Ttl": "0",
+            },
+        )
+        assert_that(
+            self.dispatcher.handle_message(
+                message=self.message,
+                bound_handlers=self.daemon.bound_handlers,
+            ),
+            has_properties(
+                elapsed_time=greater_than(0.0),
+                result=MessageHandlingResultType.EXPIRED,
+            ),
+        )

@@ -125,7 +125,8 @@ class URIHandler:
         Passes message context.
 
         """
-        headers = self.sqs_message_context(message)
+        # XXX we only want X-Request headers
+        headers = self.opaque.as_dict()
         response = get(uri, headers=headers)
         if response.status_code == codes.not_found and self.nack_if_not_found:
             raise Nack(self.resource_nack_timeout)
