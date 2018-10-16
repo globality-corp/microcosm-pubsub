@@ -2,9 +2,10 @@
 Process batches of messages.
 
 """
-from inflection import titleize
-from typing import List
+from contextlib import contextmanager
+from typing import Dict, List, Tuple
 
+from inflection import titleize
 from microcosm_logging.decorators import context_logger, logger
 from microcosm_logging.timing import elapsed_time
 
@@ -30,40 +31,57 @@ class SQSMessageDispatcher:
 
         """
         return [
-            MessageHandlingResult.invoke(
-                func=self.handle_message,
-                message=message,
-                bound_handlers=bound_handlers
-            )
+            self.handle_or_ignore_message(message, bound_handlers)
             for message in self.sqs_consumer.consume()
         ]
 
-    def handle_message(self, message, bound_handlers):
+    def handle_or_ignore_message(self, message, bound_handlers) -> MessageHandlingResult:
+        """
+        Handle or ignore single message.
+
+        :raises: IgnoreMessage
+
+        """
+        content = self.validate_content(message)
+        handler = self.find_handler(message, bound_handlers)
+        return MessageHandlingResult.invoke(
+            func=self.handle_message,
+            message=message,
+            content=content,
+            handler=handler,
+            opaque=self.opaque,
+        )
+
+    def handle_message(self, message, content, handler) -> Tuple[bool, float]:
         """
         Handle a single message.
 
+        :raises: Nack, SkipMessage, TTLExpired
+
         """
-        message_id = message.message_id
-        media_type = message.media_type
-
-        content = self.validate_content(message)
-        handler = self.find_handler(message, bound_handlers)
-
-        with self.opaque.initialize(self.sqs_message_context, content, message_id=message_id):
-            extra = self.sqs_message_context(content)
-            extra.update(
-                handler=titleize(handler.__class__.__name__),
-                uri=content.get("uri"),
-            )
-
+        with self.message_context(message, content, handler) as extra:
             with elapsed_time(extra):
-                result = self.invoke_handler(handler, media_type, content)
+                result = self.invoke_handler(handler, message.media_type, content, extra)
 
             self.logger.info(
                 "Handled {handler}",
-                extra=extra,
+                extra=self.opaque.as_dict(),
             )
-            return result
+            return bool(result), extra["elapsed_time"]
+
+    @contextmanager
+    def message_context(self, message, content, handler) -> Dict[str, str]:
+        """
+        Set the message context.
+
+        """
+        with self.opaque.initialize(
+            self.sqs_message_context,
+            content,
+            handler=titleize(handler.__class__.__name__),
+            message_id=message.message_id,
+        ):
+            yield self.opaque.as_dict()
 
     def validate_content(self, message):
         """
@@ -90,7 +108,7 @@ class SQSMessageDispatcher:
         except KeyError:
             raise IgnoreMessage(f"No handler was registered for: {message.media_type}")
 
-    def invoke_handler(self, handler, media_type, content):
+    def invoke_handler(self, handler, media_type, content, extra):
         """
         Invoke handler with logging and error handling.
 
@@ -105,7 +123,6 @@ class SQSMessageDispatcher:
             )
             return handler_with_context(content)
         except SkipMessage as skipped:
-            extra = self.sqs_message_context(content)
             extra.update(skipped.extra)
             logger.info(
                 "Skipping message for reason: {}".format(str(skipped)),
@@ -117,7 +134,7 @@ class SQSMessageDispatcher:
                 "Nacking SQS message: {}".format(
                     media_type,
                 ),
-                extra=self.sqs_message_context(content)
+                extra=extra,
             )
             raise
         except Exception as error:
@@ -126,7 +143,7 @@ class SQSMessageDispatcher:
                     media_type,
                 ),
                 exc_info=True,
-                extra=self.sqs_message_context(content)
+                extra=extra,
             )
             raise error
 

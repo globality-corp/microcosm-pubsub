@@ -27,31 +27,31 @@ class SQSMessageContext:
         self.enable_ttl = graph.config.sqs_message_context.enable_ttl
         self.initial_ttl = graph.config.sqs_message_context.initial_ttl
 
-    def __call__(self, message, **kwargs):
+    def __call__(self, content, **kwargs):
         """
-        Create a new context from a message.
+        Create a new context from message content.
 
         """
         # start with opaque data passed in message
-        if "opaque_data" in message:
-            context = message["opaque_data"].copy()
+        if "opaque_data" in content:
+            context = content["opaque_data"].copy()
         else:
             context = dict()
 
         # merge in explicit and derived arguments
         context.update(
-            **self.uri_for(context, message),
-            **self.ttl_for(context, message),
+            **self.uri_for(context, content),
+            **self.ttl_for(context, content),
             **kwargs,
         )
 
         return context
 
-    def uri_for(self, context, message):
-        uri = message.get("uri")
+    def uri_for(self, context, content):
+        uri = content.get("uri")
         return dict(uri=uri) if uri else dict()
 
-    def ttl_for(self, context, message):
+    def ttl_for(self, context, content):
         try:
             ttl = int(context[TTL_KEY])
         except KeyError:
