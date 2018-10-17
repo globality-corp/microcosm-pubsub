@@ -10,7 +10,7 @@ def do_nothing(results):
     enable_metrics="false",
 )
 def configure_pubsub_metrics(graph):
-    enable_metrics = strtobool(graph.config.route.enable_metrics)
+    enable_metrics = strtobool(graph.config.pubsub_send_metrics.enable_metrics)
     if not enable_metrics:
         return do_nothing
     metrics = graph.metrics
