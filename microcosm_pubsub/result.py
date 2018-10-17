@@ -2,19 +2,21 @@
 Message handling result.
 
 """
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum, unique
 from logging import DEBUG, INFO, WARNING
 from sys import exc_info
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 from microcosm_pubsub.errors import IgnoreMessage, Nack, SkipMessage, TTLExpired
+from microcosm_pubsub.message import SQSMessage
 
 
 @dataclass
 class MessageHandlingResultTypeInfo:
     name: str
     level: int
+    retry: bool = False
     exc_info: bool = False
 
 
@@ -24,13 +26,13 @@ class MessageHandlingResultType(Enum):
     EXPIRED = MessageHandlingResultTypeInfo(name="EXPIRED", level=WARNING)
 
     # Messaging handling failed.
-    FAILED = MessageHandlingResultTypeInfo(name="FAILED", level=WARNING, exc_info=True)
+    FAILED = MessageHandlingResultTypeInfo(name="FAILED", level=WARNING, exc_info=True, retry=True)
 
     # Message was not handled.
     IGNORED = MessageHandlingResultTypeInfo(name="IGNORED", level=DEBUG)
 
     # Messaging handling was intentionally retried.
-    RETRIED = MessageHandlingResultTypeInfo(name="RETRIED", level=INFO)
+    RETRIED = MessageHandlingResultTypeInfo(name="RETRIED", level=INFO, retry=True)
 
     # Message handling succeeded.
     SUCCEEDED = MessageHandlingResultTypeInfo(name="SUCCEEDED", level=INFO)
@@ -43,68 +45,98 @@ class MessageHandlingResultType(Enum):
         return self.name
 
     @property
+    def exc_info(self):
+        return self.value.exc_info
+
+    @property
     def level(self):
         return self.value.level
 
     @property
-    def exc_info(self):
-        return self.value.exc_info
+    def retry(self):
+        return self.value.retry
 
 
 @dataclass
 class MessageHandlingResult:
-    exc_info: Tuple[Any, Any, Any]
-    extra: Dict[str, str]
     media_type: str
     result: MessageHandlingResultType
-    elapsed_time: float = None
+    exc_info: Optional[Tuple[Any, Any, Any]] = None
+    extra: Dict[str, str] = field(default_factory=dict)
+    elapsed_time: Optional[float] = None
+    retry_timeout_seconds: Optional[int] = None
 
     @classmethod
-    def invoke(cls, func, message, **kwargs):
-        exc_info_ = None
-        extra = dict()
+    def invoke(cls, handler, message: SQSMessage):
         try:
-            success = func(message=message, **kwargs)
-            if success:
-                result = MessageHandlingResultType.SUCCEEDED
-            else:
-                result = MessageHandlingResultType.SKIPPED
-            message.ack()
-        except IgnoreMessage as error:
-            extra = error.extra
-            result = MessageHandlingResultType.IGNORED
-            message.ack()
-        except SkipMessage as error:
-            extra = error.extra
-            result = MessageHandlingResultType.SKIPPED
-            message.ack()
-        except TTLExpired as error:
-            extra = error.extra
-            result = MessageHandlingResultType.EXPIRED
-            message.ack()
-        except Nack as nack:
-            result = MessageHandlingResultType.RETRIED
-            message.nack(nack.visibility_timeout_seconds)
+            success = handler(message.content)
+            result = cls.from_result(message, bool(success))
         except Exception as error:
-            exc_info_ = exc_info()
-            result = MessageHandlingResultType.FAILED
-            message.nack()
+            result = cls.from_error(message, error)
+        finally:
+            if result.result.retry:
+                message.nack(result.retry_timeout_seconds)
+            else:
+                message.ack()
+            return result
+
+    @classmethod
+    def from_result(cls, message: SQSMessage, success: bool):
+        if success:
+            result = MessageHandlingResultType.SUCCEEDED
+        else:
+            result = MessageHandlingResultType.SKIPPED
 
         return cls(
-            exc_info=exc_info_,
-            extra=extra,
             media_type=message.media_type,
             result=result,
         )
 
+    @classmethod
+    def from_error(cls, message: SQSMessage, error: Exception, **kwargs):
+        if isinstance(error, IgnoreMessage):
+            return cls(
+                extra=error.extra,
+                media_type=message.media_type,
+                result=MessageHandlingResultType.IGNORED,
+            )
+
+        if isinstance(error, SkipMessage):
+            return cls(
+                extra=error.extra,
+                media_type=message.media_type,
+                result=MessageHandlingResultType.SKIPPED,
+            )
+
+        if isinstance(error, TTLExpired):
+            return cls(
+                extra=error.extra,
+                media_type=message.media_type,
+                result=MessageHandlingResultType.EXPIRED,
+            )
+
+        if isinstance(error, Nack):
+            return cls(
+                media_type=message.media_type,
+                result=MessageHandlingResultType.RETRIED,
+                retry_timeout_seconds=error.visibility_timeout_seconds,
+            )
+
+        return cls(
+            exc_info=exc_info(),
+            media_type=message.media_type,
+            result=MessageHandlingResultType.FAILED,
+        )
+
     def log(self, logger, opaque):
-        opaque.update(self.extra)
+        """
+        Log this result.
 
-        message = f"Result for media type: {self.media_type} was : {self.result} "
-
+        """
+        entry = f"Result for media type: {self.media_type} was : {self.result} "
         logger.log(
             self.result.level,
-            message,
+            entry,
             exc_info=self.exc_info,
-            extra=opaque.as_dict(),
+            extra=dict(**self.extra, **opaque.as_dict()),
         )

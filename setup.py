@@ -37,7 +37,7 @@ setup(
             "sqs_message_context = microcosm_pubsub.context:SQSMessageContext",
             "sqs_consumer = microcosm_pubsub.consumer:configure_sqs_consumer",
             "sqs_envelope = microcosm_pubsub.envelope:configure_sqs_envelope",
-            "sqs_message_dispatcher = microcosm_pubsub.dispatcher:configure",
+            "sqs_message_dispatcher = microcosm_pubsub.dispatcher:SQSMessageDispatcher",
             "sqs_message_handler_registry = microcosm_pubsub.registry:configure_handler_registry",
             "sns_producer = microcosm_pubsub.producer:configure_sns_producer",
             "sns_topic_arns = microcosm_pubsub.producer:configure_sns_topic_arns",

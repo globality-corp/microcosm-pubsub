@@ -40,37 +40,29 @@ class SQSMessageDispatcher:
         Handle a message.
 
         """
-        # initialize a context for the current message
         with self.opaque.initialize(self.sqs_message_context, message):
-            # save elapsed time information to the context
+            handler = None
             with elapsed_time(self.opaque):
-                message_handling_result = MessageHandlingResult.invoke(
-                    func=self._handle_message,
-                    message=message,
-                    bound_handlers=bound_handlers,
-                )
-            # save elapsed time
-            message_handling_result.elapsed_time = self.opaque["elapsed_time"]
-            # log handler outcome
-            logger = self.choose_logger(message.handler)
-            message_handling_result.log(logger, self.opaque)
-        return message_handling_result
+                try:
+                    self.validate_ttl()
+                    self.validate_content(message)
+                    handler = self.find_handler(message, bound_handlers)
+                    instance = MessageHandlingResult.invoke(
+                        handler=self.wrap_handler(handler),
+                        message=message,
+                    )
+                except Exception as error:
+                    instance = MessageHandlingResult.from_error(
+                        message=message,
+                        error=error,
+                    )
 
-    def _handle_message(self, message, bound_handlers) -> bool:
-        """
-        Handle a single message.
-
-        :raises: Nack, IgnoreMessage, SkipMessage, TTLExpired
-
-        """
-        # we might just want to ignore the message
-        self.validate_ttl()
-        content = self.validate_content(message)
-        handler = self.find_handler(message, bound_handlers)
-
-        # handle the message
-        result = handler(content)
-        return bool(result)
+            instance.elapsed_time = self.opaque["elapsed_time"]
+            instance.log(
+                logger=self.choose_logger(handler),
+                opaque=self.opaque,
+            )
+            return instance
 
     def validate_ttl(self):
         """
@@ -97,8 +89,6 @@ class SQSMessageDispatcher:
         if message.content is None:
             raise IgnoreMessage(f"Could not parse message for: {message.media_type}")
 
-        return message.content
-
     def find_handler(self, message, bound_handlers):
         """
         Find the handler for a message.
@@ -106,16 +96,23 @@ class SQSMessageDispatcher:
         """
         try:
             handler = self.sqs_message_handler_registry.find(message.media_type, bound_handlers)
-            # XXX awkward
-            message.handler = handler
             self.opaque["handler"] = titleize(handler.__class__.__name__)
-            return context_logger(
-                lambda *args, **kwargs: self.opaque,
-                handler,
-                parent=handler,
-            )
+            return handler
         except KeyError:
             raise IgnoreMessage(f"No handler was registered for: {message.media_type}")
+
+    def wrap_handler(self, handler):
+        """
+        Wrap handler with context logger.
+
+        Ensures that all handler logger calls have access to opaque data.
+
+        """
+        return context_logger(
+            context_func=lambda *args, **kwargs: self.opaque,
+            func=handler,
+            parent=handler,
+        )
 
     def choose_logger(self, handler):
         """
@@ -127,7 +124,3 @@ class SQSMessageDispatcher:
             return handler.logger
         except AttributeError:
             return self.logger
-
-
-def configure(graph):
-    return SQSMessageDispatcher(graph)

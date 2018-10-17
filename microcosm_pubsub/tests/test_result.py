@@ -6,6 +6,7 @@ from hamcrest import (
     assert_that,
     has_properties,
 )
+from microcosm_logging.decorators import logger
 
 from microcosm_pubsub.errors import IgnoreMessage, Nack, SkipMessage, TTLExpired
 from microcosm_pubsub.message import SQSMessage
@@ -17,10 +18,12 @@ MESSAGE_ID = "message-id"
 RECEIPT_HANDLE = "receipt-handle"
 
 
+@logger
 class TestMessageHandlingResult:
 
     def setup(self):
         self.graph = ExampleDaemon.create_for_testing().graph
+        self.opaque = self.graph.opaque
         self.message = SQSMessage(
             consumer=self.graph.sqs_consumer,
             content=None,
@@ -31,11 +34,11 @@ class TestMessageHandlingResult:
         self.graph.sqs_consumer.sqs_client.reset_mock()
 
     def test_succeeded_truthy(self):
-        def func(message):
+        def handler(message):
             return True
 
         result = MessageHandlingResult.invoke(
-            func=func,
+            handler=handler,
             message=self.message,
         )
 
@@ -53,11 +56,11 @@ class TestMessageHandlingResult:
         )
 
     def test_skipped_falsey(self):
-        def func(message):
+        def handler(message):
             return False
 
         result = MessageHandlingResult.invoke(
-            func=func,
+            handler=handler,
             message=self.message,
         )
 
@@ -75,11 +78,11 @@ class TestMessageHandlingResult:
         )
 
     def test_skipped_exception(self):
-        def func(message):
+        def handler(message):
             raise SkipMessage("ignorance is bliss")
 
         result = MessageHandlingResult.invoke(
-            func=func,
+            handler=handler,
             message=self.message,
         )
 
@@ -97,11 +100,11 @@ class TestMessageHandlingResult:
         )
 
     def test_ignored_exception(self):
-        def func(message):
+        def handler(message):
             raise IgnoreMessage("ignorance is bliss")
 
         result = MessageHandlingResult.invoke(
-            func=func,
+            handler=handler,
             message=self.message,
         )
 
@@ -119,11 +122,11 @@ class TestMessageHandlingResult:
         )
 
     def test_retried_nack(self):
-        def func(message):
+        def handler(message):
             raise Nack(3)
 
         result = MessageHandlingResult.invoke(
-            func=func,
+            handler=handler,
             message=self.message,
         )
 
@@ -142,11 +145,11 @@ class TestMessageHandlingResult:
         )
 
     def test_ttl_expired(self):
-        def func(message):
+        def handler(message):
             raise TTLExpired("too many attempts")
 
         result = MessageHandlingResult.invoke(
-            func=func,
+            handler=handler,
             message=self.message,
         )
 
@@ -164,11 +167,11 @@ class TestMessageHandlingResult:
         )
 
     def test_failed_exception(self):
-        def func(message):
+        def handler(message):
             raise Exception("FAIL")
 
         result = MessageHandlingResult.invoke(
-            func=func,
+            handler=handler,
             message=self.message,
         )
 
