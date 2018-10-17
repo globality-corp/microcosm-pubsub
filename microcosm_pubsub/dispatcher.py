@@ -2,16 +2,15 @@
 Process batches of messages.
 
 """
-from collections import namedtuple
+from typing import List
+
 from inflection import titleize
-
 from microcosm_logging.decorators import context_logger, logger
-
-from microcosm_pubsub.errors import Nack, SkipMessage
 from microcosm_logging.timing import elapsed_time
 
-
-DispatchResult = namedtuple("DispatchResult", ["message_count", "error_count", "ignore_count"])
+from microcosm_pubsub.context import TTL_KEY
+from microcosm_pubsub.errors import IgnoreMessage, TTLExpired
+from microcosm_pubsub.result import MessageHandlingResult
 
 
 @logger
@@ -25,113 +24,103 @@ class SQSMessageDispatcher:
         self.sqs_consumer = graph.sqs_consumer
         self.sqs_message_context = graph.sqs_message_context
         self.sqs_message_handler_registry = graph.sqs_message_handler_registry
-        self.enable_ttl = graph.config.sqs_message_context.enable_ttl
-        self.initial_ttl = graph.config.sqs_message_context.initial_ttl
 
-    def handle_batch(self, bound_handlers):
+    def handle_batch(self, bound_handlers) -> List[MessageHandlingResult]:
         """
         Send a batch of messages to a function.
 
-        :returns: a `DispatchResult` with metrics around message consumption
         """
-        message_count = error_count = ignore_count = 0
-        for message in self.sqs_consumer.consume():
-            message_count += 1
-            try:
-                with message:
-                    handled = self.handle_message(
+        return [
+            self.handle_message(message, bound_handlers)
+            for message in self.sqs_consumer.consume()
+        ]
+
+    def handle_message(self, message, bound_handlers) -> MessageHandlingResult:
+        """
+        Handle a message.
+
+        """
+        with self.opaque.initialize(self.sqs_message_context, message):
+            handler = None
+            with elapsed_time(self.opaque):
+                try:
+                    self.validate_ttl()
+                    self.validate_content(message)
+                    handler = self.find_handler(message, bound_handlers)
+                    instance = MessageHandlingResult.invoke(
+                        handler=self.wrap_handler(handler),
                         message=message,
-                        bound_handlers=bound_handlers,
                     )
-                    if not handled:
-                        ignore_count += 1
-            except Exception:
-                error_count += 1
+                except Exception as error:
+                    instance = MessageHandlingResult.from_error(
+                        message=message,
+                        error=error,
+                    )
 
-        return DispatchResult(message_count, error_count, ignore_count)
-
-    def handle_message(self, message, bound_handlers):
-        """
-        Handle a single message.
-
-        """
-        message_id = message.message_id
-        media_type = message.media_type
-        content = message.content
-
-        if content is None:
-            self.logger.debug("Skipping message with unparsed type: {}".format(media_type))
-            return False
-
-        with self.opaque.initialize(self.sqs_message_context, content, message_id=message_id):
-            try:
-                handler = self.sqs_message_handler_registry.find(media_type, bound_handlers)
-            except KeyError:
-                # no handlers
-                self.logger.debug("Skipping message with no registered handler: {}".format(media_type))
-                return False
-
-            extra = self.sqs_message_context(content)
-            extra.update(dict(
-                handler=titleize(handler.__class__.__name__),
-                uri=content.get("uri"),
-            ))
-            with elapsed_time(extra):
-                result = self.invoke_handler(handler, media_type, content)
-            self.logger.info(
-                "Handled {handler}",
-                extra=extra
+            instance.elapsed_time = self.opaque["elapsed_time"]
+            instance.log(
+                logger=self.choose_logger(handler),
+                opaque=self.opaque,
             )
-            return result
+            return instance
 
-    def invoke_handler(self, handler, media_type, content):
+    def validate_ttl(self):
         """
-        Invoke handler with logging and error handling.
+        Validate that the current message is not expired.
+
+        :raises TTLExpired
+        """
+        if TTL_KEY not in self.opaque:
+            return
+
+        if int(self.opaque[TTL_KEY]) <= 0:
+            raise TTLExpired()
+
+    def validate_content(self, message):
+        """
+        Extract message content.
+
+        The `CodecMediaTypeAndContentParser` (used by the default `CodecSQSEnvelope`) will return
+        `None` for content if it doesn't have a registered media type schema. In most cases, this
+        condition will coincide with not having a registerd handler as well. Plus, we can't handle
+        absent content.
 
         """
-        logger = self.choose_logger(handler)
+        if message.content is None:
+            raise IgnoreMessage(f"Could not parse message for: {message.media_type}")
 
+    def find_handler(self, message, bound_handlers):
+        """
+        Find the handler for a message.
+
+        """
         try:
-            handler_with_context = context_logger(
-                self.sqs_message_context,
-                handler,
-                parent=handler,
-            )
-            return handler_with_context(content)
-        except SkipMessage as skipped:
-            extra = self.sqs_message_context(content)
-            extra.update(skipped.extra)
-            logger.info(
-                "Skipping message for reason: {}".format(str(skipped)),
-                extra=extra,
-            )
-            return False
-        except Nack:
-            logger.info(
-                "Nacking SQS message: {}".format(
-                    media_type,
-                ),
-                extra=self.sqs_message_context(content)
-            )
-            raise
-        except Exception as error:
-            logger.warning(
-                "Error handling SQS message: {}".format(
-                    media_type,
-                ),
-                exc_info=True,
-                extra=self.sqs_message_context(content)
-            )
-            raise error
+            handler = self.sqs_message_handler_registry.find(message.media_type, bound_handlers)
+            self.opaque["handler"] = titleize(handler.__class__.__name__)
+            return handler
+        except KeyError:
+            raise IgnoreMessage(f"No handler was registered for: {message.media_type}")
+
+    def wrap_handler(self, handler):
+        """
+        Wrap handler with context logger.
+
+        Ensures that all handler logger calls have access to opaque data.
+
+        """
+        return context_logger(
+            context_func=lambda *args, **kwargs: self.opaque,
+            func=handler,
+            parent=handler,
+        )
 
     def choose_logger(self, handler):
-        # NB if possible, log with the handler's logger to make it easier
-        # to tell which handler failed in the logs.
+        """
+        Choose a logger to use for handler results.
+
+        """
         try:
+            # use the handler's logger, if possible
             return handler.logger
         except AttributeError:
             return self.logger
-
-
-def configure(graph):
-    return SQSMessageDispatcher(graph)

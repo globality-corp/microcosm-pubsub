@@ -262,7 +262,7 @@ def configure_sns_producer(graph):
 
     """
     if graph.metadata.testing:
-        from mock import MagicMock
+        from unittest.mock import MagicMock
 
         if not graph.config.sns_producer.mock_sns:
             return MagicMock()

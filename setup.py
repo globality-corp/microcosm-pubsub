@@ -2,7 +2,7 @@
 from setuptools import find_packages, setup
 
 project = "microcosm-pubsub"
-version = "1.11.2"
+version = "1.12.0"
 
 setup(
     name=project,
@@ -34,10 +34,10 @@ setup(
         "microcosm.factories": [
             "pubsub_message_schema_registry = microcosm_pubsub.registry:configure_schema_registry",
             "pubsub_lifecycle_change = microcosm_pubsub.conventions:LifecycleChange",
-            "sqs_message_context = microcosm_pubsub.context:configure_sqs_message_context",
+            "sqs_message_context = microcosm_pubsub.context:SQSMessageContext",
             "sqs_consumer = microcosm_pubsub.consumer:configure_sqs_consumer",
             "sqs_envelope = microcosm_pubsub.envelope:configure_sqs_envelope",
-            "sqs_message_dispatcher = microcosm_pubsub.dispatcher:configure",
+            "sqs_message_dispatcher = microcosm_pubsub.dispatcher:SQSMessageDispatcher",
             "sqs_message_handler_registry = microcosm_pubsub.registry:configure_handler_registry",
             "sns_producer = microcosm_pubsub.producer:configure_sns_producer",
             "sns_topic_arns = microcosm_pubsub.producer:configure_sns_topic_arns",
@@ -45,7 +45,6 @@ setup(
     },
     tests_require=[
         "coverage>=3.7.1",
-        "mock>=1.0.1",
         "PyHamcrest>=1.8.5",
     ],
 )

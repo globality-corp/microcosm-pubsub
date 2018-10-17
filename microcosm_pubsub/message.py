@@ -2,7 +2,7 @@
 A single SQS message.
 
 """
-from microcosm_pubsub.errors import Nack
+from microcosm_pubsub.constants import TTL_KEY
 
 
 class SQSMessage:
@@ -17,7 +17,8 @@ class SQSMessage:
                  message_id,
                  receipt_handle,
                  topic_arn=None,
-                 approximate_receive_count=None):
+                 approximate_receive_count=None,
+                 handler=None):
         self.consumer = consumer
         self.content = content
         self.media_type = media_type
@@ -25,6 +26,7 @@ class SQSMessage:
         self.receipt_handle = receipt_handle
         self.topic_arn = topic_arn
         self.approximate_receive_count = approximate_receive_count
+        self.handler = handler
 
     def ack(self):
         """
@@ -40,13 +42,20 @@ class SQSMessage:
         """
         self.consumer.nack(self, visibility_timeout_seconds)
 
-    def __enter__(self):
-        return self
+    @property
+    def opaque_data(self):
+        if not self.content:
+            return dict()
+        return self.content.get("opaque_data", {})
 
-    def __exit__(self, type, value, traceback):
-        if type is None:
-            self.ack()
-        elif isinstance(value, Nack):
-            self.nack(value.visibility_timeout_seconds)
-        else:
-            self.nack()
+    @property
+    def ttl(self):
+        if TTL_KEY not in self.opaque_data:
+            return None
+        return int(self.opaque_data[TTL_KEY])
+
+    @property
+    def uri(self):
+        if not self.content:
+            return None
+        return self.content.get("uri")
