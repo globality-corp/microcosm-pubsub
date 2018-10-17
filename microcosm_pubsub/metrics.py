@@ -9,10 +9,10 @@ def do_nothing(results):
 
 
 @defaults(
-    enable_metrics="false",
+    enable="false",
 )
 def configure_pubsub_metrics(graph):
-    enable_metrics = strtobool(graph.config.pubsub_send_metrics.enable_metrics)
+    enable_metrics = strtobool(graph.config.pubsub_send_metrics.enable)
     if not enable_metrics:
         return do_nothing
     graph.use("metrics")
@@ -25,10 +25,6 @@ def configure_pubsub_metrics(graph):
             f"result:{results.result}",
             f"media-type:{results.media_type}",
         ]
-        graph.metrics.increment(
-            "message_count",
-            tags=tags + extra_tags,
-        )
         graph.metrics.histogram(
             "message",
             results.elapsed_time,
