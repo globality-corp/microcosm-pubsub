@@ -31,10 +31,13 @@ class SQSMessageDispatcher:
         Send a batch of messages to a function.
 
         """
-        return [
+        instances = [
             self.handle_message(message, bound_handlers)
             for message in self.sqs_consumer.consume()
         ]
+        for instance in instances:
+            self.send_metrics(instance)
+        return instances
 
     def handle_message(self, message, bound_handlers) -> MessageHandlingResult:
         """
@@ -63,7 +66,6 @@ class SQSMessageDispatcher:
                 logger=self.choose_logger(handler),
                 opaque=self.opaque,
             )
-            self.send_metrics(instance)
             return instance
 
     def validate_ttl(self):

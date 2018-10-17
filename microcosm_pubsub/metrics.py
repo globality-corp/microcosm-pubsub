@@ -1,6 +1,7 @@
 from distutils.util import strtobool
 
-from microcosm.api import defaults
+from microcosm.api import defaults, typed
+from microcosm.config.types import boolean
 from microcosm_pubsub.result import MessageHandlingResultType
 
 
@@ -9,10 +10,10 @@ def do_nothing(results):
 
 
 @defaults(
-    enable="false",
+    enable=typed(boolean, default_value=False)
 )
 def configure_pubsub_metrics(graph):
-    enable_metrics = strtobool(graph.config.pubsub_send_metrics.enable)
+    enable_metrics = graph.config.pubsub_send_metrics.enable
     if not enable_metrics:
         return do_nothing
     graph.use("metrics")

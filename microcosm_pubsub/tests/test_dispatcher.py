@@ -2,6 +2,7 @@
 Dispatcher tests.
 
 """
+from json import dumps
 from hamcrest import (
     assert_that,
     greater_than,
@@ -86,5 +87,30 @@ class TestDispatcher:
             has_properties(
                 elapsed_time=greater_than(0.0),
                 result=MessageHandlingResultType.EXPIRED,
+            ),
+        )
+
+    def test_handle_batch_with_message_succeeded(self):
+        batch = [
+            dict(
+                    MessageId=MESSAGE_ID,
+                    ReceiptHandle="receipt-handle",
+                    Body=dumps(dict(
+                        Message=dumps(dict(
+                            mediaType=DerivedSchema.MEDIA_TYPE,
+                            bar="baz",
+                            uri="http://example.com",
+                        )),
+                    )))
+        ]
+        self.dispatcher.sqs_consumer.sqs_client.receive_message.value = dict(Messages=batch)
+        result = self.dispatcher.handle_batch(
+            bound_handlers=self.daemon.bound_handlers,
+        )[0]
+        assert_that(
+            result,
+            has_properties(
+                elapsed_time=greater_than(0.0),
+                result=MessageHandlingResultType.SUCCEEDED,
             ),
         )
