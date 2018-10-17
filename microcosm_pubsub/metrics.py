@@ -5,21 +5,21 @@ from microcosm.config.types import boolean
 from microcosm_pubsub.result import MessageHandlingResultType
 
 
-def do_nothing(results):
+def do_nothing(dummy, result):
     return
 
 
-def send_metrics(metrics, results):
-    if results.result == MessageHandlingResultType.IGNORED:
+def send_metrics(metrics, result):
+    if result.result == MessageHandlingResultType.IGNORED:
         return
     tags = [
         "source:micrcocosm-pubsub",
-        f"result:{results.result}",
-        f"media-type:{results.media_type}",
+        f"result:{result.result}",
+        f"media-type:{result.media_type}",
     ]
     metrics.histogram(
         "message",
-        results.elapsed_time,
+        result.elapsed_time,
         tags=tags,
     )
 
@@ -30,6 +30,6 @@ def send_metrics(metrics, results):
 def configure_pubsub_metrics(graph):
     enable_metrics = graph.config.pubsub_send_metrics.enable
     if not enable_metrics:
-        return do_nothing
+        return partial(do_nothing, None)
     else:
         return partial(send_metrics, graph.metrics)
