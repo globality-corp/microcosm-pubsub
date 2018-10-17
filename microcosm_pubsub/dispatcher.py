@@ -24,16 +24,20 @@ class SQSMessageDispatcher:
         self.sqs_consumer = graph.sqs_consumer
         self.sqs_message_context = graph.sqs_message_context
         self.sqs_message_handler_registry = graph.sqs_message_handler_registry
+        self.send_metrics = graph.pubsub_send_metrics
 
     def handle_batch(self, bound_handlers) -> List[MessageHandlingResult]:
         """
         Send a batch of messages to a function.
 
         """
-        return [
+        instances = [
             self.handle_message(message, bound_handlers)
             for message in self.sqs_consumer.consume()
         ]
+        for instance in instances:
+            self.send_metrics(instance)
+        return instances
 
     def handle_message(self, message, bound_handlers) -> MessageHandlingResult:
         """
