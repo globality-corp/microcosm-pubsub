@@ -1,5 +1,3 @@
-from distutils.util import strtobool
-
 from microcosm.api import defaults, typed
 from microcosm.config.types import boolean
 from microcosm_pubsub.result import MessageHandlingResultType
