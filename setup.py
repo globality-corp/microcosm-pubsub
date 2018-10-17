@@ -34,6 +34,7 @@ setup(
         "microcosm.factories": [
             "pubsub_message_schema_registry = microcosm_pubsub.registry:configure_schema_registry",
             "pubsub_lifecycle_change = microcosm_pubsub.conventions:LifecycleChange",
+            "pubsub_send_metrics = microcosm_pubsub.metrics:configure_pubsub_metrics",
             "sqs_message_context = microcosm_pubsub.context:SQSMessageContext",
             "sqs_consumer = microcosm_pubsub.consumer:configure_sqs_consumer",
             "sqs_envelope = microcosm_pubsub.envelope:configure_sqs_envelope",
