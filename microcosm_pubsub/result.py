@@ -70,15 +70,9 @@ class MessageHandlingResult:
     def invoke(cls, handler, message: SQSMessage):
         try:
             success = handler(message.content)
-            result = cls.from_result(message, bool(success))
+            return cls.from_result(message, bool(success))
         except Exception as error:
-            result = cls.from_error(message, error)
-        finally:
-            if result.result.retry:
-                message.nack(result.retry_timeout_seconds)
-            else:
-                message.ack()
-            return result
+            return cls.from_error(message, error)
 
     @classmethod
     def from_result(cls, message: SQSMessage, success: bool):
@@ -140,3 +134,10 @@ class MessageHandlingResult:
             exc_info=self.exc_info,
             extra=dict(**self.extra, **opaque.as_dict()),
         )
+
+    def resolve(self, message):
+        if self.result.retry:
+            message.nack(self.retry_timeout_seconds)
+        else:
+            message.ack()
+        return self

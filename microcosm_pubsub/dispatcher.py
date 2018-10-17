@@ -62,6 +62,7 @@ class SQSMessageDispatcher:
                 logger=self.choose_logger(handler),
                 opaque=self.opaque,
             )
+            instance.resolve(message)
             return instance
 
     def validate_ttl(self):
