@@ -40,7 +40,7 @@ class TestMessageHandlingResult:
         result = MessageHandlingResult.invoke(
             handler=handler,
             message=self.message,
-        )
+        ).resolve(self.message)
 
         assert_that(
             result,
@@ -62,7 +62,7 @@ class TestMessageHandlingResult:
         result = MessageHandlingResult.invoke(
             handler=handler,
             message=self.message,
-        )
+        ).resolve(self.message)
 
         assert_that(
             result,
@@ -84,7 +84,7 @@ class TestMessageHandlingResult:
         result = MessageHandlingResult.invoke(
             handler=handler,
             message=self.message,
-        )
+        ).resolve(self.message)
 
         assert_that(
             result,
@@ -106,7 +106,7 @@ class TestMessageHandlingResult:
         result = MessageHandlingResult.invoke(
             handler=handler,
             message=self.message,
-        )
+        ).resolve(self.message)
 
         assert_that(
             result,
@@ -128,7 +128,7 @@ class TestMessageHandlingResult:
         result = MessageHandlingResult.invoke(
             handler=handler,
             message=self.message,
-        )
+        ).resolve(self.message)
 
         assert_that(
             result,
@@ -151,7 +151,7 @@ class TestMessageHandlingResult:
         result = MessageHandlingResult.invoke(
             handler=handler,
             message=self.message,
-        )
+        ).resolve(self.message)
 
         assert_that(
             result,
@@ -173,7 +173,7 @@ class TestMessageHandlingResult:
         result = MessageHandlingResult.invoke(
             handler=handler,
             message=self.message,
-        )
+        ).resolve(self.message)
 
         assert_that(
             result,
