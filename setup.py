@@ -14,6 +14,7 @@ setup(
     packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
     include_package_data=True,
     zip_safe=False,
+    python_requires=">=3.7",
     install_requires=[
         "boto3>=1.5.8",
         "marshmallow>=2.15.0",
