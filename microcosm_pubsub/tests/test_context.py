@@ -78,3 +78,26 @@ class TestSQSMessageContext:
                     "X-Request-Ttl": "9",
                 }),
             )
+
+    def test_handle_existing_opaque_message_id(self):
+        self.message = SQSMessage(
+            consumer=self.graph.sqs_consumer,
+            content=dict(
+                opaque_data=dict(
+                    foo="bar",
+                    message_id="opaque_message_id",
+                ),
+                uri=MESSAGE_URI,
+            ),
+            media_type=None,
+            message_id=MESSAGE_ID,
+            receipt_handle=None,
+        )
+
+        with self.graph.opaque.initialize(self.graph.sqs_message_context, self.message):
+            assert_that(
+                self.graph.opaque.as_dict(),
+                has_entries(
+                    message_id=MESSAGE_ID,
+                ),
+            )
