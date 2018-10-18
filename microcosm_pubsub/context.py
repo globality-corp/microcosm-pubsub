@@ -33,12 +33,12 @@ class SQSMessageContext:
         """
         return self.from_sqs_message(context, **kwargs)
 
-    def from_sqs_message(self, message, **kwargs):
-        context = dict(
+    def from_sqs_message(self, message: SQSMessage, **kwargs):
+        context: Dict = dict(message.opaque_data)
+
+        context.update(
             # include the message id
             message_id=message.message_id,
-            # include
-            **message.opaque_data,
             **kwargs,
         )
 
