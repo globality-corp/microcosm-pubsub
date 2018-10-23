@@ -5,6 +5,8 @@ Consumer backoff policy
 from abc import ABCMeta, abstractmethod
 from random import randint
 
+from microcosm_pubsub.errors import SkipMessage
+
 
 # we cannot go over 12 hours
 MAX_BACKOFF_TIMEOUT = 60 * 60 * 12
@@ -31,10 +33,14 @@ class NaiveBackoffPolicy(BackoffPolicy):
     Uses a fixed timeout from the message or system default.
 
     """
-    def __init__(self, message_retry_visibility_timeout_seconds, **kwargs):
+    def __init__(self, message_retry_visibility_timeout_seconds, message_max_processing_attempts, **kwargs):
         self.message_retry_visibility_timeout_seconds = message_retry_visibility_timeout_seconds
+        self.max_processing_attempts = message_max_processing_attempts
 
     def compute_backoff_timeout(self, message, message_timeout):
+        if self.max_processing_attempts > 0 and message.approximate_receive_count > self.max_processing_attempts:
+            return -1
+
         backoff_timeout = message_timeout or self.message_retry_visibility_timeout_seconds
         # we can only set integer timeouts
         return int(backoff_timeout) if backoff_timeout is not None else backoff_timeout
