@@ -7,6 +7,7 @@ from urllib.parse import urlparse
 
 from boto3 import Session
 from microcosm.api import defaults, typed
+from microcosm_logging.decorators import logger
 
 from microcosm_pubsub.backoff import BackoffPolicy
 from microcosm_pubsub.reader import SQSFileReader, SQSStdInReader
@@ -22,6 +23,7 @@ def is_file(url):
     return exists(urlparse(url).path)
 
 
+@logger
 class SQSConsumer:
     """
     Consume message from a (single) SQS queue.
@@ -130,7 +132,7 @@ def configure_sqs_client(graph):
     # SQS will only return a few messages at time unless long polling is enabled (>0)
     wait_seconds=typed(int, default_value=1),
     # On error, change the visibility timeout when nacking
-    message_retry_visibility_timeout_seconds=typed(int, default_value=5)
+    message_retry_visibility_timeout_seconds=typed(int, default_value=5),
 )
 def configure_sqs_consumer(graph):
     """

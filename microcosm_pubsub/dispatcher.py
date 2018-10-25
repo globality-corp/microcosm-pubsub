@@ -5,15 +5,20 @@ Process batches of messages.
 from typing import List
 
 from inflection import titleize
+from microcosm.api import defaults, typed
 from microcosm_logging.decorators import context_logger, logger
 from microcosm_logging.timing import elapsed_time
 
 from microcosm_pubsub.context import TTL_KEY
-from microcosm_pubsub.errors import IgnoreMessage, TTLExpired
+from microcosm_pubsub.errors import IgnoreMessage, TTLExpired, SkipMessage
 from microcosm_pubsub.result import MessageHandlingResult
 
 
 @logger
+@defaults(
+    # Number of failed attempts after which the message stops being processed
+    message_max_processing_attempts=typed(int, default_value=None)
+)
 class SQSMessageDispatcher:
     """
     Dispatch batches of SQSMessages to handler functions.
@@ -25,6 +30,7 @@ class SQSMessageDispatcher:
         self.sqs_message_context = graph.sqs_message_context
         self.sqs_message_handler_registry = graph.sqs_message_handler_registry
         self.send_metrics = graph.pubsub_send_metrics
+        self.max_processing_attempts = graph.config.sqs_message_dispatcher.message_max_processing_attempts
 
     def handle_batch(self, bound_handlers) -> List[MessageHandlingResult]:
         """
@@ -48,8 +54,7 @@ class SQSMessageDispatcher:
             handler = None
             with elapsed_time(self.opaque):
                 try:
-                    self.validate_ttl()
-                    self.validate_content(message)
+                    self.validate_message(message)
                     handler = self.find_handler(message, bound_handlers)
                     instance = MessageHandlingResult.invoke(
                         handler=self.wrap_handler(handler),
@@ -69,6 +74,11 @@ class SQSMessageDispatcher:
             instance.resolve(message)
             return instance
 
+    def validate_message(self, message):
+        self.validate_ttl()
+        self.validate_processing_limit(message)
+        self.validate_content(message)
+
     def validate_ttl(self):
         """
         Validate that the current message is not expired.
@@ -80,6 +90,13 @@ class SQSMessageDispatcher:
 
         if int(self.opaque[TTL_KEY]) <= 0:
             raise TTLExpired()
+
+    def validate_processing_limit(self, message):
+        if self.max_processing_attempts and message.approximate_receive_count > self.max_processing_attempts:
+            raise SkipMessage(
+                "Message exceeded maximum of {max} processing attempts. Skipping",
+                extra=dict(max=self.max_processing_attempts),
+            )
 
     def validate_content(self, message):
         """
