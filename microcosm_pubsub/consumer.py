@@ -102,22 +102,11 @@ class SQSConsumer:
 
         """
         timeout = self.backoff_policy.compute_backoff_timeout(message, visibility_timeout_seconds)
-        if timeout < 0:
-            return self.skip_nack(message)
         self.sqs_client.change_message_visibility(
             QueueUrl=self.sqs_queue_url,
             ReceiptHandle=message.receipt_handle,
             VisibilityTimeout=timeout,
         )
-
-    def skip_nack(self, message):
-        self.logger.info(
-            "Message has exceeded the maximum of {attempts} processing attempts. Skipping",
-            extra=dict(
-                attempts=self.backoff_policy.max_processing_attempts,
-            )
-        )
-        self.ack(message)
 
 
 def configure_sqs_client(graph):
@@ -144,9 +133,6 @@ def configure_sqs_client(graph):
     wait_seconds=typed(int, default_value=1),
     # On error, change the visibility timeout when nacking
     message_retry_visibility_timeout_seconds=typed(int, default_value=5),
-    # Number of failed attempts after which the message stops being processed
-    # Only used by the CutoffBackoffPolicy; only meant to be used in non-SQS contexts
-    message_max_processing_attempts=typed(int, default_value=-1)
 )
 def configure_sqs_consumer(graph):
     """
@@ -171,7 +157,6 @@ def configure_sqs_consumer(graph):
 
     backoff_policy = backoff_policy_class(
         message_retry_visibility_timeout_seconds=graph.config.sqs_consumer.message_retry_visibility_timeout_seconds,
-        message_max_processing_attempts=graph.config.sqs_consumer.message_max_processing_attempts,
     )
 
     return SQSConsumer(
