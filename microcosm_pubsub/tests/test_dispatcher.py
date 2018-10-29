@@ -31,6 +31,7 @@ class TestDispatcher:
 
         self.content = dict(bar="baz", uri="http://example.com")
         self.message = SQSMessage(
+            approximate_receive_count=0,
             consumer=self.graph.sqs_consumer,
             content=self.content,
             media_type=DerivedSchema.MEDIA_TYPE,
@@ -71,7 +72,7 @@ class TestDispatcher:
 
     def test_handle_message_expired(self):
         """
-        Unsupported media types are ignored.
+        Messages whose TTL have reached 0 are ignored
 
         """
         self.message.content = dict(
@@ -87,6 +88,24 @@ class TestDispatcher:
             has_properties(
                 elapsed_time=greater_than(0.0),
                 result=MessageHandlingResultType.EXPIRED,
+            ),
+        )
+
+    def test_handle_message_reached_processing_limit(self):
+        """
+        Messages that have reached the processing limit are ignored
+
+        """
+        self.dispatcher.max_processing_attempts = 1
+        self.message.approximate_receive_count = 2
+        assert_that(
+            self.dispatcher.handle_message(
+                message=self.message,
+                bound_handlers=self.daemon.bound_handlers,
+            ),
+            has_properties(
+                elapsed_time=greater_than(0.0),
+                result=MessageHandlingResultType.SKIPPED,
             ),
         )
 
