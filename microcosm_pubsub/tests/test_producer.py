@@ -211,17 +211,7 @@ def test_deferred_batch_production():
     messages in one MessageBatchSchema
 
     """
-    def loader(metadata):
-        return dict(
-            sns_topic_arns=dict(
-                default="topic",
-                mappings={
-                    MessageBatchSchema.MEDIA_TYPE: "batch-topic",
-                },
-            )
-        )
-
-    graph = create_object_graph("example", testing=True, loader=loader)
+    graph = create_object_graph("example", testing=True, loader=batch_loader)
     graph.use("opaque")
 
     # set up response
@@ -239,18 +229,31 @@ def test_deferred_batch_production():
     )
 
 
-def test_deferred_batch_with_single_message():
-    def loader(metadata):
-        return dict(
-            sns_topic_arns=dict(
-                default="topic",
-                mappings={
-                    MessageBatchSchema.MEDIA_TYPE: "batch-topic",
-                },
-            )
-        )
+def test_increased_deferred_batch_production():
+    """
+    Deferred production caps the size of each batch of messages during the publish call
 
-    graph = create_object_graph("example", testing=True, loader=loader)
+    """
+    graph = create_object_graph("example", testing=True, loader=batch_loader)
+    graph.use("opaque")
+
+    # set up response
+    graph.sns_producer.sns_client.publish.return_value = dict(MessageId=MESSAGE_ID)
+
+    with DeferredBatchProducer(graph.sns_producer) as producer:
+        for i in range(202):
+            assert_that(producer.produce(DerivedSchema.MEDIA_TYPE, data=f"{i}"), is_(none()))
+        assert_that(graph.sns_producer.sns_client.publish.call_count, is_(equal_to(0)))
+
+    assert_that(graph.sns_producer.sns_client.publish.call_count, is_(equal_to(3)))
+    assert_that(
+        loads(graph.sns_producer.sns_client.publish.call_args[1]["Message"])["mediaType"],
+        is_(equal_to("application/vnd.globality.pubsub._.created.batch_message")),
+    )
+
+
+def test_deferred_batch_with_single_message():
+    graph = create_object_graph("example", testing=True, loader=batch_loader)
     graph.use("opaque")
 
     with DeferredBatchProducer(graph.sns_producer) as producer:
@@ -265,17 +268,7 @@ def test_deferred_batch_with_single_message():
 
 
 def test_deferred_batch_with_no_message():
-    def loader(metadata):
-        return dict(
-            sns_topic_arns=dict(
-                default="topic",
-                mappings={
-                    MessageBatchSchema.MEDIA_TYPE: "batch-topic",
-                },
-            )
-        )
-
-    graph = create_object_graph("example", testing=True, loader=loader)
+    graph = create_object_graph("example", testing=True, loader=batch_loader)
     graph.use("opaque")
 
     with DeferredBatchProducer(graph.sns_producer):
@@ -316,16 +309,6 @@ def test_batch_deferred_production_decorator():
     Deferred production can be used to decorate a function
 
     """
-    def loader(metadata):
-        return dict(
-            sns_topic_arns=dict(
-                default="topic",
-                mappings={
-                    MessageBatchSchema.MEDIA_TYPE: "batch-topic",
-                },
-            )
-        )
-
     class Foo:
         def __init__(self, graph):
             self.graph = graph
@@ -337,10 +320,21 @@ def test_batch_deferred_production_decorator():
             self.sns_producer.produce(DerivedSchema.MEDIA_TYPE, data="data2")
             assert_that(graph.sns_producer.sns_client.publish.call_count, is_(equal_to(0)))
 
-    graph = create_object_graph("example", testing=True, loader=loader)
+    graph = create_object_graph("example", testing=True, loader=batch_loader)
     foo = Foo(graph)
 
     func = deferred_batch(foo)(foo.bar)
     func()
 
     assert_that(graph.sns_producer.sns_client.publish.call_count, is_(equal_to(1)))
+
+
+def batch_loader(metadata):
+    return dict(
+        sns_topic_arns=dict(
+            default="topic",
+            mappings={
+                MessageBatchSchema.MEDIA_TYPE: "batch-topic",
+            },
+        )
+    )
