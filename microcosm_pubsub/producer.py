@@ -7,7 +7,7 @@ from distutils.util import strtobool
 from functools import wraps
 
 from boto3 import Session
-from microcosm.api import defaults
+from microcosm.api import defaults, typed
 from microcosm.errors import NotBoundError
 from microcosm_logging.decorators import logger
 from microcosm_logging.timing import elapsed_time
@@ -23,12 +23,13 @@ class SNSProducer:
     Produces messages to SNS topics.
 
     """
-    def __init__(self, opaque, pubsub_message_schema_registry, sns_client, sns_topic_arns, skip):
+    def __init__(self, opaque, pubsub_message_schema_registry, sns_client, sns_topic_arns, skip, deferred_batch_size):
         self.opaque = opaque
         self.pubsub_message_schema_registry = pubsub_message_schema_registry
         self.sns_client = sns_client
         self.sns_topic_arns = sns_topic_arns
         self.skip = skip
+        self.deferred_batch_size = deferred_batch_size
 
     def produce(self, media_type, dct=None, uri=None, **kwargs):
         """
@@ -122,6 +123,11 @@ class DeferredProducer:
 
 
 class DeferredBatchProducer(DeferredProducer):
+
+    def generate_message_batches(self, messages, deferred_batch_size):
+        for i in range(0, len(messages), deferred_batch_size):
+            yield messages[i:i + deferred_batch_size]
+
     def __exit__(self, type, value, traceback):
         if type is not None:
             return
@@ -136,13 +142,14 @@ class DeferredBatchProducer(DeferredProducer):
             for media_type, message, topic_arn, opaque_data in self.messages
         ]
 
-        if len(messages) > 1:
-            self.producer.produce(
-                MessageBatchSchema.MEDIA_TYPE,
-                messages=messages,
-            )
-        elif len(messages) == 1:
-            self.producer.publish_message(**messages[0])
+        for message_batch in self.generate_message_batches(messages, self.producer.deferred_batch_size):
+            if len(message_batch) > 1:
+                self.producer.produce(
+                    MessageBatchSchema.MEDIA_TYPE,
+                    messages=message_batch,
+                )
+            elif len(message_batch) == 1:
+                self.producer.publish_message(**message_batch[0])
 
 
 def deferred(component, key="sns_producer"):
@@ -249,6 +256,8 @@ def configure_sns_topic_arns(graph):
     endpoint_url=None,
     mock_sns=True,
     skip=None,
+    # the size used to determine batching in the deferred batch producer
+    deferred_batch_size=typed(int, default_value=100),
 )
 def configure_sns_producer(graph):
     """
@@ -297,4 +306,5 @@ def configure_sns_producer(graph):
         sns_client=sns_client,
         sns_topic_arns=graph.sns_topic_arns,
         skip=skip,
+        deferred_batch_size=graph.config.sns_producer.deferred_batch_size,
     )
