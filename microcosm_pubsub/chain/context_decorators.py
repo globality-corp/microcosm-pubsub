@@ -1,5 +1,5 @@
 from functools import wraps, WRAPPER_ASSIGNMENTS
-from inspect import signature, _POSITIONAL_ONLY, _POSITIONAL_OR_KEYWORD, _empty
+from inspect import Parameter, signature, Signature
 
 from microcosm_pubsub.chain.decorators import EXTRACTS, BINDS
 
@@ -19,7 +19,7 @@ def get_positional_args(func):
         (arg, parameter.default)
         for arg, parameter
         in signature(func).parameters.items()
-        if parameter.kind in (_POSITIONAL_ONLY, _POSITIONAL_OR_KEYWORD)
+        if parameter.kind in (Parameter.POSITIONAL_ONLY, Parameter.POSITIONAL_OR_KEYWORD)
     ]
 
 
@@ -34,7 +34,7 @@ def get_from_context(context, func, assigned=DEFAULT_ASSIGNED):
     @wraps(func, assigned=assigned + WRAPPER_ASSIGNMENTS)
     def decorate(*args, **kwargs):
         context_kwargs = {
-            arg_name: (context[arg_name] if default is _empty else context.get(arg_name, default))
+            arg_name: (context[arg_name] if default is Signature.empty else context.get(arg_name, default))
             for arg_name, default in positional_args[len(args):]
             if arg_name not in kwargs
         }

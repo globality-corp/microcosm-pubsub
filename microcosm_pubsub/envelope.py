@@ -120,7 +120,7 @@ class SQSEnvelope(MessageBodyParser, MediaTypeAndContentParser):
 
     """
     def __init__(self, graph):
-        self.validate_md5 = graph.config.sqs_envelope.validate_md5
+        self.should_validate_md5 = graph.config.sqs_envelope.validate_md5
 
     def parse_raw_message(self, consumer, raw_message):
         """
@@ -134,7 +134,7 @@ class SQSEnvelope(MessageBodyParser, MediaTypeAndContentParser):
 
         body = self.parse_body(raw_message)
 
-        if self.validate_md5:
+        if self.should_validate_md5:
             self.validate_md5(raw_message, body)
 
         message = self.parse_message(body)
