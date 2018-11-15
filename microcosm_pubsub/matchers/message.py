@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from json import loads
 from typing import Iterable, Optional, Mapping
+from unittest.mock import Mock
 
 from hamcrest import not_none
 from hamcrest.core.helpers.wrap_matcher import wrap_matcher
@@ -25,16 +26,38 @@ class PublishedMessage:
         return self.message.get("uri")
 
     @classmethod
-    def from_call(cls, call) -> "PublishedMessage":
+    def from_call(cls, call) -> Optional["PublishedMessage"]:
+        """
+        Extract a published message from a mock call.
+
+        """
+        # NB: _Call is a tuple of (name, args, kwargs)
         name, args, kwargs = call
 
-        # NB: we could use the envelope functions to parse the inner message
-        topic_arn = kwargs["TopicArn"]
-        message = loads(kwargs["Message"])
-        return cls(
-            topic_arn=topic_arn,
-            message=message,
-        )
+        # Case 1: we've mocked the boto3 SNS client
+        if "TopicArn" in kwargs and "Message" in kwargs:
+            topic_arn = kwargs["TopicArn"]
+            # NB: we could use the envelope functions to parse the inner message
+            message = loads(kwargs["Message"])
+            return cls(
+                topic_arn=topic_arn,
+                message=message,
+            )
+
+        # Case 2: we've mocked the entire SNSProducer
+        if args and args[0].startswith("application/vnd.globality") and kwargs:
+            topic_arn = None
+
+            message = kwargs.copy()
+            message.update(mediaType=args[0])
+
+            return cls(
+                topic_arn=topic_arn,
+                message=message,
+            )
+
+        # calls with unexpected format will be filtered
+        return None
 
     @staticmethod
     def iter_from_mock_calls(mock_calls) -> Iterable["PublishedMessage"]:
@@ -42,12 +65,10 @@ class PublishedMessage:
         Iterate over published messages among mock calls.
 
         """
-        return [
+        return list(filter(None, (
             PublishedMessage.from_call(mock_call)
             for mock_call in mock_calls
-            # NB: _Call is a tuple of (name, args, kwargs)
-            if "TopicArn" in mock_call[-1] and "Message" in mock_call[-1]
-        ]
+        )))
 
     @staticmethod
     def iter_from_sns_producer(sns_producer) -> Iterable["PublishedMessage"]:
@@ -55,7 +76,12 @@ class PublishedMessage:
         Iterate over published messages from a mocked SNSProducer.
 
         """
-        return PublishedMessage.iter_from_mock_calls(sns_producer.sns_client.publish.mock_calls)
+        if isinstance(sns_producer, Mock):
+            target = sns_producer.produce
+        else:
+            target = sns_producer.sns_client.publish
+
+        return PublishedMessage.iter_from_mock_calls(target.mock_calls)
 
 
 class PublishedMessageMatcher(IsObjectWithProperty):

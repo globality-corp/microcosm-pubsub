@@ -15,10 +15,14 @@ from microcosm_pubsub.matchers import (
 )
 
 
-class TestPublishingMatcher:
+class TestPublishingMatcherWithMockedSNS:
 
     def setup(self):
         loader = load_from_dict(
+            sns_producer=dict(
+                # NB: mock the boto SNS client (default)
+                mock_sns=True,
+            ),
             sns_topic_arns=dict(
                 default="topic",
             )
@@ -74,6 +78,41 @@ class TestPublishingMatcher:
                 all_of(
                     has_media_type(created("foo")),
                     has_uri(),
+                ),
+            ),
+        )
+
+
+class TestPublishingMatcherWithoutMockedSNS:
+
+    def setup(self):
+        loader = load_from_dict(
+            sns_producer=dict(
+                # NB: mock the SNS producer itself (non-default, except for daemons)
+                mock_sns=False,
+            ),
+            sns_topic_arns=dict(
+                default="topic",
+            )
+        )
+        self.graph = create_object_graph("example", testing=True, loader=loader)
+        self.graph.sns_producer.sns_client.reset_mocks()
+
+    def test_publish_no_messages(self):
+        assert_that(
+            self.graph.sns_producer,
+            published_nothing(),
+        )
+
+    def test_publish_one_message(self):
+        self.graph.sns_producer.produce(created("foo"), uri="http://localhost")
+
+        assert_that(
+            self.graph.sns_producer,
+            published(
+                all_of(
+                    has_media_type(created("foo")),
+                    has_uri("http://localhost"),
                 ),
             ),
         )
