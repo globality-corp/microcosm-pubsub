@@ -11,7 +11,11 @@ class PubSubSendMetrics:
 
     def __init__(self, graph):
         self.metrics = self.get_metrics(graph)
-        self.enabled = bool(self.metrics and graph.config.pubsub_send_metrics.enabled)
+        self.enabled = bool(
+            self.metrics
+            and self.metrics.host != "localhost"
+            and graph.config.pubsub_send_metrics.enabled
+        )
 
     def get_metrics(self, graph):
         """

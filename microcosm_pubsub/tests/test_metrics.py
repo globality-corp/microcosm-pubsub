@@ -2,7 +2,7 @@
 Test metrics enablement.
 
 """
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from hamcrest import assert_that, equal_to, is_
 from microcosm.api import create_object_graph, load_from_dict
@@ -28,7 +28,19 @@ def test_configure_metrics_default_metrics_installed():
 
     """
     with patch.object(PubSubSendMetrics, "get_metrics") as mocked:
-        mocked.return_value = object()
+        mocked.return_value = Mock(host="localhost")
+
+        graph = create_object_graph("example", testing=True)
+        assert_that(graph.pubsub_send_metrics.enabled, is_(equal_to(False)))
+
+
+def test_configure_metrics_default_metrics_configured():
+    """
+    Enabled metrics by default if installed.
+
+    """
+    with patch.object(PubSubSendMetrics, "get_metrics") as mocked:
+        mocked.return_value = Mock(host="statsd")
 
         graph = create_object_graph("example", testing=True)
         assert_that(graph.pubsub_send_metrics.enabled, is_(equal_to(True)))
