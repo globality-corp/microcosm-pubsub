@@ -2,13 +2,14 @@
 Message handling result.
 
 """
-from dataclasses import dataclass, field
 from enum import Enum, unique
 from logging import DEBUG, INFO, WARNING
 from sys import exc_info
 from typing import Any, Dict, Optional, Tuple
 
-from microcosm_pubsub.errors import IgnoreMessage, Nack, SkipMessage, TTLExpired
+from dataclasses import dataclass, field
+from microcosm_pubsub.errors import (IgnoreMessage, Nack, SkipMessage,
+                                     TTLExpired)
 from microcosm_pubsub.message import SQSMessage
 
 
@@ -97,7 +98,10 @@ class MessageHandlingResult:
 
         if isinstance(error, SkipMessage):
             return cls(
-                extra=error.extra,
+                extra=dict(
+                    reason=str(error),
+                    **error.extra
+                ),
                 media_type=message.media_type,
                 result=MessageHandlingResultType.SKIPPED,
             )
