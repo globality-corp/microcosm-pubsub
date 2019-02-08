@@ -2,10 +2,7 @@
 Test result handling.
 
 """
-from hamcrest import (
-    assert_that,
-    has_properties,
-)
+from hamcrest import assert_that, has_entries, has_properties
 from microcosm_logging.decorators import logger
 
 from microcosm_pubsub.errors import IgnoreMessage, Nack, SkipMessage, TTLExpired
@@ -91,6 +88,9 @@ class TestMessageHandlingResult:
             has_properties(
                 media_type="application/vnd.microcosm.derived",
                 result=MessageHandlingResultType.SKIPPED,
+                extra=has_entries(
+                    reason="ignorance is bliss",
+                ),
             ),
         )
         # ack
