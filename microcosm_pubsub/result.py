@@ -2,14 +2,13 @@
 Message handling result.
 
 """
+from dataclasses import dataclass, field
 from enum import Enum, unique
 from logging import DEBUG, INFO, WARNING
 from sys import exc_info
 from typing import Any, Dict, Optional, Tuple
 
-from dataclasses import dataclass, field
-from microcosm_pubsub.errors import (IgnoreMessage, Nack, SkipMessage,
-                                     TTLExpired)
+from microcosm_pubsub.errors import IgnoreMessage, Nack, SkipMessage, TTLExpired
 from microcosm_pubsub.message import SQSMessage
 
 

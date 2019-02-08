@@ -5,12 +5,11 @@ Test result handling.
 from hamcrest import assert_that, has_entries, has_properties
 from microcosm_logging.decorators import logger
 
-from microcosm_pubsub.errors import (IgnoreMessage, Nack, SkipMessage,
-                                     TTLExpired)
+from microcosm_pubsub.errors import IgnoreMessage, Nack, SkipMessage, TTLExpired
 from microcosm_pubsub.message import SQSMessage
-from microcosm_pubsub.result import (MessageHandlingResult,
-                                     MessageHandlingResultType)
+from microcosm_pubsub.result import MessageHandlingResult, MessageHandlingResultType
 from microcosm_pubsub.tests.fixtures import DerivedSchema, ExampleDaemon
+
 
 MESSAGE_ID = "message-id"
 RECEIPT_HANDLE = "receipt-handle"
