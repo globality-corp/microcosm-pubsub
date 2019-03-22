@@ -11,7 +11,6 @@ try(
 
 """
 from microcosm_pubsub.chain import Chain
-from microcosm_pubsub.chain.statements.case import CaseStatement
 from microcosm_pubsub.chain.statements.switch import SwitchStatement
 
 
