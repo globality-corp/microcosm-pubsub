@@ -67,6 +67,7 @@ def test_empty_switch():
         is_(equal_to(None)),
     )
 
+
 def test_switch_unhashable_value():
     chain = Chain(
         switch("arg").case(None).then(

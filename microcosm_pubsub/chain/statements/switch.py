@@ -28,6 +28,16 @@ class SwitchStatement:
     def _add_action_for_key(self, key, action):
         self._cases.append((key, action))
 
+    def _case_for_key(self, key):
+        try:
+            return next(
+                case_action
+                for case_key, case_action in self._cases
+                if case_key == key
+            )
+        except StopIteration:
+            return None
+
     def case(self, key, *args, **kwargs):
         if not args and not kwargs:
             return CaseStatement(self, key)
@@ -43,13 +53,8 @@ class SwitchStatement:
 
     def __call__(self, context):
         key = context[self.key]
-        try:
-            action = next(
-                case_action
-                for case_key, case_action in self._cases
-                if case_key == key
-            )
-        except StopIteration:
+        action = self._case_for_key(key)
+        if action is None:
             action = self._otherwise
         if action:
             return action(context)

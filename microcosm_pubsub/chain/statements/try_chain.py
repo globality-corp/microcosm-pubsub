@@ -12,30 +12,22 @@ try(
 """
 from microcosm_pubsub.chain import Chain
 from microcosm_pubsub.chain.statements.case import CaseStatement
+from microcosm_pubsub.chain.statements.switch import SwitchStatement
 
 
-class TryChainStatement:
+class TryChainStatement(SwitchStatement):
     def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.chain = Chain.make(*args, **kwargs)
-        self._cases = dict()
-        self._otherwise = None
 
     def catch(self, key, *args,  **kwargs):
-        if not args and not kwargs:
-            return CaseStatement(self, key)
-
-        self._cases[key] = Chain.make(*args, **kwargs)
-        return self
-
-    def otherwise(self, *args, **kwargs):
-        self._otherwise = Chain.make(*args, **kwargs)
-        return self
+        return self.case(key, *args, **kwargs)
 
     def __call__(self, context):
         try:
             res = self.chain(context)
         except Exception as error:
-            handle = self._cases.get(type(error))
+            handle = self._case_for_key(type(error))
             if not handle:
                 raise error
             return handle(context)
