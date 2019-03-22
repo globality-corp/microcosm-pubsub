@@ -97,7 +97,10 @@ class MessageHandlingResult:
 
         if isinstance(error, SkipMessage):
             return cls(
-                extra=error.extra,
+                extra=dict(
+                    reason=str(error),
+                    **error.extra
+                ),
                 media_type=message.media_type,
                 result=MessageHandlingResultType.SKIPPED,
             )
