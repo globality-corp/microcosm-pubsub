@@ -11,5 +11,5 @@ class CaseStatement:
         self.key = key
 
     def then(self, *args, **kwargs):
-        self.switch._cases[self.key] = Chain.make(*args, **kwargs)
+        self.switch._add_action_for_key(self.key, Chain.make(*args, **kwargs))
         return self.switch

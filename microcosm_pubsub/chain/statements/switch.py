@@ -20,16 +20,21 @@ class SwitchStatement:
     def __init__(self, key):
         self.key = key
         self._otherwise = None
-        self._cases = dict()
+        self._cases = []
 
     def __str__(self):
         return f"switch_{self.key}"
+
+    def _add_action_for_key(self, key, action):
+        self._cases.append((key, action))
 
     def case(self, key, *args, **kwargs):
         if not args and not kwargs:
             return CaseStatement(self, key)
 
-        self._cases[key] = Chain.make(*args, **kwargs)
+        self._cases.append(
+            (key, Chain.make(*args, **kwargs)),
+        )
         return self
 
     def otherwise(self, *args, **kwargs):
@@ -38,7 +43,14 @@ class SwitchStatement:
 
     def __call__(self, context):
         key = context[self.key]
-        action = self._cases.get(key, self._otherwise)
+        try:
+            action = next(
+                case_action
+                for case_key, case_action in self._cases
+                if case_key == key
+            )
+        except StopIteration:
+            action = self._otherwise
         if action:
             return action(context)
 

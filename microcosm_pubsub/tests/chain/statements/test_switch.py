@@ -66,3 +66,26 @@ def test_empty_switch():
         chain(arg=None),
         is_(equal_to(None)),
     )
+
+def test_switch_unhashable_value():
+    chain = Chain(
+        switch("arg").case(None).then(
+            lambda: 200,
+        ).case([]).then(
+            lambda: 300,
+        ).otherwise(
+            lambda: 500,
+        ),
+    )
+    assert_that(
+        chain(arg=[]),
+        is_(equal_to(300)),
+    )
+    assert_that(
+        chain(arg=None),
+        is_(equal_to(200)),
+    )
+    assert_that(
+        chain(arg=[1]),
+        is_(equal_to(500)),
+    )
