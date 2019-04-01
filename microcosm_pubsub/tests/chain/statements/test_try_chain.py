@@ -102,3 +102,41 @@ def test_try_other_simplified():
         chain(exception=None),
         is_(equal_to(200)),
     )
+
+
+def test_try_complex_chain():
+    def function1(exception):
+        if exception is ValueError:
+            raise exception()
+        return True
+
+    def function2(exception):
+        if exception is ArithmeticError:
+            raise exception()
+        return True
+
+    chain = Chain(
+        try_chain(
+            function1,
+            function2,
+        ).catch(ValueError).then(
+            lambda: 501,
+        ).catch(ArithmeticError).then(
+            lambda: 502,
+        ).otherwise(
+            Chain(lambda: 200),
+        ),
+    )
+    assert_that(
+        chain(exception=ValueError),
+        is_(equal_to(501)),
+    )
+    assert_that(
+        chain(exception=ArithmeticError),
+        is_(equal_to(502)),
+    )
+
+    assert_that(
+        chain(exception=None),
+        is_(equal_to(200)),
+    )

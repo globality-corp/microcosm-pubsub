@@ -16,8 +16,8 @@ from microcosm_pubsub.chain.statements.switch import SwitchStatement
 
 class TryChainStatement(SwitchStatement):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
         self.chain = Chain.make(*args, **kwargs)
+        super().__init__(self.chain)
 
     def catch(self, key, *args,  **kwargs):
         return self.case(key, *args, **kwargs)
