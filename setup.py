@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 from setuptools import find_packages, setup
 
+
 project = "microcosm-pubsub"
-version = "1.21.0"
+version = "1.22.0"
 
 setup(
     name=project,
