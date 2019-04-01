@@ -106,12 +106,12 @@ def test_try_other_simplified():
 
 def test_try_complex_chain():
     def function1(exception):
-        if exception is not None:
+        if exception is ValueError:
             raise exception()
         return True
 
     def function2(exception):
-        if exception is not None:
+        if exception is ArithmeticError:
             raise exception()
         return True
 
