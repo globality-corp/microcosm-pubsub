@@ -32,7 +32,10 @@ class ChainURIHandler(URIHandler, metaclass=ABCMeta):
         return "resource"
 
     def handle(self, message, uri, resource):
-        kwargs = dict(message=message)
+        kwargs = dict(
+            message=message,
+            uri=uri,
+        )
         kwargs[self.resource_name] = resource
         chain = self.get_chain()
         chain(**kwargs)
