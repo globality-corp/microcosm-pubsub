@@ -100,7 +100,7 @@ class PubSubSendBatchMetrics:
         )
 
         self.metrics.histogram(
-            "message_count",
+            "message_batch_count",
             message_count,
             tags=tags,
         )
