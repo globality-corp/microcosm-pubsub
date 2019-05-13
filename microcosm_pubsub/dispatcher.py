@@ -11,7 +11,7 @@ from microcosm_logging.timing import elapsed_time
 
 from microcosm_pubsub.context import TTL_KEY
 from microcosm_pubsub.errors import IgnoreMessage, SkipMessage, TTLExpired
-from microcosm_pubsub.result import MessageHandlingResult
+from microcosm_pubsub.result import MessageHandlingResult, MessageHandlingResultType
 
 
 @logger
@@ -30,6 +30,7 @@ class SQSMessageDispatcher:
         self.sqs_message_context = graph.sqs_message_context
         self.sqs_message_handler_registry = graph.sqs_message_handler_registry
         self.send_metrics = graph.pubsub_send_metrics
+        self.send_batch_metrics = graph.pubsub_send_batch_metrics
         self.max_processing_attempts = graph.config.sqs_message_dispatcher.message_max_processing_attempts
 
     def handle_batch(self, bound_handlers) -> List[MessageHandlingResult]:
@@ -37,12 +38,30 @@ class SQSMessageDispatcher:
         Send a batch of messages to a function.
 
         """
-        instances = [
-            self.handle_message(message, bound_handlers)
-            for message in self.sqs_consumer.consume()
-        ]
+        with elapsed_time(self.opaque):
+            instances = [
+                self.handle_message(message, bound_handlers)
+                for message in self.sqs_consumer.consume()
+            ]
+
+        message_count = len([
+            instance for instance in instances
+            if instance.result != MessageHandlingResultType.IGNORED
+        ])
+
+        self.logger.info(
+            f"Finished handling batch",
+            extra=dict(
+                message_count=message_count,
+                **self.opaque.as_dict(),
+            ),
+        )
+
+        self.send_batch_metrics(self.opaque["elapsed_time"], message_count)
+
         for instance in instances:
             self.send_metrics(instance)
+
         return instances
 
     def handle_message(self, message, bound_handlers) -> MessageHandlingResult:

@@ -1,3 +1,6 @@
+from typing import List, Optional
+
+from datadog.dogstatsd.base import DogStatsd
 from microcosm.api import defaults, typed
 from microcosm.config.types import boolean
 from microcosm.errors import NotBoundError
@@ -42,12 +45,62 @@ class PubSubSendMetrics:
             return
 
         tags = [
-            "source:micrcocosm-pubsub",
+            "source:microcosm-pubsub",
             f"result:{result.result}",
             f"media-type:{result.media_type}",
         ]
         self.metrics.histogram(
             "message",
             result.elapsed_time,
+            tags=tags,
+        )
+
+
+@defaults(
+    enabled=typed(boolean, default_value=True)
+)
+class PubSubSendBatchMetrics:
+
+    def __init__(self, graph):
+        self.metrics = self.get_metrics(graph)
+        self.enabled = bool(
+            self.metrics
+            and self.metrics.host != "localhost"
+            and graph.config.pubsub_send_metrics.enabled
+        )
+
+    def get_metrics(self, graph) -> Optional[DogStatsd]:
+        """
+        Fetch the metrics client from the graph.
+
+        Metrics will be disabled if the not configured.
+
+        """
+        try:
+            return graph.metrics
+        except NotBoundError:
+            return None
+
+    def __call__(self, elapsed_time, message_count: int):
+        """
+        Send metrics if enabled.
+
+        """
+        if not self.enabled:
+            return
+
+        tags = [
+            "source:microcosm-pubsub",
+        ]
+
+        self.metrics.histogram(
+            "message_batch",
+            elapsed_time,
+            tags=tags,
+        )
+
+        self.metrics.histogram(
+            "message_count",
+            message_count,
             tags=tags,
         )
