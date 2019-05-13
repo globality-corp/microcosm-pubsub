@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 from datadog.dogstatsd.base import DogStatsd
 from microcosm.api import defaults, typed

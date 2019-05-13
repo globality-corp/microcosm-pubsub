@@ -2,6 +2,7 @@
 Process batches of messages.
 
 """
+from logging import Logger
 from typing import List
 
 from inflection import titleize
@@ -24,6 +25,8 @@ class SQSMessageDispatcher:
     Dispatch batches of SQSMessages to handler functions.
 
     """
+    logger: Logger
+
     def __init__(self, graph):
         self.opaque = graph.opaque
         self.sqs_consumer = graph.sqs_consumer
