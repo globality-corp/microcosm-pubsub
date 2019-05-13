@@ -50,7 +50,7 @@ class SQSMessageDispatcher:
         ])
 
         self.logger.info(
-            f"Finished handling batch",
+            "Finished handling batch",
             extra=dict(
                 message_count=message_count,
                 **self.opaque.as_dict(),
