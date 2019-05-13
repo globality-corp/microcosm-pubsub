@@ -4,7 +4,7 @@ Message encoding and decoding.
 """
 from json import dumps, loads
 
-from marshmallow import fields, Schema, ValidationError
+from marshmallow import Schema, ValidationError, fields
 
 
 DEFAULT_MEDIA_TYPE = "application/json"

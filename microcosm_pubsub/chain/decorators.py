@@ -1,5 +1,5 @@
-from inspect import ismethod
 from functools import wraps
+from inspect import ismethod
 
 
 EXTRACTS = "_extracts"

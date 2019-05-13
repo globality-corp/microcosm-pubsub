@@ -8,23 +8,20 @@ from hamcrest import (
     assert_that,
     equal_to,
     instance_of,
-    is_
+    is_,
 )
 from microcosm.api import create_object_graph
 
 from microcosm_pubsub.codecs import PubSubMessageCodec
 from microcosm_pubsub.conventions import (
-    created,
-    deleted,
     IdentityMessageSchema,
     LifecycleChange,
-    make_media_type,
     URIMessageSchema,
+    created,
+    deleted,
+    make_media_type,
 )
-from microcosm_pubsub.tests.fixtures import (
-    ExampleDaemon,
-    noop_handler,
-)
+from microcosm_pubsub.tests.fixtures import ExampleDaemon, noop_handler
 
 
 class Foo:

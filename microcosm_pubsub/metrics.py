@@ -1,6 +1,7 @@
 from microcosm.api import defaults, typed
-from microcosm.errors import NotBoundError
 from microcosm.config.types import boolean
+from microcosm.errors import NotBoundError
+
 from microcosm_pubsub.result import MessageHandlingResultType
 
 

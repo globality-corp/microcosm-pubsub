@@ -4,18 +4,11 @@ SQS envelope tests.
 """
 from json import dumps
 
-from hamcrest import (
-    assert_that,
-    equal_to,
-    is_,
-)
-
+from hamcrest import assert_that, equal_to, is_
 from microcosm.api import create_object_graph
+
 from microcosm_pubsub.conventions import created
-from microcosm_pubsub.envelope import (
-    CodecSQSEnvelope,
-    RawSQSEnvelope,
-)
+from microcosm_pubsub.envelope import CodecSQSEnvelope, RawSQSEnvelope
 
 
 def test_raw_sqs_envelope():

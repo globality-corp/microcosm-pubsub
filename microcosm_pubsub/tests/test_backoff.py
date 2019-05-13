@@ -2,8 +2,9 @@
 Test backoff policies.
 
 """
-from hamcrest import assert_that, equal_to, is_
 from unittest.mock import patch
+
+from hamcrest import assert_that, equal_to, is_
 
 from microcosm_pubsub.backoff import ExponentialBackoffPolicy, NaiveBackoffPolicy
 from microcosm_pubsub.message import SQSMessage

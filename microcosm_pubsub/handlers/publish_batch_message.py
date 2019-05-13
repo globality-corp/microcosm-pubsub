@@ -5,6 +5,7 @@ PublishBatchMessage handler.
 
 from microcosm.api import binding
 from microcosm_logging.decorators import logger
+
 from microcosm_pubsub.conventions import created
 from microcosm_pubsub.decorators import handles
 

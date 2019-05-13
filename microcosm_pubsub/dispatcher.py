@@ -10,7 +10,7 @@ from microcosm_logging.decorators import context_logger, logger
 from microcosm_logging.timing import elapsed_time
 
 from microcosm_pubsub.context import TTL_KEY
-from microcosm_pubsub.errors import IgnoreMessage, TTLExpired, SkipMessage
+from microcosm_pubsub.errors import IgnoreMessage, SkipMessage, TTLExpired
 from microcosm_pubsub.result import MessageHandlingResult
 
 

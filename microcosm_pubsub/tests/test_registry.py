@@ -10,14 +10,9 @@ from hamcrest import (
     is_,
     raises,
 )
-from microcosm.api import create_object_graph
-from microcosm.api import binding
+from microcosm.api import binding, create_object_graph
 
-from microcosm_pubsub.codecs import (
-    DEFAULT_MEDIA_TYPE,
-    PubSubMessageCodec,
-    PubSubMessageSchema,
-)
+from microcosm_pubsub.codecs import DEFAULT_MEDIA_TYPE, PubSubMessageCodec, PubSubMessageSchema
 from microcosm_pubsub.registry import AlreadyRegisteredError
 from microcosm_pubsub.tests.fixtures import DerivedSchema, ExampleDaemon, noop_handler
 

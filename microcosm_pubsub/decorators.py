@@ -5,9 +5,9 @@ Fluent decorators for resources and handlers.
 from microcosm.hooks import on_resolve
 
 from microcosm_pubsub.registry import (
-    media_type_for,
     PubSubMessageSchemaRegistry,
     SQSMessageHandlerRegistry,
+    media_type_for,
 )
 
 

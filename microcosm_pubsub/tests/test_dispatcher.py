@@ -3,19 +3,13 @@ Dispatcher tests.
 
 """
 from json import dumps
-from hamcrest import (
-    assert_that,
-    greater_than,
-    has_properties,
-)
+
+from hamcrest import assert_that, greater_than, has_properties
 
 from microcosm_pubsub.conventions import created
 from microcosm_pubsub.message import SQSMessage
 from microcosm_pubsub.result import MessageHandlingResultType
-from microcosm_pubsub.tests.fixtures import (
-    ExampleDaemon,
-    DerivedSchema,
-)
+from microcosm_pubsub.tests.fixtures import DerivedSchema, ExampleDaemon
 
 
 MESSAGE_ID = "message-id"

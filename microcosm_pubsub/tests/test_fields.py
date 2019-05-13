@@ -3,6 +3,7 @@ Test fields
 
 """
 from uuid import UUID
+
 from hamcrest import (
     assert_that,
     contains,

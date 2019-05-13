@@ -1,10 +1,10 @@
 from microcosm_pubsub.chain.context import SafeContext
 from microcosm_pubsub.chain.context_decorators import (
+    DEFAULT_ASSIGNED,
     get_from_context,
     save_to_context,
     save_to_context_by_func_name,
     temporarily_replace_context_keys,
-    DEFAULT_ASSIGNED,
 )
 
 

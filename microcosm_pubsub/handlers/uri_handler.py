@@ -3,8 +3,8 @@ Uri Handler base classes.
 
 """
 from abc import ABCMeta
-from inflection import titleize
 
+from inflection import titleize
 from requests import codes, get
 
 from microcosm_pubsub.errors import Nack

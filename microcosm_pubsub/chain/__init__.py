@@ -6,7 +6,7 @@ from microcosm_pubsub.chain.statements import (  # noqa: F401
     assign_function,
     extract,
     for_each,
-    when,
     switch,
     try_chain,
+    when,
 )

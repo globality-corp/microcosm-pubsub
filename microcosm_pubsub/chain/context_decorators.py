@@ -1,7 +1,7 @@
-from functools import wraps, WRAPPER_ASSIGNMENTS
-from inspect import Parameter, signature, Signature
+from functools import WRAPPER_ASSIGNMENTS, wraps
+from inspect import Parameter, Signature, signature
 
-from microcosm_pubsub.chain.decorators import EXTRACTS, BINDS
+from microcosm_pubsub.chain.decorators import BINDS, EXTRACTS
 
 
 DEFAULT_ASSIGNED = (EXTRACTS, BINDS)

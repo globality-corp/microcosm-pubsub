@@ -1,6 +1,7 @@
+from abc import ABCMeta, abstractmethod
+
 from microcosm_pubsub.chain import Chain
 from microcosm_pubsub.handlers.uri_handler import URIHandler
-from abc import ABCMeta, abstractmethod
 
 
 class ChainHandler(metaclass=ABCMeta):

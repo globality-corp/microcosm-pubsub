@@ -6,8 +6,8 @@ from microcosm.loaders import load_each, load_from_dict
 from microcosm_daemon.api import SleepNow
 from microcosm_daemon.daemon import Daemon
 
-from microcosm_pubsub.envelope import SQSEnvelope, NaiveSQSEnvelope
 from microcosm_pubsub.consumer import STDIN
+from microcosm_pubsub.envelope import NaiveSQSEnvelope, SQSEnvelope
 
 
 class ConsumerDaemon(Daemon):

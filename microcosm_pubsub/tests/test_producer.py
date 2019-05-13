@@ -5,6 +5,7 @@ Producer tests.
 from json import loads
 from os import environ
 
+import microcosm.opaque  # noqa
 from hamcrest import (
     assert_that,
     calling,
@@ -15,16 +16,15 @@ from hamcrest import (
 )
 from microcosm.api import create_object_graph
 from microcosm.loaders import load_from_environ
-import microcosm.opaque  # noqa
 
 from microcosm_pubsub.batch import MessageBatchSchema
 from microcosm_pubsub.conventions import created
 from microcosm_pubsub.errors import TopicNotDefinedError
 from microcosm_pubsub.producer import (
+    DeferredBatchProducer,
+    DeferredProducer,
     deferred,
     deferred_batch,
-    DeferredProducer,
-    DeferredBatchProducer,
     iter_topic_mappings,
 )
 from microcosm_pubsub.tests.fixtures import DerivedSchema
