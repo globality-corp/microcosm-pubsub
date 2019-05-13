@@ -1,6 +1,5 @@
 from typing import Optional
 
-from datadog.dogstatsd.base import DogStatsd
 from microcosm.api import defaults, typed
 from microcosm.config.types import boolean
 from microcosm.errors import NotBoundError
@@ -69,7 +68,7 @@ class PubSubSendBatchMetrics:
             and graph.config.pubsub_send_metrics.enabled
         )
 
-    def get_metrics(self, graph) -> Optional[DogStatsd]:
+    def get_metrics(self, graph):
         """
         Fetch the metrics client from the graph.
 
