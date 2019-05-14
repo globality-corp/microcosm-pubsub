@@ -86,7 +86,7 @@ class PubSubSendBatchMetrics:
         except NotBoundError:
             return None
 
-    def __call__(self, elapsed_time: float, message_count: int):
+    def __call__(self, elapsed_time: float, message_batch_size: int):
         """
         Send metrics if enabled.
 
@@ -105,7 +105,7 @@ class PubSubSendBatchMetrics:
         )
 
         self.metrics.histogram(
-            "message_batch_count",
-            message_count,
+            "message_batch_size",
+            message_batch_size,
             tags=tags,
         )
