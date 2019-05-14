@@ -3,6 +3,7 @@ Process batches of messages.
 
 """
 from logging import Logger
+from time import time
 from typing import List
 
 from inflection import titleize
@@ -41,26 +42,30 @@ class SQSMessageDispatcher:
         Send a batch of messages to a function.
 
         """
-        with elapsed_time(self.opaque):
-            instances = [
-                self.handle_message(message, bound_handlers)
-                for message in self.sqs_consumer.consume()
-            ]
+        start_time = time()
+
+        instances = [
+            self.handle_message(message, bound_handlers)
+            for message in self.sqs_consumer.consume()
+        ]
+
+        batch_elapsed_time = time() - start_time
 
         message_count = len([
             instance for instance in instances
             if instance.result != MessageHandlingResultType.IGNORED
         ])
 
-        self.logger.info(
-            "Finished handling batch",
-            extra=dict(
-                message_count=message_count,
-                **self.opaque.as_dict(),
-            ),
-        )
+        if message_count > 0:
+            self.logger.info(
+                "Finished handling batch: Message count: {message_count}, elapsed_time: {batch_elapsed_time}",
+                extra=dict(
+                    message_count=message_count,
+                    batch_elapsed_time=batch_elapsed_time,
+                ),
+            )
 
-        self.send_batch_metrics(self.opaque["elapsed_time"], message_count)
+        self.send_batch_metrics(batch_elapsed_time, message_count)
 
         for instance in instances:
             self.send_metrics(instance)

@@ -9,6 +9,10 @@ from microcosm_pubsub.result import MessageHandlingResultType
     enabled=typed(boolean, default_value=True)
 )
 class PubSubSendMetrics:
+    """
+    Send metrics relating to a single MessageHandlingResult
+
+    """
 
     def __init__(self, graph):
         self.metrics = self.get_metrics(graph)
@@ -57,6 +61,10 @@ class PubSubSendMetrics:
     enabled=typed(boolean, default_value=True)
 )
 class PubSubSendBatchMetrics:
+    """
+    Send metrics relating to a batch of handled messages
+
+    """
 
     def __init__(self, graph):
         self.metrics = self.get_metrics(graph)
@@ -78,7 +86,7 @@ class PubSubSendBatchMetrics:
         except NotBoundError:
             return None
 
-    def __call__(self, elapsed_time, message_count: int):
+    def __call__(self, elapsed_time: float, message_count: int):
         """
         Send metrics if enabled.
 
