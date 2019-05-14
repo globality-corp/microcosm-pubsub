@@ -1,7 +1,10 @@
 {
   "params": {
-    "name": "microcosm-pubsub"
+    "name": "microcosm-pubsub",
+    "pypi": {
+      "repository": "pypi"
+    }
   },
   "type": "python-library",
-  "version": "2.0.36"
+  "version": "2019.18.1"
 }

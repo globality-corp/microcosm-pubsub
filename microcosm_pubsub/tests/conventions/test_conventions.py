@@ -2,9 +2,14 @@
 Test conventions.
 
 """
-from hamcrest import assert_that, equal_to, instance_of, is_
-
+from hamcrest import (
+    assert_that,
+    equal_to,
+    instance_of,
+    is_,
+)
 from microcosm.api import create_object_graph
+
 from microcosm_pubsub.conventions import created, deleted, media_type
 from microcosm_pubsub.conventions.messages import IdentityMessageSchema, URIMessageSchema
 

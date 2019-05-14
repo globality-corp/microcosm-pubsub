@@ -5,8 +5,10 @@ Matchers for message publishing.
 from typing import List
 
 from hamcrest.core.helpers.wrap_matcher import wrap_matcher
+from hamcrest.library.collection.issequence_containinginanyorder import (
+    IsSequenceContainingInAnyOrder,
+)
 from hamcrest.library.collection.issequence_containinginorder import IsSequenceContainingInOrder
-from hamcrest.library.collection.issequence_containinginanyorder import IsSequenceContainingInAnyOrder
 
 from microcosm_pubsub.matchers.message import PublishedMessage
 

@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from json import loads
-from typing import Iterable, Optional, Mapping
+from typing import Iterable, Mapping, Optional
 from unittest.mock import Mock
 
 from hamcrest import not_none

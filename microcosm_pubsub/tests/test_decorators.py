@@ -9,11 +9,7 @@ from hamcrest import (
     is_,
 )
 
-from microcosm_pubsub.tests.fixtures import (
-    DuckTypeSchema,
-    ExampleDaemon,
-    noop_handler,
-)
+from microcosm_pubsub.tests.fixtures import DuckTypeSchema, ExampleDaemon, noop_handler
 
 
 class TestDecorators:

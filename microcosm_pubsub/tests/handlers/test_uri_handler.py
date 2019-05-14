@@ -1,6 +1,11 @@
 from unittest.mock import MagicMock, patch
 
-from hamcrest import assert_that, equal_to, instance_of, is_
+from hamcrest import (
+    assert_that,
+    equal_to,
+    instance_of,
+    is_,
+)
 from microcosm.api import create_object_graph
 
 from microcosm_pubsub.handlers import URIHandler

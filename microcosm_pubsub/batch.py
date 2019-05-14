@@ -1,7 +1,7 @@
-from marshmallow import fields, Schema
+from marshmallow import Schema, fields
 
-from microcosm_pubsub.conventions import created
 from microcosm_pubsub.codecs import PubSubMessageSchema
+from microcosm_pubsub.conventions import created
 from microcosm_pubsub.decorators import schema
 
 

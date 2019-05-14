@@ -7,8 +7,8 @@ process this envelope, depending on the degree of validation and metadata desire
 
 """
 from abc import ABCMeta, abstractmethod
-from json import loads
 from hashlib import md5
+from json import loads
 from uuid import uuid4
 
 from microcosm.api import defaults

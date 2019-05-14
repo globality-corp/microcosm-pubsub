@@ -2,8 +2,8 @@
 Implement SQS message reading from other sources.
 
 """
-from sys import stdin
 from json import loads
+from sys import stdin
 
 from microcosm_daemon.error_policy import ExitError
 

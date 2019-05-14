@@ -2,9 +2,9 @@
 Test fixtures.
 
 """
-from marshmallow import fields, Schema
-
+from marshmallow import Schema, fields
 from microcosm.api import binding
+
 from microcosm_pubsub.codecs import PubSubMessageSchema
 from microcosm_pubsub.conventions import created, deleted
 from microcosm_pubsub.daemon import ConsumerDaemon
@@ -38,8 +38,8 @@ class DuckTypeSchema(Schema):
 
 
 @handles(DuckTypeSchema)
-@handles(created("foo"))
-@handles(deleted("foo"))
+@handles(created("Foo"))
+@handles(deleted("Foo"))
 @handles(DerivedSchema.MEDIA_TYPE)
 def noop_handler(message):
     return True

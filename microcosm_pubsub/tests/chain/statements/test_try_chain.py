@@ -7,9 +7,7 @@ from hamcrest import (
 )
 
 from microcosm_pubsub.chain import Chain
-from microcosm_pubsub.chain.statements import (
-    try_chain,
-)
+from microcosm_pubsub.chain.statements import try_chain
 
 
 def test_try_chain():

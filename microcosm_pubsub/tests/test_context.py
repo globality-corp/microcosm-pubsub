@@ -2,10 +2,7 @@
 SQSMessageContext tests.
 
 """
-from hamcrest import (
-    assert_that,
-    has_entries,
-)
+from hamcrest import assert_that, has_entries
 
 from microcosm_pubsub.message import SQSMessage
 from microcosm_pubsub.tests.fixtures import ExampleDaemon

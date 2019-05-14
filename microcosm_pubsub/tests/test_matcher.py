@@ -2,7 +2,7 @@
 Test customized matcher.
 
 """
-from hamcrest import assert_that, all_of
+from hamcrest import all_of, assert_that
 from microcosm.api import create_object_graph, load_from_dict
 
 from microcosm_pubsub.conventions import created

@@ -3,6 +3,7 @@ PubSub CLI
 
 """
 from __future__ import print_function
+
 from argparse import ArgumentParser
 from json import dumps
 from sys import stdout
@@ -10,7 +11,7 @@ from sys import stdout
 from microcosm.api import create_object_graph
 from microcosm.loaders import load_from_dict
 
-from microcosm_pubsub.conventions import created, changed
+from microcosm_pubsub.conventions import changed, created
 
 
 def main():

@@ -9,10 +9,10 @@ this package as part of their unit tests (and not their runtime).
 
 """
 from microcosm_pubsub.matchers.message import (
-    has_media_type,
-    has_uri,
     PublishedMessage,
     PublishedMessageMatcher,
+    has_media_type,
+    has_uri,
 )
 from microcosm_pubsub.matchers.publishing import (
     published,

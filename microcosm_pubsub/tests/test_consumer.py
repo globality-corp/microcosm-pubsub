@@ -7,8 +7,8 @@ from json import dumps
 from hamcrest import (
     assert_that,
     equal_to,
-    is_,
     has_length,
+    is_,
 )
 
 from microcosm_pubsub.tests.fixtures import DerivedSchema, ExampleDaemon

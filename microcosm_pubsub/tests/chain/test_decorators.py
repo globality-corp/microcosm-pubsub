@@ -6,13 +6,13 @@ from hamcrest import (
     raises,
 )
 
-from microcosm_pubsub.chain.decorators import binds, extracts
 from microcosm_pubsub.chain.context_decorators import (
     get_from_context,
     save_to_context,
     save_to_context_by_func_name,
     temporarily_replace_context_keys,
 )
+from microcosm_pubsub.chain.decorators import binds, extracts
 
 
 class TestDecorators:

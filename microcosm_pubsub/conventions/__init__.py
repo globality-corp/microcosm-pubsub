@@ -5,8 +5,8 @@ Convention-driven pubsub.
 from functools import partial
 
 from microcosm_pubsub.conventions.lifecycle import LifecycleChange
-from microcosm_pubsub.conventions.messages import IdentityMessageSchema, URIMessageSchema  # noqa: F401
-from microcosm_pubsub.conventions.naming import make_media_type, name_for  # noqa: F401
+from microcosm_pubsub.conventions.messages import IdentityMessageSchema, URIMessageSchema  # noqa
+from microcosm_pubsub.conventions.naming import make_media_type, name_for  # noqa
 
 
 def media_type(lifecycle_change):

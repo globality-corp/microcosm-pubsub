@@ -1,9 +1,4 @@
-from hamcrest import (
-    assert_that,
-    equal_to,
-    is_,
-)
-
+from hamcrest import assert_that, equal_to, is_
 
 from microcosm_pubsub.chain import Chain
 from microcosm_pubsub.chain.statements import (

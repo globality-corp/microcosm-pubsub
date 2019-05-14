@@ -2,6 +2,8 @@
 Process batches of messages.
 
 """
+from logging import Logger
+from time import time
 from typing import List
 
 from inflection import titleize
@@ -10,8 +12,8 @@ from microcosm_logging.decorators import context_logger, logger
 from microcosm_logging.timing import elapsed_time
 
 from microcosm_pubsub.context import TTL_KEY
-from microcosm_pubsub.errors import IgnoreMessage, TTLExpired, SkipMessage
-from microcosm_pubsub.result import MessageHandlingResult
+from microcosm_pubsub.errors import IgnoreMessage, SkipMessage, TTLExpired
+from microcosm_pubsub.result import MessageHandlingResult, MessageHandlingResultType
 
 
 @logger
@@ -24,12 +26,15 @@ class SQSMessageDispatcher:
     Dispatch batches of SQSMessages to handler functions.
 
     """
+    logger: Logger
+
     def __init__(self, graph):
         self.opaque = graph.opaque
         self.sqs_consumer = graph.sqs_consumer
         self.sqs_message_context = graph.sqs_message_context
         self.sqs_message_handler_registry = graph.sqs_message_handler_registry
         self.send_metrics = graph.pubsub_send_metrics
+        self.send_batch_metrics = graph.pubsub_send_batch_metrics
         self.max_processing_attempts = graph.config.sqs_message_dispatcher.message_max_processing_attempts
 
     def handle_batch(self, bound_handlers) -> List[MessageHandlingResult]:
@@ -37,12 +42,34 @@ class SQSMessageDispatcher:
         Send a batch of messages to a function.
 
         """
+        start_time = time()
+
         instances = [
             self.handle_message(message, bound_handlers)
             for message in self.sqs_consumer.consume()
         ]
+
+        batch_elapsed_time = time() - start_time
+
+        message_count = len([
+            instance for instance in instances
+            if instance.result != MessageHandlingResultType.IGNORED
+        ])
+
+        if message_count > 0:
+            self.logger.info(
+                "Finished handling batch: Message count: {message_count}, elapsed_time: {batch_elapsed_time}",
+                extra=dict(
+                    message_count=message_count,
+                    batch_elapsed_time=batch_elapsed_time,
+                ),
+            )
+
+        self.send_batch_metrics(batch_elapsed_time, message_count)
+
         for instance in instances:
             self.send_metrics(instance)
+
         return instances
 
     def handle_message(self, message, bound_handlers) -> MessageHandlingResult:
