@@ -88,10 +88,14 @@ class PubSubSendBatchMetrics:
 
     def __call__(self, elapsed_time: float, message_batch_size: int):
         """
-        Send metrics if enabled.
+        Send metrics if enabled, and if the batch processed contains at least one
+        non-ignored message
 
         """
         if not self.enabled:
+            return
+
+        if not message_batch_size > 0:
             return
 
         tags = [
