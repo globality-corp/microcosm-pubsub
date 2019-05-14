@@ -51,20 +51,20 @@ class SQSMessageDispatcher:
 
         batch_elapsed_time = time() - start_time
 
-        message_count = len([
+        message_batch_size = len([
             instance for instance in instances
             if instance.result != MessageHandlingResultType.IGNORED
         ])
 
-        if message_count > 0:
+        if message_batch_size > 0:
             # NB: Expose formatted message
-            message = "Completed batch: Message count: {message_count}, elapsed_time: {batch_elapsed_time}".format(
-                message_count=message_count,
+            message = "Completed batch: Message count: {message_batch_size}, elapsed_time: {batch_elapsed_time}".format(
+                message_batch_size=message_batch_size,
                 batch_elapsed_time=batch_elapsed_time,
             )
             self.logger.info(message)
 
-        self.send_batch_metrics(batch_elapsed_time, message_count)
+        self.send_batch_metrics(batch_elapsed_time, message_batch_size)
 
         for instance in instances:
             self.send_metrics(instance)
