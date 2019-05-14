@@ -57,13 +57,12 @@ class SQSMessageDispatcher:
         ])
 
         if message_count > 0:
-            self.logger.info(
-                "Finished handling batch: Message count: {message_count}, elapsed_time: {batch_elapsed_time}",
-                extra=dict(
-                    message_count=message_count,
-                    batch_elapsed_time=batch_elapsed_time,
-                ),
+            # NB: Expose formatted message
+            message = "Completed batch: Message count: {message_count}, elapsed_time: {batch_elapsed_time}".format(
+                message_count=message_count,
+                batch_elapsed_time=batch_elapsed_time,
             )
+            self.logger.info(message)
 
         self.send_batch_metrics(batch_elapsed_time, message_count)
 
