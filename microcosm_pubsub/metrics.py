@@ -39,8 +39,8 @@ class PubSubSendMetrics:
         Send metrics if enabled.
 
         """
-        # if not self.enabled:
-        #     return
+        if not self.enabled:
+            return
 
         if result.result == MessageHandlingResultType.IGNORED:
             return
@@ -56,7 +56,6 @@ class PubSubSendMetrics:
             tags=tags,
         )
 
-        print(result.handle_start_time)
         if result.handle_start_time:
             self.metrics.histogram(
                 "message_start",

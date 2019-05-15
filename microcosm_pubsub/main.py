@@ -136,5 +136,5 @@ def make_naive_message():
     args = parser.parse_args()
 
     action = dict(created=created, changed=changed)[args.action]
-    from time import time
-    write(dumps(dict(mediaType=action(args.resource_name), opaque={"X-Request-Published": time()}, uri=args.uri)))
+
+    stdout.write(dumps(dict(mediaType=action(args.resource_name), uri=args.uri)))
