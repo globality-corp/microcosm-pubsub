@@ -11,7 +11,7 @@ from microcosm.api import defaults, typed
 from microcosm_logging.decorators import context_logger, logger
 from microcosm_logging.timing import elapsed_time
 
-from microcosm_pubsub.context import TTL_KEY
+from microcosm_pubsub.constants import PUBLISHED_KEY, TTL_KEY
 from microcosm_pubsub.errors import IgnoreMessage, SkipMessage, TTLExpired
 from microcosm_pubsub.result import MessageHandlingResult, MessageHandlingResultType
 
@@ -78,6 +78,9 @@ class SQSMessageDispatcher:
         """
         with self.opaque.initialize(self.sqs_message_context, message):
             handler = None
+
+            start_handle_time = time()
+
             with elapsed_time(self.opaque):
                 try:
                     self.validate_message(message)
@@ -93,6 +96,9 @@ class SQSMessageDispatcher:
                     )
 
             instance.elapsed_time = self.opaque["elapsed_time"]
+            published_time = self.opaque.get(PUBLISHED_KEY)
+            if published_time:
+                instance.handle_start_time = start_handle_time - float(published_time)
             instance.log(
                 logger=self.choose_logger(handler),
                 opaque=self.opaque,

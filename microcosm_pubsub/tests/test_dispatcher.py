@@ -85,6 +85,28 @@ class TestDispatcher:
             ),
         )
 
+    def test_handle_message_published_time(self):
+        """
+        Messages that have a published time header calculate that time
+
+        """
+        self.message.content = dict(
+            opaque_data={
+                "X-Request-Published": "0",
+            },
+        )
+        assert_that(
+            self.dispatcher.handle_message(
+                message=self.message,
+                bound_handlers=self.daemon.bound_handlers,
+            ),
+            has_properties(
+                handle_start_time=greater_than(0.0),
+                elapsed_time=greater_than(0.0),
+                result=MessageHandlingResultType.SUCCEEDED,
+            ),
+        )
+
     def test_handle_message_reached_processing_limit(self):
         """
         Messages that have reached the processing limit are ignored

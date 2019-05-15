@@ -2,7 +2,7 @@ from microcosm.api import defaults, typed
 from microcosm.config.types import boolean
 from microcosm.errors import NotBoundError
 
-from microcosm_pubsub.result import MessageHandlingResultType
+from microcosm_pubsub.result import MessageHandlingResult, MessageHandlingResultType
 
 
 @defaults(
@@ -34,13 +34,13 @@ class PubSubSendMetrics:
         except NotBoundError:
             return None
 
-    def __call__(self, result):
+    def __call__(self, result: MessageHandlingResult):
         """
         Send metrics if enabled.
 
         """
-        if not self.enabled:
-            return
+        # if not self.enabled:
+        #     return
 
         if result.result == MessageHandlingResultType.IGNORED:
             return
@@ -55,6 +55,14 @@ class PubSubSendMetrics:
             result.elapsed_time,
             tags=tags,
         )
+
+        print(result.handle_start_time)
+        if result.handle_start_time:
+            self.metrics.histogram(
+                "message_start",
+                result.handle_start_time,
+                tags=tags,
+            )
 
 
 @defaults(

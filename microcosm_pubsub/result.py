@@ -74,6 +74,7 @@ class MessageHandlingResult:
     exc_info: Optional[Tuple[Any, Any, Any]] = None
     extra: Dict[str, str] = field(default_factory=dict)
     elapsed_time: Optional[float] = None
+    handle_start_time: Optional[float] = None
     retry_timeout_seconds: Optional[int] = None
 
     @classmethod

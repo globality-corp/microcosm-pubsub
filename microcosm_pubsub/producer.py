@@ -5,6 +5,7 @@ Message producer.
 from collections import defaultdict
 from distutils.util import strtobool
 from functools import wraps
+from time import time
 
 from boto3 import Session
 from microcosm.api import defaults, typed
@@ -13,6 +14,7 @@ from microcosm_logging.decorators import logger
 from microcosm_logging.timing import elapsed_time
 
 from microcosm_pubsub.batch import MessageBatchSchema
+from microcosm_pubsub.constants import PUBLISHED_KEY
 from microcosm_pubsub.conventions.naming import make_media_type
 from microcosm_pubsub.errors import TopicNotDefinedError
 
@@ -50,6 +52,8 @@ class SNSProducer:
 
         if self.opaque is not None:
             opaque_data.update(self.opaque.as_dict())
+
+        opaque_data[PUBLISHED_KEY] = time()
 
         topic_arn = self.choose_topic_arn(media_type)
         message = self.pubsub_message_schema_registry.find(media_type).encode(
