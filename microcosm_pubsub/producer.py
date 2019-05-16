@@ -53,7 +53,7 @@ class SNSProducer:
         if self.opaque is not None:
             opaque_data.update(self.opaque.as_dict())
 
-        opaque_data[PUBLISHED_KEY] = time()
+        opaque_data[PUBLISHED_KEY] = str(time())
 
         topic_arn = self.choose_topic_arn(media_type)
         message = self.pubsub_message_schema_registry.find(media_type).encode(
