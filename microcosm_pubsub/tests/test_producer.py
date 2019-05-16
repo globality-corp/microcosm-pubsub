@@ -70,7 +70,7 @@ def test_produce_default_topic():
     # set up response
     graph.sns_producer.sns_client.publish.return_value = dict(MessageId=MESSAGE_ID)
 
-    published_time = time()
+    published_time = str(time())
     with patch("microcosm_pubsub.producer.time") as mocked_time:
         mocked_time.return_value = published_time
         message_id = graph.sns_producer.produce(DerivedSchema.MEDIA_TYPE, data="data")
@@ -108,7 +108,7 @@ def test_produce_custom_topic():
     # set up response
     graph.sns_producer.sns_client.publish.return_value = dict(MessageId=MESSAGE_ID)
 
-    published_time = time()
+    published_time = str(time())
     with patch("microcosm_pubsub.producer.time") as mocked_time:
         mocked_time.return_value = published_time
         message_id = graph.sns_producer.produce(DerivedSchema.MEDIA_TYPE, data="data")

@@ -130,7 +130,7 @@ def test_publish_by_uri_convention():
 
     graph = create_object_graph("example", testing=True, loader=loader)
 
-    published_time = time()
+    published_time = str(time())
     with patch("microcosm_pubsub.producer.time") as mocked_time:
         mocked_time.return_value = published_time
         graph.sns_producer.produce(created("foo"), uri="http://example.com", opaque_data=dict())
@@ -171,7 +171,7 @@ def test_publish_by_identity_convention():
         "mediaType": "application/vnd.globality.pubsub._.deleted.foo",
         "id": "1",
         "opaqueData": {
-            "X-Request-Published": published_time,
+            "X-Request-Published": str(published_time),
         },
     })))
 
