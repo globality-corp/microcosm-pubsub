@@ -3,6 +3,8 @@ URI and Identity message tests.
 
 """
 from json import dumps, loads
+from time import time
+from unittest.mock import patch
 
 from hamcrest import (
     assert_that,
@@ -128,14 +130,19 @@ def test_publish_by_uri_convention():
 
     graph = create_object_graph("example", testing=True, loader=loader)
 
-    graph.sns_producer.produce(created("foo"), uri="http://example.com", opaque_data=dict())
+    published_time = time()
+    with patch("microcosm_pubsub.producer.time") as mocked_time:
+        mocked_time.return_value = published_time
+        graph.sns_producer.produce(created("foo"), uri="http://example.com", opaque_data=dict())
 
     assert_that(graph.sns_producer.sns_client.publish.call_count, is_(equal_to(1)))
     assert_that(graph.sns_producer.sns_client.publish.call_args[1]["TopicArn"], is_(equal_to("default")))
     assert_that(loads(graph.sns_producer.sns_client.publish.call_args[1]["Message"]), is_(equal_to({
         "mediaType": "application/vnd.globality.pubsub._.created.foo",
         "uri": "http://example.com",
-        "opaqueData": {},
+        "opaqueData": {
+            "X-Request-Published": published_time,
+        },
     })))
 
 
@@ -153,14 +160,19 @@ def test_publish_by_identity_convention():
 
     graph = create_object_graph("example", testing=True, loader=loader)
 
-    graph.sns_producer.produce(deleted("foo"), id="1", opaque_data=dict())
+    published_time = time()
+    with patch("microcosm_pubsub.producer.time") as mocked_time:
+        mocked_time.return_value = published_time
+        graph.sns_producer.produce(deleted("foo"), id="1", opaque_data=dict())
 
     assert_that(graph.sns_producer.sns_client.publish.call_count, is_(equal_to(1)))
     assert_that(graph.sns_producer.sns_client.publish.call_args[1]["TopicArn"], is_(equal_to("default")))
     assert_that(loads(graph.sns_producer.sns_client.publish.call_args[1]["Message"]), is_(equal_to({
         "mediaType": "application/vnd.globality.pubsub._.deleted.foo",
         "id": "1",
-        "opaqueData": {},
+        "opaqueData": {
+            "X-Request-Published": published_time,
+        },
     })))
 
 

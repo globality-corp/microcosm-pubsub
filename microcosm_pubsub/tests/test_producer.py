@@ -4,6 +4,8 @@ Producer tests.
 """
 from json import loads
 from os import environ
+from time import time
+from unittest.mock import patch
 
 import microcosm.opaque  # noqa
 from hamcrest import (
@@ -68,14 +70,19 @@ def test_produce_default_topic():
     # set up response
     graph.sns_producer.sns_client.publish.return_value = dict(MessageId=MESSAGE_ID)
 
-    message_id = graph.sns_producer.produce(DerivedSchema.MEDIA_TYPE, data="data")
+    published_time = time()
+    with patch("microcosm_pubsub.producer.time") as mocked_time:
+        mocked_time.return_value = published_time
+        message_id = graph.sns_producer.produce(DerivedSchema.MEDIA_TYPE, data="data")
 
     assert_that(graph.sns_producer.sns_client.publish.call_count, is_(equal_to(1)))
     assert_that(graph.sns_producer.sns_client.publish.call_args[1]["TopicArn"], is_(equal_to("topic")))
     assert_that(loads(graph.sns_producer.sns_client.publish.call_args[1]["Message"]), is_(equal_to({
         "data": "data",
         "mediaType": DerivedSchema.MEDIA_TYPE,
-        "opaqueData": {},
+        "opaqueData": {
+            "X-Request-Published": published_time,
+        },
     })))
     assert_that(message_id, is_(equal_to(MESSAGE_ID)))
 
@@ -101,14 +108,19 @@ def test_produce_custom_topic():
     # set up response
     graph.sns_producer.sns_client.publish.return_value = dict(MessageId=MESSAGE_ID)
 
-    message_id = graph.sns_producer.produce(DerivedSchema.MEDIA_TYPE, data="data")
+    published_time = time()
+    with patch("microcosm_pubsub.producer.time") as mocked_time:
+        mocked_time.return_value = published_time
+        message_id = graph.sns_producer.produce(DerivedSchema.MEDIA_TYPE, data="data")
 
     assert_that(graph.sns_producer.sns_client.publish.call_count, is_(equal_to(1)))
     assert_that(graph.sns_producer.sns_client.publish.call_args[1]["TopicArn"], is_(equal_to("special-topic")))
     assert_that(loads(graph.sns_producer.sns_client.publish.call_args[1]["Message"]), is_(equal_to({
         "data": "data",
         "mediaType": DerivedSchema.MEDIA_TYPE,
-        "opaqueData": {},
+        "opaqueData": {
+            "X-Request-Published": published_time,
+        },
     })))
     assert_that(message_id, is_(equal_to(MESSAGE_ID)))
 
