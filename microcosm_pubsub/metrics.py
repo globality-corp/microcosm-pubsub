@@ -58,7 +58,7 @@ class PubSubSendMetrics:
 
         if result.handle_start_time:
             self.metrics.histogram(
-                "message_start",
+                "message_handle_start",
                 result.handle_start_time,
                 tags=tags,
             )
