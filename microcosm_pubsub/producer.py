@@ -3,9 +3,11 @@ Message producer.
 
 """
 from collections import defaultdict
+from dataclasses import dataclass
 from distutils.util import strtobool
 from functools import wraps
 from time import time
+from typing import Dict, List
 
 from boto3 import Session
 from microcosm.api import defaults, typed
@@ -17,6 +19,20 @@ from microcosm_pubsub.batch import MessageBatchSchema
 from microcosm_pubsub.constants import PUBLISHED_KEY
 from microcosm_pubsub.conventions.naming import make_media_type
 from microcosm_pubsub.errors import TopicNotDefinedError
+
+
+@dataclass
+class PubsubMessage:
+    """
+    Container class encapsulating all of the necessary components for
+    publishing a given message
+
+    """
+    media_type: str
+    message: str
+    message_attributes: Dict[str, Dict[str, str]]
+    opaque_data: dict
+    topic_arn: str
 
 
 @logger
@@ -43,10 +59,10 @@ class SNSProducer:
 
         if self.skip:
             return
-        message, topic_arn, opaque_data = self.create_message(media_type, dct, uri, **kwargs)
-        return self.publish_message(media_type, message, topic_arn, opaque_data)
+        pubsub_message = self.create_message(media_type, dct, uri, **kwargs)
+        return self.publish_message(pubsub_message)
 
-    def create_message(self, media_type, dct, uri=None, opaque_data=None, **kwargs):
+    def create_message(self, media_type, dct, uri=None, opaque_data=None, **kwargs) -> PubsubMessage:
         if opaque_data is None:
             opaque_data = dict()
 
@@ -56,25 +72,35 @@ class SNSProducer:
         opaque_data[PUBLISHED_KEY] = str(time())
 
         topic_arn = self.choose_topic_arn(media_type)
+
+        message_attributes = self.choose_message_attributes(media_type)
+
         message = self.pubsub_message_schema_registry.find(media_type).encode(
             dct,
             opaque_data=opaque_data,
             uri=uri,
             **kwargs
         )
-        return message, topic_arn, opaque_data
-
-    def publish_message(self, media_type, message, topic_arn, opaque_data):
-        extra = dict(
+        return PubsubMessage(
             media_type=media_type,
-            **opaque_data
+            message=message,
+            message_attributes=message_attributes,
+            opaque_data=opaque_data,
+            topic_arn=topic_arn,
+        )
+
+    def publish_message(self, pubsub_message: PubsubMessage):
+        extra = dict(
+            media_type=pubsub_message.media_type,
+            **pubsub_message.opaque_data
         )
         self.logger.debug("Publishing message with media type {media_type}", extra=extra)
 
         with elapsed_time(extra):
             result = self.sns_client.publish(
-                TopicArn=topic_arn,
-                Message=message,
+                TopicArn=pubsub_message.topic_arn,
+                Message=pubsub_message.message,
+                MessageAttributes=pubsub_message.message_attributes,
             )
 
         self.logger.info("Published message with media type {media_type}", extra=extra)
@@ -97,6 +123,18 @@ class SNSProducer:
             ))
         return topic_arn
 
+    def choose_message_attributes(self, media_type: str) -> Dict[str, Dict[str, str]]:
+        """
+        Choose message attributes for this message
+
+        """
+        return {
+            "media_type": {
+                "DataType": "String",
+                "StringValue": media_type,
+            }
+        }
+
 
 class DeferredProducer:
     """
@@ -111,8 +149,8 @@ class DeferredProducer:
         if self.producer.skip:
             return
 
-        message, topic_arn, opaque_data = self.producer.create_message(media_type, dct, **kwargs)
-        self.messages.append((media_type, message, topic_arn, opaque_data))
+        pubsub_message = self.producer.create_message(media_type, dct, **kwargs)
+        self.messages.append(pubsub_message)
 
     def __enter__(self):
         self.messages = []
@@ -122,8 +160,8 @@ class DeferredProducer:
         if type is not None:
             return
 
-        for media_type, message, topic_arn, opaque_data in self.messages:
-            self.producer.publish_message(media_type, message, topic_arn, opaque_data)
+        for pubsub_message in self.messages:
+            self.producer.publish_message(pubsub_message)
 
 
 class DeferredBatchProducer(DeferredProducer):
@@ -132,28 +170,30 @@ class DeferredBatchProducer(DeferredProducer):
         for i in range(0, len(messages), deferred_batch_size):
             yield messages[i:i + deferred_batch_size]
 
+    def construct_batch_pubsub_message(self, message_batch: List[PubsubMessage]):
+        return [
+            dict(
+                media_type=pubsub_message.media_type,
+                message=pubsub_message.message,
+                message_attributes=pubsub_message.message_attributes,
+                opaque_data=pubsub_message.opaque_data,
+                topic_arn=pubsub_message.topic_arn,
+            )
+            for pubsub_message in message_batch
+        ]
+
     def __exit__(self, type, value, traceback):
         if type is not None:
             return
 
-        messages = [
-            dict(
-                media_type=media_type,
-                message=message,
-                topic_arn=topic_arn,
-                opaque_data=opaque_data,
-            )
-            for media_type, message, topic_arn, opaque_data in self.messages
-        ]
-
-        for message_batch in self.generate_message_batches(messages, self.producer.deferred_batch_size):
+        for message_batch in self.generate_message_batches(self.messages, self.producer.deferred_batch_size):
             if len(message_batch) > 1:
                 self.producer.produce(
                     MessageBatchSchema.MEDIA_TYPE,
-                    messages=message_batch,
+                    messages=self.construct_batch_pubsub_message(message_batch)
                 )
             elif len(message_batch) == 1:
-                self.producer.publish_message(**message_batch[0])
+                self.producer.publish_message(message_batch[0])
 
 
 def deferred(component, key="sns_producer"):
