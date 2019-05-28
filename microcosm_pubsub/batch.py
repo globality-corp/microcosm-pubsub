@@ -15,6 +15,7 @@ class BatchedMessageSchema(Schema):
     message = fields.Raw(required=True)
     topic_arn = fields.String(required=True)
     opaque_data = fields.Raw(required=True)
+    message_attributes = fields.Raw(required=True)
 
 
 @schema

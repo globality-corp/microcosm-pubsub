@@ -85,7 +85,10 @@ class PubSubMessageCodec:
         Uses the appropriate coded to read JSON.
 
         """
-        dct = loads(message)
+        if not isinstance(message, dict):
+            dct = loads(message)
+        else:
+            dct = message
         # we need to explicitly validate because dump() doesn't
         self.schema.validate(dct)
         decoded = self.schema.dump(dct)

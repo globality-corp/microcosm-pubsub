@@ -144,6 +144,12 @@ def test_publish_by_uri_convention():
             "X-Request-Published": published_time,
         },
     })))
+    assert_that(graph.sns_producer.sns_client.publish.call_args[1]["MessageAttributes"], is_(equal_to({
+        "media_type": {
+            "DataType": "String",
+            "StringValue": "application/vnd.globality.pubsub._.created.foo"
+        },
+    })))
 
 
 def test_publish_by_identity_convention():
@@ -172,6 +178,12 @@ def test_publish_by_identity_convention():
         "id": "1",
         "opaqueData": {
             "X-Request-Published": str(published_time),
+        },
+    })))
+    assert_that(graph.sns_producer.sns_client.publish.call_args[1]["MessageAttributes"], is_(equal_to({
+        "media_type": {
+            "DataType": "String",
+            "StringValue": "application/vnd.globality.pubsub._.deleted.foo"
         },
     })))
 
