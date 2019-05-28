@@ -67,11 +67,12 @@ def test_raw_consume():
     """
     graph = ExampleDaemon.create_for_testing().graph
     # simulate the response structure
-    graph.sqs_consumer.sqs_client.receive_message.return_value = dict(Messages=[dict(
-        MessageId=MESSAGE_ID,
-        ReceiptHandle=RECEIPT_HANDLE,
-        MD5OfBody="7efaa8404863d47c51ed0e20b9014aec",
-        Body=dumps(dict(
+    graph.sqs_consumer.sqs_client.receive_message.return_value = dict(Messages=[
+        dict(
+            MessageId=MESSAGE_ID,
+            ReceiptHandle=RECEIPT_HANDLE,
+            MD5OfBody="7efaa8404863d47c51ed0e20b9014aec",
+            Body=dumps(dict(
                 data="data",
                 mediaType=DerivedSchema.MEDIA_TYPE,
             )),
