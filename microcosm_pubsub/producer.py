@@ -6,6 +6,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from distutils.util import strtobool
 from functools import wraps
+from logging import Logger
 from time import time
 from typing import Dict, List
 
@@ -41,6 +42,8 @@ class SNSProducer:
     Produces messages to SNS topics.
 
     """
+    logger: Logger
+
     def __init__(self, opaque, pubsub_message_schema_registry, sns_client, sns_topic_arns, skip, deferred_batch_size):
         self.opaque = opaque
         self.pubsub_message_schema_registry = pubsub_message_schema_registry
