@@ -89,7 +89,12 @@ class SNSMessageBodyParser(MessageBodyParser):
         as JSON within the `Message` key of the top-level envelope.
 
         """
-        return loads(body)["Message"]
+        body_dict = loads(body)
+        try:
+            return body_dict["Message"]
+        except KeyError:
+            # We're handling a raw message
+            return body_dict
 
 
 class CodecMediaTypeAndContentParser(MediaTypeAndContentParser):
