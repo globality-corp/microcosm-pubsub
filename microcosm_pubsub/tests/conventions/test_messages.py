@@ -144,7 +144,6 @@ def test_publish_by_uri_convention():
             "X-Request-Published": published_time,
         },
     })))
-    assert_that(graph.sns_producer.sns_client.publish.call_args[1]["MessageAttributes"]), is_(equal_to("ADFASDF"))
     assert_that(graph.sns_producer.sns_client.publish.call_args[1]["MessageAttributes"], is_(equal_to({
         "media_type": {
             "DataType": "String",
