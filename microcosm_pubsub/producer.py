@@ -193,7 +193,7 @@ class DeferredBatchProducer(DeferredProducer):
             if len(message_batch) > 1:
                 self.producer.produce(
                     MessageBatchSchema.MEDIA_TYPE,
-                    messages=self.construct_batch_pubsub_message(message_batch)
+                    messages=self.construct_batch_pubsub_message(message_batch),
                 )
             elif len(message_batch) == 1:
                 self.producer.publish_message(message_batch[0])
