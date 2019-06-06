@@ -24,6 +24,19 @@ class URIMessageSchema(PubSubMessageSchema):
         return self.MEDIA_TYPE
 
 
+class ChangedURIMessageSchema(URIMessageSchema):
+    """
+    Define a baseline message schema that points to the URI of a updated resource, with the updated value.
+
+    By convention, pubsub messages are a reference to something which happened, but changed messages can
+    be published (and handled) before the changes are comitted to DB. Keeping the changed field on the message
+    allows us to retry handling the message in case value doesn't match the one in the message.
+
+    """
+    field_name = fields.String()
+    new_value = fields.String()
+
+
 class IdentityMessageSchema(PubSubMessageSchema):
     """
     Define a baseline message schema that points to (the identity of) a resource that experienced a lifecycle change.

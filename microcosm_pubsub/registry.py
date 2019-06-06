@@ -9,7 +9,11 @@ from microcosm.api import defaults
 from microcosm_logging.decorators import logger
 
 from microcosm_pubsub.codecs import PubSubMessageCodec
-from microcosm_pubsub.conventions.messages import IdentityMessageSchema, URIMessageSchema
+from microcosm_pubsub.conventions.messages import (
+    ChangedURIMessageSchema,
+    IdentityMessageSchema,
+    URIMessageSchema,
+)
 
 
 class AlreadyRegisteredError(Exception):
@@ -75,6 +79,8 @@ class PubSubMessageSchemaRegistry:
             # use convention otherwise
             if self.lifecycle_change.Deleted in media_type.split("."):
                 schema = IdentityMessageSchema(media_type)
+            elif self.lifecycle_change.Changed in media_type.split("."):
+                schema = ChangedURIMessageSchema(media_type)
             else:
                 schema = URIMessageSchema(media_type)
 
