@@ -13,6 +13,8 @@ from hamcrest import (
 from microcosm.api import binding, create_object_graph
 
 from microcosm_pubsub.codecs import DEFAULT_MEDIA_TYPE, PubSubMessageCodec, PubSubMessageSchema
+from microcosm_pubsub.conventions import changed
+from microcosm_pubsub.conventions.messages import ChangedURIMessageSchema
 from microcosm_pubsub.registry import AlreadyRegisteredError
 from microcosm_pubsub.tests.fixtures import DerivedSchema, ExampleDaemon, noop_handler
 
@@ -36,6 +38,10 @@ def configure_another_handler(graph):
 
 class AnotherSchema(PubSubMessageSchema):
     MEDIA_TYPE = "application/vnd.microcosm.another"
+
+
+class ChangedSchema(PubSubMessageSchema):
+    MEDIA_TYPE = changed("Foo")
 
 
 class TestDerivedPubSubMessageCodecRegistry:
@@ -79,6 +85,11 @@ class TestDerivedPubSubMessageCodecRegistry:
         schema = self.registry.find(DerivedSchema.MEDIA_TYPE)
         assert_that(schema, is_(instance_of(PubSubMessageCodec)))
         assert_that(schema.schema, is_(instance_of(DerivedSchema)))
+
+    def test_find_changed(self):
+        schema = self.registry.find(ChangedSchema.MEDIA_TYPE)
+        assert_that(schema, is_(instance_of(PubSubMessageCodec)))
+        assert_that(schema.schema, is_(instance_of(ChangedURIMessageSchema)))
 
 
 class TestDerivedSQSMessageHandlerRegistry:
