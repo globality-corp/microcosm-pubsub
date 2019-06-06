@@ -118,6 +118,13 @@ class URIHandler:
         """
         return None
 
+    def validate_changed_field(self, message, resource):
+        if message.get('field_name') and self.nack_if_not_found:
+            field_name = message["field_name"]
+            new_value = message["new_value"]
+            if resource.get(field_name) != new_value:
+                raise Nack(self.resource_nack_timeout)
+
     def get_resource(self, message, uri):
         """
         Mock-friendly URI getter.
@@ -130,6 +137,9 @@ class URIHandler:
         if response.status_code == codes.not_found and self.nack_if_not_found:
             raise Nack(self.resource_nack_timeout)
         response.raise_for_status()
+
+        self.validate_changed_field(message, response.json())
+
         return response.json()
 
     def get_headers(self, message):
