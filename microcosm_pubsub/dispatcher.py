@@ -62,7 +62,7 @@ class SQSMessageDispatcher:
                 message_batch_size=message_batch_size,
                 batch_elapsed_time=batch_elapsed_time,
             )
-            self.logger.info(message)
+            self.logger.debug(message)
 
         self.send_batch_metrics(batch_elapsed_time, message_batch_size)
 
