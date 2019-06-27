@@ -33,6 +33,9 @@ class LocalCallWrapper:
         return self
 
     def _build_local_kwargs(self, parent_context):
+        for local_name in self.kwargs_mapping:
+            if local_name in parent_context:
+                raise ValueError(f"Argument `{local_name}` for local overshadows existing context key")
         return {
             local_name: parent_context[parent_name]
             for local_name, parent_name
