@@ -10,7 +10,7 @@ from microcosm_pubsub.chain.statements.call import call
 
 
 class TestLocalCallWrapper:
-    def two_calls_of_same_function(self):
+    def test_two_calls_of_same_function(self):
         def double_it(input):
             return 2 * input
 
@@ -28,9 +28,7 @@ class TestLocalCallWrapper:
             equal_to(12),
         )
 
-    def mix_parent_child_context(self):
-        # `sum_base` will come from the parent context
-        # `addend` will be defined using `call`
+    def test_call_with_constant(self):
         def sum(sum_base, addend):
             return sum_base + addend
 
@@ -38,8 +36,36 @@ class TestLocalCallWrapper:
             return twelve
 
         chain = Chain(
-            call(sum).with_args(addend="two").as_("twelve"),
+            call(sum).with_args(addend=2).as_("twelve"),
             noop,
+        )
+
+        assert_that(
+            chain(sum_base=10),
+            equal_to(12),
+        )
+
+    def test_call_with_string_constant(self):
+        def concatenate(word, suffix):
+            return f"{word}{suffix}"
+
+        chain = Chain(
+            call(concatenate).with_args(suffix="er").as_("more_word"),
+        )
+
+        assert_that(
+            chain(word="high"),
+            equal_to("higher"),
+        )
+
+    def test_mix_parent_child_context(self):
+        # `sum_base` will come from the parent context
+        # `addend` will be defined using `call`
+        def sum(sum_base, addend):
+            return sum_base + addend
+
+        chain = Chain(
+            call(sum).with_args(addend="two").as_("twelve"),
         )
 
         assert_that(
@@ -47,7 +73,7 @@ class TestLocalCallWrapper:
             equal_to(12),
         )
 
-    def error_on_overwrite_parent_context(self):
+    def test_error_on_overwrite_parent_context(self):
         # the kwargs in `with_args` overshadows an existing key on the context
         chain = Chain(
             call(sum).with_args(input="another_word").as_("twelve"),
