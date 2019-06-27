@@ -106,7 +106,7 @@ class SNSProducer:
                 MessageAttributes=pubsub_message.message_attributes,
             )
 
-        self.logger.info("Published message with media type {media_type}", extra=extra)
+        self.logger.debug("Published message with media type {media_type}", extra=extra)
 
         return result["MessageId"]
 
