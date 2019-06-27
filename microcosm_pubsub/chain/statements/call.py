@@ -37,7 +37,7 @@ class LocalCallWrapper:
 
         for local_name, mapped_value in self.kwargs.items():
             if local_name in parent_context:
-                raise ValueError(f"Argument `{local_name}` for local overshadows existing context key")
+                raise ValueError(f"Argument `{local_name}` for local call overshadows existing context key")
 
             if isinstance(mapped_value, str) and mapped_value in parent_context:
                 # mapped value points to parent context
