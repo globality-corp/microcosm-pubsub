@@ -88,7 +88,7 @@ class PublishedMessageMatcher(IsObjectWithProperty):
     """
     A matcher that validates a single published message property.
 
-    This matcher is primarily a cosmetric change describe errors in terms of messages
+    This matcher is primarily a cosmetic change describe errors in terms of messages
     (and not generic objects).
 
     """

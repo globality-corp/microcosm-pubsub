@@ -4,6 +4,7 @@ from microcosm_pubsub.chain.statements import (  # noqa: F401
     assign,
     assign_constant,
     assign_function,
+    call,
     extract,
     for_each,
     switch,
