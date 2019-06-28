@@ -1,5 +1,6 @@
 """
 assign("foo.bar").to("baz")
+assign_constant(1).to("qux")
 
 """
 from inspect import getfullargspec
@@ -36,7 +37,6 @@ class Constant:
 
 
 class Function:
-
     def __init__(self, func):
         self.func = func
         try:
@@ -99,7 +99,7 @@ def assign_function(this):
 
 def extract(name, key, key_property=None):
     """
-    Extract an argument from a context to anotherwise context key
+    Extract an argument from a context to another context key
 
     :param name: new context key
     :param key: old context key
