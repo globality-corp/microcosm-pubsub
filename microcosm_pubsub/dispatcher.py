@@ -3,14 +3,13 @@ Process batches of messages.
 
 """
 from logging import Logger
-from time import time, sleep
+from time import time
 from typing import List
 
 from inflection import titleize
 from microcosm.api import defaults, typed
 from microcosm_logging.decorators import context_logger, logger
 from microcosm_logging.timing import elapsed_time
-from opentracing_instrumentation.request_context import span_in_context
 
 from microcosm_pubsub.constants import PUBLISHED_KEY, TTL_KEY
 from microcosm_pubsub.errors import IgnoreMessage, SkipMessage, TTLExpired
@@ -37,7 +36,6 @@ class SQSMessageDispatcher:
         self.send_metrics = graph.pubsub_send_metrics
         self.send_batch_metrics = graph.pubsub_send_batch_metrics
         self.max_processing_attempts = graph.config.sqs_message_dispatcher.message_max_processing_attempts
-        self.tracer = graph.tracer
 
     def handle_batch(self, bound_handlers) -> List[MessageHandlingResult]:
         """
@@ -80,23 +78,22 @@ class SQSMessageDispatcher:
         """
         with self.opaque.initialize(self.sqs_message_context, message):
             handler = None
+
             start_handle_time = time()
+
             with elapsed_time(self.opaque):
-                self.validate_message(message)
-                handler = self.find_handler(message, bound_handlers)
-                with self.tracer.start_span(handler.name) as span:
-                    span.set_tag('time', start_handle_time)
-                    with span_in_context(span):
-                        try:
-                            instance = MessageHandlingResult.invoke(
-                                handler=self.wrap_handler(handler),
-                                message=message,
-                            )
-                        except Exception as error:
-                            instance = MessageHandlingResult.from_error(
-                                message=message,
-                                error=error,
-                            )
+                try:
+                    self.validate_message(message)
+                    handler = self.find_handler(message, bound_handlers)
+                    instance = MessageHandlingResult.invoke(
+                        handler=self.wrap_handler(handler),
+                        message=message,
+                    )
+                except Exception as error:
+                    instance = MessageHandlingResult.from_error(
+                        message=message,
+                        error=error,
+                    )
 
             instance.elapsed_time = self.opaque["elapsed_time"]
             published_time = self.opaque.get(PUBLISHED_KEY)
@@ -107,7 +104,6 @@ class SQSMessageDispatcher:
                 opaque=self.opaque,
             )
             instance.resolve(message)
-            sleep(2)
             return instance
 
     def validate_message(self, message):
