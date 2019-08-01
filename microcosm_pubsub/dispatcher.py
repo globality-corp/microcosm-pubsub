@@ -49,7 +49,7 @@ class SQSMessageDispatcher:
             for message in self.sqs_consumer.consume()
         ]
 
-        batch_elapsed_time = time() - start_time
+        batch_elapsed_time = (time() - start_time) * 1000
 
         message_batch_size = len([
             instance for instance in instances
