@@ -20,7 +20,7 @@ setup(
         "boto3>=1.5.8",
         "dataclasses;python_version<'3.7'",
         "marshmallow>=2.15.0",
-        "microcosm>=2.0.0",
+        "microcosm>=2.12.0",
         "microcosm-daemon>=1.0.0",
         "microcosm-logging>=1.3.0",
     ],
