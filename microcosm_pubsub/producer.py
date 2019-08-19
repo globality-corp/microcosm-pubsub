@@ -81,6 +81,7 @@ class SNSProducer:
         message = self.pubsub_message_schema_registry.find(media_type).encode(
             dct,
             opaque_data=opaque_data,
+            media_type=media_type,
             uri=uri,
             **kwargs
         )

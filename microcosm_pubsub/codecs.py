@@ -75,8 +75,7 @@ class PubSubMessageCodec:
         """
         message = dct.copy() if dct else dict()
         message.update(kwargs)
-        encoded = self.schema.load(message)
-        return dumps(encoded.data)
+        return dumps(self.schema.load(message))
 
     def decode(self, message):
         """
@@ -91,5 +90,4 @@ class PubSubMessageCodec:
             dct = message
         # we need to explicitly validate because dump() doesn't
         self.schema.validate(dct)
-        decoded = self.schema.dump(dct)
-        return decoded.data
+        return self.schema.dump(dct)
