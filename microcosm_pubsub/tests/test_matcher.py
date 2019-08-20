@@ -37,7 +37,7 @@ class TestPublishingMatcherWithMockedSNS:
         )
 
     def test_publish_one_message(self):
-        self.graph.sns_producer.produce(created("foo"), data="data")
+        self.graph.sns_producer.produce(created("foo"), data="data", uri="http://some-uri")
 
         assert_that(
             self.graph.sns_producer,

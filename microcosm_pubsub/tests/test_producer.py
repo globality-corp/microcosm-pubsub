@@ -156,7 +156,7 @@ def test_produce_custom_topic_environ():
     key = "EXAMPLE__SNS_TOPIC_ARNS__CREATED__FOO__BAR_BAZ"
     environ[key] = "topic"
     graph = create_object_graph("example", testing=True, loader=load_from_environ)
-    graph.sns_producer.produce(created("foo.bar_baz"), bar="baz")
+    graph.sns_producer.produce(created("foo.bar_baz"), uri="http://some_uri")
     assert_that(graph.sns_producer.sns_client.publish.call_count, is_(equal_to(1)))
     assert_that(graph.sns_producer.sns_client.publish.call_args[1]["TopicArn"], is_(equal_to("topic")))
 

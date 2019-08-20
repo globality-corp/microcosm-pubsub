@@ -32,7 +32,7 @@ class Foo:
 
 def test_encode_uri_message_schema():
     """
-    Message encoding should include the standard fields.
+    Message encoding should include the standard URIMessage fields.
 
     """
     schema = URIMessageSchema(make_media_type("Foo", lifecycle_change=LifecycleChange.Deleted))
@@ -41,6 +41,7 @@ def test_encode_uri_message_schema():
         loads(codec.encode(
             opaque_data=dict(foo="bar"),
             uri="http://example.com",
+            media_type="application/vnd.globality.pubsub._.deleted.foo",
         )),
         is_(equal_to({
             "mediaType": "application/vnd.globality.pubsub._.deleted.foo",
@@ -54,7 +55,7 @@ def test_encode_uri_message_schema():
 
 def test_encode_identity_message_schema():
     """
-    Message encoding should include the standard fields.
+    Message encoding should include the standard IdentityMessage fields.
 
     """
     schema = IdentityMessageSchema(make_media_type("Foo", lifecycle_change=LifecycleChange.Deleted))
@@ -62,6 +63,7 @@ def test_encode_identity_message_schema():
     assert_that(
         loads(codec.encode(
             opaque_data=dict(foo="bar"),
+            media_type="application/vnd.globality.pubsub._.deleted.foo",
             id="1",
         )),
         is_(equal_to({
@@ -76,7 +78,7 @@ def test_encode_identity_message_schema():
 
 def test_decode_uri_message_schema():
     """
-    Message decoding should process standard fields.
+    Message decoding should process standard URIMessage fields.
 
     """
     schema = URIMessageSchema(make_media_type("Foo"))
@@ -97,7 +99,7 @@ def test_decode_uri_message_schema():
 
 def test_decode_identity_message_schema():
     """
-    Message decoding should process standard fields.
+    Message decoding should process standard IdentityMessage fields.
 
     """
     schema = IdentityMessageSchema(make_media_type("Foo"))

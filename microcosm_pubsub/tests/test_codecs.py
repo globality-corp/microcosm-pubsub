@@ -47,7 +47,7 @@ def test_encode():
     """
     graph = create_object_graph("example", testing=True)
     codec = graph.pubsub_message_schema_registry.find(DerivedSchema.MEDIA_TYPE)
-    assert_that(loads(codec.encode(data="data")), is_(equal_to({
+    assert_that(loads(codec.encode(data="data", media_type=DerivedSchema.MEDIA_TYPE)), is_(equal_to({
         "data": "data",
         "mediaType": DerivedSchema.MEDIA_TYPE,
     })))
