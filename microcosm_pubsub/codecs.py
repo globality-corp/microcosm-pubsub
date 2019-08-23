@@ -80,6 +80,9 @@ class PubSubMessageCodec:
         """
         message = dct.copy() if dct else dict()
         message.update(kwargs)
+        # We allow unknown fields to pass through (but not included here)
+        # to accommodate unconditional parameter passing during produce()
+        # e.g. passing in `uri` for IdentityMessages
         return dumps(self.schema.load(message, unknown=EXCLUDE))
 
     def decode(self, message):
@@ -94,5 +97,6 @@ class PubSubMessageCodec:
         else:
             dct = message
         # load performs a validation and raises on error
+        # Similarly, we exclude unknown fields to avoid errors on decode
         self.schema.load(dct, unknown=EXCLUDE)
         return self.schema.dump(dct)

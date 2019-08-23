@@ -16,9 +16,9 @@ from marshmallow import Schema, ValidationError
 from microcosm_pubsub.fields import UUIDField
 
 
-UUID_STR = '051263b8-707a-4561-a114-11d6706ca5d5'
+UUID_STR = "051263b8-707a-4561-a114-11d6706ca5d5"
 # UUID_UUID = UUID(UUID_STR)
-INVALID_UUID_STR = 'INVALID_UUID_STRING'
+INVALID_UUID_STR = "INVALID_UUID_STRING"
 
 
 class UUIDSchema(Schema):
@@ -36,8 +36,8 @@ def test_uuid_load():
         "uuid_uuid": UUID(UUID_STR),
     })
 
-    assert_that(result['uuid_str'], is_(equal_to(UUID_STR)))
-    assert_that(result['uuid_uuid'], is_(equal_to(UUID_STR)))
+    assert_that(result["uuid_str"], is_(equal_to(UUID_STR)))
+    assert_that(result["uuid_uuid"], is_(equal_to(UUID_STR)))
 
 
 def test_invalid_uuid_load():
@@ -67,5 +67,5 @@ def test_uuid_dump():
         "uuid_uuid": UUID(UUID_STR),
     })
 
-    assert_that(result['uuid_str'], is_(equal_to(UUID_STR)))
-    assert_that(result['uuid_uuid'], is_(equal_to(UUID_STR)))
+    assert_that(result["uuid_str"], is_(equal_to(UUID_STR)))
+    assert_that(result["uuid_uuid"], is_(equal_to(UUID_STR)))
