@@ -32,7 +32,6 @@ class PubSubMessageSchemaRegistry:
         self.graph = graph
         self.lifecycle_change = graph.pubsub_lifecycle_change
         self.auto_register = graph.config.pubsub_message_schema_registry.auto_register
-        self.strict = graph.config.pubsub_message_schema_registry.strict
 
     def register(self, media_type, value):
         """
@@ -74,7 +73,7 @@ class PubSubMessageSchemaRegistry:
         try:
             # use a concrete schema class if any
             schema_cls = self._mappings[media_type]
-            schema = schema_cls(strict=self.strict)
+            schema = schema_cls()
         except KeyError:
             # use convention otherwise
             if self.lifecycle_change.Deleted in media_type.split("."):
@@ -149,7 +148,6 @@ class SQSMessageHandlerRegistry:
 
 @defaults(
     auto_register=True,
-    strict=True,
 )
 def configure_schema_registry(graph):
     return PubSubMessageSchemaRegistry(graph)

@@ -4,7 +4,12 @@ Message encoding and decoding.
 """
 from json import dumps, loads
 
-from marshmallow import Schema, ValidationError, fields
+from marshmallow import (
+    EXCLUDE,
+    Schema,
+    ValidationError,
+    fields,
+)
 
 
 DEFAULT_MEDIA_TYPE = "application/json"
@@ -75,21 +80,23 @@ class PubSubMessageCodec:
         """
         message = dct.copy() if dct else dict()
         message.update(kwargs)
-        encoded = self.schema.load(message)
-        return dumps(encoded.data)
+        # We allow unknown fields to pass through (but not included here)
+        # to accommodate unconditional parameter passing during produce()
+        # e.g. passing in `uri` for IdentityMessages
+        return dumps(self.schema.load(message, unknown=EXCLUDE))
 
     def decode(self, message):
         """
         Decode a message.
 
-        Uses the appropriate coded to read JSON.
+        Uses the appropriate codec to read JSON.
 
         """
         if not isinstance(message, dict):
             dct = loads(message)
         else:
             dct = message
-        # we need to explicitly validate because dump() doesn't
-        self.schema.validate(dct)
-        decoded = self.schema.dump(dct)
-        return decoded.data
+        # load performs a validation and raises on error
+        # Similarly, we exclude unknown fields to avoid errors on decode
+        self.schema.load(dct, unknown=EXCLUDE)
+        return self.schema.dump(dct)
