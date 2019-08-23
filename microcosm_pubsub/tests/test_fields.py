@@ -6,18 +6,19 @@ from uuid import UUID
 
 from hamcrest import (
     assert_that,
-    contains,
+    calling,
     equal_to,
     is_,
+    raises,
 )
-from marshmallow import Schema
+from marshmallow import Schema, ValidationError
 
 from microcosm_pubsub.fields import UUIDField
 
 
-UUID_STR = '051263b8-707a-4561-a114-11d6706ca5d5'
+UUID_STR = "051263b8-707a-4561-a114-11d6706ca5d5"
 # UUID_UUID = UUID(UUID_STR)
-INVALID_UUID_STR = 'INVALID_UUID_STRING'
+INVALID_UUID_STR = "INVALID_UUID_STRING"
 
 
 class UUIDSchema(Schema):
@@ -35,21 +36,25 @@ def test_uuid_load():
         "uuid_uuid": UUID(UUID_STR),
     })
 
-    assert_that(result.data['uuid_str'], is_(equal_to(UUID_STR)))
-    assert_that(result.data['uuid_uuid'], is_(equal_to(UUID_STR)))
+    assert_that(result["uuid_str"], is_(equal_to(UUID_STR)))
+    assert_that(result["uuid_uuid"], is_(equal_to(UUID_STR)))
 
 
-def test_invlalid_uuid_load():
+def test_invalid_uuid_load():
     """
-    Desirializing of non-uuid formatted value should raise an error.
+    Deserializing of non-uuid formatted value should raise an error.
+
     """
     schema = UUIDSchema()
-    result = schema.load({
-        "uuid_str": INVALID_UUID_STR,
-        "uuid_uuid": UUID(UUID_STR),
-    })
-
-    assert_that(result.errors["uuid_str"], contains('Not a valid UUID.'))
+    assert_that(
+        calling(schema.load).with_args({
+            "uuid_str": INVALID_UUID_STR,
+            "uuid_uuid": UUID(UUID_STR),
+        }),
+        raises(
+            ValidationError,
+        ),
+    )
 
 
 def test_uuid_dump():
@@ -62,5 +67,5 @@ def test_uuid_dump():
         "uuid_uuid": UUID(UUID_STR),
     })
 
-    assert_that(result.data['uuid_str'], is_(equal_to(UUID_STR)))
-    assert_that(result.data['uuid_uuid'], is_(equal_to(UUID_STR)))
+    assert_that(result["uuid_str"], is_(equal_to(UUID_STR)))
+    assert_that(result["uuid_uuid"], is_(equal_to(UUID_STR)))
