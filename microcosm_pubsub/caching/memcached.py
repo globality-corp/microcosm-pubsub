@@ -72,12 +72,16 @@ class MemcachedCache(CacheBase):
         self,
         host="localhost",
         port=11211,
+        connect_timeout=None,
+        read_timeout=None,
         serializer=json_serializer,
         deserializer=json_deserializer,
         testing=False,
     ):
         client_kwargs = dict(
             server=(host, port),
+            connect_timeout=connect_timeout,
+            timeout=read_timeout,
             serializer=json_serializer,
             deserializer=json_deserializer,
         )
