@@ -158,9 +158,12 @@ class TestURIHandler:
         )
         graph.lock()
 
-        uri = "http://localhost"
+        # Nb. changed events should not be whitelisted for caching
+        uri = "https://service.env.globality.io/api/v2/project_event/0598355c-5b19-49bd-a755-146204220a5b"
+        media_type = "application/vnd.globality.pubsub._.changed.project_event.project_brief_submitted"
         message = dict(
             uri=uri,
+            mediaType=media_type,
         )
         json_data = dict(foo="bar", bar="baz")
 
@@ -200,8 +203,10 @@ class TestURIHandler:
         graph.lock()
 
         uri = "https://service.env.globality.io/api/v2/project_event/0598355c-5b19-49bd-a755-146204220a5b"
+        media_type = "application/vnd.globality.pubsub._.created.project_event.project_brief_submitted"
         message = dict(
             uri=uri,
+            mediaType=media_type,
         )
         json_data = dict(foo="bar", bar="baz")
 
@@ -247,8 +252,10 @@ class TestURIHandler:
         graph.lock()
 
         uri = "https://service.env.globality.io/api/v2/project_event/0598355c-5b19-49bd-a755-146204220a5b"
+        media_type = "application/vnd.globality.pubsub._.created.project_event.project_brief_submitted"
         message = dict(
             uri=uri,
+            mediaType=media_type,
         )
         json_data = dict(foo="bar", bar="baz")
 

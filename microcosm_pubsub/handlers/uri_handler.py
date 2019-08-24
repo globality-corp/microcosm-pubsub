@@ -3,16 +3,33 @@ Uri Handler base classes.
 
 """
 from abc import ABCMeta
-from re import compile
+from re import search
 
 from inflection import titleize
 from microcosm.errors import LockedGraphError, NotBoundError
 from requests import codes, get
 
+from microcosm_pubsub.conventions.lifecycle import LifecycleChange
 from microcosm_pubsub.errors import Nack
 
 
-RESOURCE_CACHE_WHITELIST_REGEXP = compile(r"/[a-z]+_event/")
+def resource_cache_whitelist_callable(media_type, uri):
+    """
+    Default resource cache whitelist callable implementation.
+
+    Only whitelists under the following conditions:
+    * verb is created
+    * resource is an event
+
+    """
+    if not media_type:
+        # Nb. likely to happen with mocks and tests.
+        return False
+
+    return all((
+        search(r"/[a-z]+_event/", uri),
+        search(r".{}.".format(LifecycleChange.Created), media_type),
+    ))
 
 
 class URIHandler:
@@ -43,7 +60,7 @@ class URIHandler:
         retry_nack_timeout=1,
         resource_nack_timeout=1,
         resource_cache_enabled=True,
-        resource_cache_whitelist_callable=lambda uri: RESOURCE_CACHE_WHITELIST_REGEXP.search(uri),
+        resource_cache_whitelist_callable=resource_cache_whitelist_callable,
     ):
         self.opaque = graph.opaque
         self.retry_nack_timeout = retry_nack_timeout
@@ -152,7 +169,10 @@ class URIHandler:
         Passes message context.
 
         """
-        if self.resource_cache and self.resource_cache_whitelist_callable(uri):
+        if self.resource_cache and self.resource_cache_whitelist_callable(
+            media_type=message.get("mediaType"),
+            uri=uri
+        ):
             response = self.resource_cache.get(uri)
             if response:
                 return response
@@ -166,7 +186,10 @@ class URIHandler:
 
         self.validate_changed_field(message, response_json)
 
-        if self.resource_cache and self.resource_cache_whitelist_callable(uri):
+        if self.resource_cache and self.resource_cache_whitelist_callable(
+            media_type=message.get("mediaType"),
+            uri=uri,
+        ):
             self.resource_cache.set(uri, response_json)
 
         return response_json
