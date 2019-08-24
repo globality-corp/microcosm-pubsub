@@ -3,7 +3,7 @@ from setuptools import find_packages, setup
 
 
 project = "microcosm-pubsub"
-version = "2.0.0"
+version = "2.1.0"
 
 setup(
     name=project,
@@ -26,6 +26,7 @@ setup(
     ],
     extras_require={
         "metrics": "microcosm-metrics>=2.2.0",
+        "caching": "pymemcache>=2.2.2",
     },
     setup_requires=[
         "nose>=1.3.6",
@@ -42,6 +43,7 @@ setup(
             "pubsub_lifecycle_change = microcosm_pubsub.conventions:LifecycleChange",
             "pubsub_send_batch_metrics = microcosm_pubsub.metrics:PubSubSendBatchMetrics",
             "pubsub_send_metrics = microcosm_pubsub.metrics:PubSubSendMetrics",
+            "resource_cache = microcosm_pubsub.caching:configure_resource_cache",
             "sqs_message_context = microcosm_pubsub.context:SQSMessageContext",
             "sqs_consumer = microcosm_pubsub.consumer:configure_sqs_consumer",
             "sqs_envelope = microcosm_pubsub.envelope:configure_sqs_envelope",
@@ -53,6 +55,7 @@ setup(
     },
     tests_require=[
         "coverage>=3.7.1",
+        "parameterized>=0.7.0",
         "PyHamcrest>=1.8.5",
     ],
 )

@@ -22,7 +22,12 @@
 if [ "$1" = "test" ]; then
     # Install standard test dependencies; YMMV
     pip --quiet install \
-        .[test] nose PyHamcrest coverage
+        .[test] nose PyHamcrest coverage parameterized
+    exec nosetests ${NAME} -a '!caching'
+elif [ "$1" = "test_caching" ]; then
+    # Install standard test dependencies; YMMV
+    pip --quiet install \
+        .[caching,test] nose PyHamcrest coverage parameterized
     exec nosetests ${NAME}
 elif [ "$1" = "lint" ]; then
     # Install standard linting dependencies; YMMV

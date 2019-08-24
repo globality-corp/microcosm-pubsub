@@ -3,11 +3,16 @@ Uri Handler base classes.
 
 """
 from abc import ABCMeta
+from re import compile
 
 from inflection import titleize
+from microcosm.errors import LockedGraphError, NotBoundError
 from requests import codes, get
 
 from microcosm_pubsub.errors import Nack
+
+
+RESOURCE_CACHE_WHITELIST_REGEXP = compile(r"/[a-z]+_event/")
 
 
 class URIHandler:
@@ -32,10 +37,19 @@ class URIHandler:
     """
     __metaclass__ = ABCMeta
 
-    def __init__(self, graph, retry_nack_timeout=1, resource_nack_timeout=1):
+    def __init__(
+        self,
+        graph,
+        retry_nack_timeout=1,
+        resource_nack_timeout=1,
+        resource_cache_enabled=True,
+        resource_cache_whitelist_callable=lambda uri: RESOURCE_CACHE_WHITELIST_REGEXP.search(uri),
+    ):
         self.opaque = graph.opaque
         self.retry_nack_timeout = retry_nack_timeout
         self.resource_nack_timeout = resource_nack_timeout
+        self.resource_cache = self.get_resource_cache(graph) if resource_cache_enabled else None
+        self.resource_cache_whitelist_callable = resource_cache_whitelist_callable
 
     @property
     def nack_timeout(self):
@@ -53,6 +67,12 @@ class URIHandler:
     @property
     def resource_type(self):
         return dict
+
+    def get_resource_cache(self, graph):
+        try:
+            return graph.resource_cache
+        except (LockedGraphError, NotBoundError):
+            return None
 
     def __call__(self, message):
         uri = message["uri"]
@@ -132,15 +152,24 @@ class URIHandler:
         Passes message context.
 
         """
+        if self.resource_cache and self.resource_cache_whitelist_callable(uri):
+            response = self.resource_cache.get(uri)
+            if response:
+                return response
+
         headers = self.get_headers(message)
         response = get(uri, headers=headers)
         if response.status_code == codes.not_found and self.nack_if_not_found:
             raise Nack(self.resource_nack_timeout)
         response.raise_for_status()
+        response_json = response.json()
 
-        self.validate_changed_field(message, response.json())
+        self.validate_changed_field(message, response_json)
 
-        return response.json()
+        if self.resource_cache and self.resource_cache_whitelist_callable(uri):
+            self.resource_cache.set(uri, response_json)
+
+        return response_json
 
     def get_headers(self, message):
         """
