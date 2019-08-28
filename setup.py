@@ -21,12 +21,12 @@ setup(
         "dataclasses;python_version<'3.7'",
         "marshmallow>=3.0.0",
         "microcosm>=2.12.0",
+        "microcosm-caching>=0.1.0",
         "microcosm-daemon>=1.0.0",
         "microcosm-logging>=1.3.0",
     ],
     extras_require={
         "metrics": "microcosm-metrics>=2.2.0",
-        "caching": "pymemcache>=2.2.2",
     },
     setup_requires=[
         "nose>=1.3.6",
@@ -43,7 +43,6 @@ setup(
             "pubsub_lifecycle_change = microcosm_pubsub.conventions:LifecycleChange",
             "pubsub_send_batch_metrics = microcosm_pubsub.metrics:PubSubSendBatchMetrics",
             "pubsub_send_metrics = microcosm_pubsub.metrics:PubSubSendMetrics",
-            "resource_cache = microcosm_pubsub.caching:configure_resource_cache",
             "sqs_message_context = microcosm_pubsub.context:SQSMessageContext",
             "sqs_consumer = microcosm_pubsub.consumer:configure_sqs_consumer",
             "sqs_envelope = microcosm_pubsub.envelope:configure_sqs_envelope",
