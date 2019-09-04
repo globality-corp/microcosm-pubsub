@@ -2,6 +2,9 @@
 Process batches of messages.
 
 """
+import asyncio
+import concurrent.futures
+
 from logging import Logger
 from time import time
 from typing import List
@@ -36,18 +39,27 @@ class SQSMessageDispatcher:
         self.send_metrics = graph.pubsub_send_metrics
         self.send_batch_metrics = graph.pubsub_send_batch_metrics
         self.max_processing_attempts = graph.config.sqs_message_dispatcher.message_max_processing_attempts
+        self.loop = asyncio.get_event_loop()
 
     def handle_batch(self, bound_handlers) -> List[MessageHandlingResult]:
         """
         Send a batch of messages to a function.
 
         """
+        executor = concurrent.futures.ThreadPoolExecutor(5)
+
         start_time = time()
 
-        instances = [
-            self.handle_message(message, bound_handlers)
+        instances = []
+
+        threads = [
+            self.loop.run_in_executor(executor, self.handle_message, message, bound_handlers)
             for message in self.sqs_consumer.consume()
         ]
+
+        finished, _ = self.loop.run_until_complete(asyncio.wait(threads, return_when=asyncio.ALL_COMPLETED))
+        for task in finished:
+             instances.append(task.result())
 
         batch_elapsed_time = (time() - start_time) * 1000
 
