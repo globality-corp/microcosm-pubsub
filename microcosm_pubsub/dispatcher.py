@@ -8,16 +8,16 @@ import concurrent.futures
 from logging import Logger
 from time import time
 from typing import List
-
 from inflection import titleize
 from microcosm.api import defaults, typed
 from microcosm_logging.decorators import context_logger, logger
 from microcosm_logging.timing import elapsed_time
-
 from microcosm_pubsub.constants import PUBLISHED_KEY, TTL_KEY
 from microcosm_pubsub.errors import IgnoreMessage, SkipMessage, TTLExpired
 from microcosm_pubsub.result import MessageHandlingResult, MessageHandlingResultType
 
+
+MAX_THREADS=5
 
 @logger
 @defaults(
@@ -40,26 +40,25 @@ class SQSMessageDispatcher:
         self.send_batch_metrics = graph.pubsub_send_batch_metrics
         self.max_processing_attempts = graph.config.sqs_message_dispatcher.message_max_processing_attempts
         self.loop = asyncio.get_event_loop()
+        self.executor = concurrent.futures.ThreadPoolExecutor(MAX_THREADS)
 
     def handle_batch(self, bound_handlers) -> List[MessageHandlingResult]:
         """
         Send a batch of messages to a function.
 
         """
-        executor = concurrent.futures.ThreadPoolExecutor(5)
-
         start_time = time()
 
         instances = []
 
         threads = [
-            self.loop.run_in_executor(executor, self.handle_message, message, bound_handlers)
+            self.loop.run_in_executor(self.executor, self.handle_message, message, bound_handlers)
             for message in self.sqs_consumer.consume()
         ]
 
         finished, _ = self.loop.run_until_complete(asyncio.wait(threads, return_when=asyncio.ALL_COMPLETED))
         for task in finished:
-             instances.append(task.result())
+            instances.append(task.result())
 
         batch_elapsed_time = (time() - start_time) * 1000
 
