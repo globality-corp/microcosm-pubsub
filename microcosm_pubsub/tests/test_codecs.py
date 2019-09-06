@@ -103,4 +103,7 @@ def test_decode_missing_field():
     message = dumps({
         "mediaType": DerivedSchema.MEDIA_TYPE,
     })
-    assert_that(calling(codec.decode).with_args(message), raises(ValidationError))
+    assert_that(
+        calling(codec.decode).with_args(message),
+        raises(ValidationError, r".*DerivedSchema"),
+    )

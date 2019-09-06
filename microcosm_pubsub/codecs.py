@@ -15,6 +15,25 @@ from marshmallow import (
 DEFAULT_MEDIA_TYPE = "application/json"
 
 
+def enrich(error: ValidationError, schema: Schema):
+    """
+    Enrich a schema validation error with a human-interpretable
+    description of a marshmallow schema.
+
+    """
+    messages = error.messages
+    if isinstance(messages, dict):
+        messages.update(dict(
+            schema=str(schema),
+        ))
+    else:
+        messages.append(
+            str(schema),
+        )
+
+    return error
+
+
 class PubSubMessageSchema(Schema):
     """
     Base schema for messages, including a media type.
@@ -96,7 +115,13 @@ class PubSubMessageCodec:
             dct = loads(message)
         else:
             dct = message
-        # load performs a validation and raises on error
-        # Similarly, we exclude unknown fields to avoid errors on decode
-        self.schema.load(dct, unknown=EXCLUDE)
+
+        try:
+            # load performs a validation and raises on error
+            # Similarly, we exclude unknown fields to avoid errors on decode
+            self.schema.load(dct, unknown=EXCLUDE)
+        except ValidationError as error:
+            # Add more useful information to logs for debugging validation errors.
+            raise enrich(error, self.schema)
+
         return self.schema.dump(dct)
