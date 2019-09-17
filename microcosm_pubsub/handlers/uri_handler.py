@@ -13,6 +13,9 @@ from microcosm_pubsub.conventions.lifecycle import LifecycleChange
 from microcosm_pubsub.errors import Nack
 
 
+DEFAULT_CACHE_TTL = 60
+
+
 def resource_cache_whitelist_callable(media_type, uri):
     """
     Default resource cache whitelist callable implementation.
@@ -65,6 +68,8 @@ class URIHandler:
         self.opaque = graph.opaque
         self.retry_nack_timeout = retry_nack_timeout
         self.resource_nack_timeout = resource_nack_timeout
+        self.resource_cache_ttl = graph.config.resource_cache.ttl if 'ttl' in graph.config.resource_cache \
+            else DEFAULT_CACHE_TTL
         self.resource_cache = self.get_resource_cache(graph) if resource_cache_enabled else None
         self.resource_cache_whitelist_callable = resource_cache_whitelist_callable
 
@@ -190,7 +195,7 @@ class URIHandler:
             media_type=message.get("mediaType"),
             uri=uri,
         ):
-            self.resource_cache.set(uri, response_json)
+            self.resource_cache.set(uri, response_json, self.resource_cache_ttl)
 
         return response_json
 
