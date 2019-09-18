@@ -239,11 +239,10 @@ class TestURIHandler:
         )
 
     @attr("caching")
-    def test_get_whitelisted_resource_with_cache_enabled_and_cache_miss_and_ttl(self):
+    def test_get_whitelisted_resource_with_cache_enabled_and_cache_miss_and_custom_ttl(self):
         config = dict(
             resource_cache=dict(
                 enabled=True,
-                ttl=100,
             ),
         )
         graph = create_object_graph("microcosm", testing=True, loader=load_from_dict(config))
@@ -267,7 +266,7 @@ class TestURIHandler:
                 status_code=200,
                 json_data=json_data,
             )
-            handler = URIHandler(graph)
+            handler = URIHandler(graph, resource_cache_ttl=100)
 
             with patch.object(handler.resource_cache, "get") as mocked_cache_get:
                 mocked_cache_get.return_value = None
@@ -286,7 +285,7 @@ class TestURIHandler:
         mocked_cache_set.assert_called_with(
             uri,
             json_data,
-            ttl=DEFAULT_RESOURCE_CACHE_TTL,
+            ttl=100,
         )
 
     @attr("caching")
