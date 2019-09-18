@@ -13,6 +13,7 @@ from microcosm.api import create_object_graph
 from microcosm.loaders import load_from_dict
 from nose.plugins.attrib import attr
 
+from microcosm_pubsub.constants import DEFAULT_RESOURCE_CACHE_TTL
 from microcosm_pubsub.errors import Nack
 from microcosm_pubsub.handlers import URIHandler
 
@@ -234,6 +235,57 @@ class TestURIHandler:
         mocked_cache_set.assert_called_with(
             uri,
             json_data,
+            ttl=DEFAULT_RESOURCE_CACHE_TTL,
+        )
+
+    @attr("caching")
+    def test_get_whitelisted_resource_with_cache_enabled_and_cache_miss_and_custom_ttl(self):
+        config = dict(
+            resource_cache=dict(
+                enabled=True,
+            ),
+        )
+        graph = create_object_graph("microcosm", testing=True, loader=load_from_dict(config))
+        graph.use(
+            "opaque",
+            "resource_cache",
+            "sqs_message_context",
+        )
+        graph.lock()
+
+        uri = "https://service.env.globality.io/api/v2/project_event/0598355c-5b19-49bd-a755-146204220a5b"
+        media_type = "application/vnd.globality.pubsub._.created.project_event.project_brief_submitted"
+        message = dict(
+            uri=uri,
+            mediaType=media_type,
+        )
+        json_data = dict(foo="bar", bar="baz")
+
+        with patch("microcosm_pubsub.handlers.uri_handler.get") as mocked_get:
+            mocked_get.return_value = MockResponse(
+                status_code=200,
+                json_data=json_data,
+            )
+            handler = URIHandler(graph, resource_cache_ttl=100)
+
+            with patch.object(handler.resource_cache, "get") as mocked_cache_get:
+                mocked_cache_get.return_value = None
+                with patch.object(handler.resource_cache, "set") as mocked_cache_set:
+                    handler.get_resource(message, uri)
+
+        mocked_get.assert_called_with(
+            uri,
+            headers=dict(),
+        )
+        # Nb. cache get was attempted
+        mocked_cache_get.assert_called_with(
+            uri,
+        )
+        # Nb. cache set was called due to cache miss
+        mocked_cache_set.assert_called_with(
+            uri,
+            json_data,
+            ttl=100,
         )
 
     @attr("caching")
