@@ -13,11 +13,9 @@ from microcosm.api import create_object_graph
 from microcosm.loaders import load_from_dict
 from nose.plugins.attrib import attr
 
+from microcosm_pubsub.constants import DEFAULT_RESOURCE_CACHE_TTL
 from microcosm_pubsub.errors import Nack
 from microcosm_pubsub.handlers import URIHandler
-
-
-DEFAULT_CACHE_TTL = 60
 
 
 class MockResponse:
@@ -237,7 +235,7 @@ class TestURIHandler:
         mocked_cache_set.assert_called_with(
             uri,
             json_data,
-            DEFAULT_CACHE_TTL,
+            ttl=DEFAULT_RESOURCE_CACHE_TTL,
         )
 
     @attr("caching")
@@ -288,7 +286,7 @@ class TestURIHandler:
         mocked_cache_set.assert_called_with(
             uri,
             json_data,
-            100,
+            ttl=DEFAULT_RESOURCE_CACHE_TTL,
         )
 
     @attr("caching")

@@ -9,11 +9,9 @@ from inflection import titleize
 from microcosm.errors import LockedGraphError, NotBoundError
 from requests import codes, get
 
+from microcosm_pubsub.constants import DEFAULT_RESOURCE_CACHE_TTL
 from microcosm_pubsub.conventions.lifecycle import LifecycleChange
 from microcosm_pubsub.errors import Nack
-
-
-DEFAULT_CACHE_TTL = 60
 
 
 def resource_cache_whitelist_callable(media_type, uri):
@@ -63,13 +61,13 @@ class URIHandler:
         retry_nack_timeout=1,
         resource_nack_timeout=1,
         resource_cache_enabled=True,
+        resource_cache_ttl=DEFAULT_RESOURCE_CACHE_TTL,
         resource_cache_whitelist_callable=resource_cache_whitelist_callable,
     ):
         self.opaque = graph.opaque
         self.retry_nack_timeout = retry_nack_timeout
         self.resource_nack_timeout = resource_nack_timeout
-        self.resource_cache_ttl = graph.config.resource_cache.ttl if 'ttl' in graph.config.resource_cache \
-            else DEFAULT_CACHE_TTL
+        self.resource_cache_ttl = resource_cache_ttl
         self.resource_cache = self.get_resource_cache(graph) if resource_cache_enabled else None
         self.resource_cache_whitelist_callable = resource_cache_whitelist_callable
 
@@ -94,6 +92,7 @@ class URIHandler:
         try:
             return graph.resource_cache
         except (LockedGraphError, NotBoundError):
+            # Nb. if resource cache is globally disabled, will not be bound
             return None
 
     def __call__(self, message):
@@ -195,7 +194,7 @@ class URIHandler:
             media_type=message.get("mediaType"),
             uri=uri,
         ):
-            self.resource_cache.set(uri, response_json, self.resource_cache_ttl)
+            self.resource_cache.set(uri, response_json, ttl=self.resource_cache_ttl)
 
         return response_json
 
