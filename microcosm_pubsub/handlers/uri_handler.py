@@ -33,7 +33,7 @@ def resource_cache_whitelist_callable(media_type, uri):
     ))
 
 
-class URIHandler:
+class URIHandler(metaclass=ABCMeta):
     """
     Base handler for URI-driven events.
 
@@ -53,8 +53,6 @@ class URIHandler:
     log per message processed (unless an error/nack is raised).
 
     """
-    __metaclass__ = ABCMeta
-
     def __init__(
         self,
         graph,

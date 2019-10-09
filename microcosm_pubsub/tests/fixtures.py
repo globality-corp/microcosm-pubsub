@@ -22,9 +22,6 @@ class DerivedSchema(PubSubMessageSchema):
 
     data = fields.String(required=True)
 
-    def deserialize_media_type(self, obj):
-        return DerivedSchema.MEDIA_TYPE
-
 
 @schema
 class DuckTypeSchema(Schema):
