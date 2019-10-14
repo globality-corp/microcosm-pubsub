@@ -44,7 +44,7 @@ class PubSubMessageSchema(Schema):
 
     mediaType = fields.String(
         attribute="media_type",
-        required=False,
+        required=True,
     )
     opaqueData = fields.Dict(
         attribute="opaque_data",
