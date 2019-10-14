@@ -27,6 +27,3 @@ class MessageBatchSchema(PubSubMessageSchema):
     MEDIA_TYPE = created("batch_message")
 
     messages = fields.List(fields.Nested(BatchedMessageSchema), required=True)
-
-    def deserialize_media_type(self, obj):
-        return MessageBatchSchema.MEDIA_TYPE
