@@ -146,7 +146,7 @@ class MessageHandlingResult:
             self.result.level,
             entry,
             exc_info=self.exc_info,
-            extra=dict(**self.extra, **opaque.as_dict()),
+            extra={**opaque.as_dict(), **self.extra},
         )
 
     def resolve(self, message):
