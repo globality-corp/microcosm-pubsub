@@ -193,3 +193,23 @@ class TestMessageHandlingResult:
             ReceiptHandle=RECEIPT_HANDLE,
             VisibilityTimeout=5,
         )
+
+    def test_log_merge_keys(self):
+        def handler(message):
+            return True
+
+        result = MessageHandlingResult.invoke(
+            handler=handler,
+            message=self.message,
+        ).resolve(self.message)
+
+        result.extra = dict(
+            foo="bar"
+        )
+        self.graph.opaque["foo"] = "baz"
+
+        # This doesn't error
+        result.log(
+            self.graph.logger,
+            self.graph.opaque
+        )
