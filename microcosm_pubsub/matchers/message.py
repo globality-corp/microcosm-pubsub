@@ -76,7 +76,7 @@ class PublishedMessage:
         Iterate over published messages from a mocked SNSProducer.
 
         """
-        if isinstance(sns_producer, Mock):
+        if isinstance(sns_producer, Mock):  # type: ignore
             target = sns_producer.produce
         else:
             target = sns_producer.sns_client.publish
