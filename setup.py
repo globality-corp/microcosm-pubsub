@@ -26,7 +26,7 @@ setup(
         "microcosm-logging>=1.3.0",
     ],
     extras_require={
-        "metrics": "microcosm-metrics>=2.2.0",
+        "metrics": "microcosm-metrics>=2.5.0",
     },
     setup_requires=[
         "nose>=1.3.6",
