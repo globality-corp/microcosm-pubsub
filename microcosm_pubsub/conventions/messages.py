@@ -20,16 +20,13 @@ class URIMessageSchema(PubSubMessageSchema):
 
     uri = fields.String(required=True)
 
-    def deserialize_media_type(self, obj):
-        return self.MEDIA_TYPE
-
 
 class ChangedURIMessageSchema(URIMessageSchema):
     """
     Define a baseline message schema that points to the URI of a updated resource, with the updated value.
 
     By convention, pubsub messages are a reference to something which happened, but changed messages can
-    be published (and handled) before the changes are comitted to DB. Keeping the changed field on the message
+    be published (and handled) before the changes are committed to DB. Keeping the changed field on the message
     allows us to retry handling the message in case value doesn't match the one in the message.
 
     """
@@ -50,6 +47,3 @@ class IdentityMessageSchema(PubSubMessageSchema):
         self.MEDIA_TYPE = media_type
 
     id = fields.String(required=True)
-
-    def deserialize_media_type(self, obj):
-        return self.MEDIA_TYPE

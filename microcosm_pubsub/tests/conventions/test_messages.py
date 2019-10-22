@@ -2,6 +2,7 @@
 URI and Identity message tests.
 
 """
+from enum import Enum, auto
 from json import dumps, loads
 from time import time
 from unittest.mock import patch
@@ -12,6 +13,7 @@ from hamcrest import (
     instance_of,
     is_,
 )
+from marshmallow.fields import Field
 from microcosm.api import create_object_graph
 
 from microcosm_pubsub.codecs import PubSubMessageCodec
@@ -23,11 +25,70 @@ from microcosm_pubsub.conventions import (
     deleted,
     make_media_type,
 )
+from microcosm_pubsub.decorators import schema
 from microcosm_pubsub.tests.fixtures import ExampleDaemon, noop_handler
 
 
 class Foo:
     pass
+
+
+class TestEnum(Enum):
+    key = auto()
+
+    def __str__(self):
+        return self.name
+
+
+class EnumField(Field):
+    """
+    Test serialization of non-serializable fields
+    This is mostly taken from microcosm-flask's EnumField
+
+    """
+    default_error_messages = {
+        "by_name": "Invalid enum member {name}",
+    }
+
+    def __init__(self, enum, **kwargs):
+        super().__init__(**kwargs)
+        self.enum = enum
+
+    def _serialize(self, value, attr, obj, **kwargs):
+        if value is None:
+            return value
+        elif isinstance(value, str) and not isinstance(value, Enum):
+            return value
+        else:
+            return value.name
+
+    def _deserialize(self, value, attr, data, **kwargs):
+        if value is None:
+            return value
+        else:
+            return self._deserialize_by_name(value)
+
+    def _deserialize_by_name(self, value):
+        try:
+            return getattr(self.enum, value)
+        except AttributeError:
+            self.fail("by_name", name=value)
+
+
+@schema
+class CustomMessageSchema(URIMessageSchema):
+    """
+    Message indicating that a resource was created
+
+    """
+    MEDIA_TYPE = created("Resource")
+    enumField = EnumField(TestEnum, attribute="enum_field", required=True)
+
+    def __init__(self, **kwargs):
+        super().__init__(
+            media_type=CustomMessageSchema.MEDIA_TYPE,
+            **kwargs,
+        )
 
 
 def test_encode_uri_message_schema():
@@ -49,6 +110,32 @@ def test_encode_uri_message_schema():
                 "foo": "bar",
             },
             "uri": "http://example.com",
+        })),
+    )
+
+
+def test_encode_custom_message():
+    """
+    Custom message encoding should include the standard URIMessage fields plus additionally
+    specified fields
+
+    """
+    custom_schema = CustomMessageSchema()
+    codec = PubSubMessageCodec(custom_schema)
+    assert_that(
+        loads(codec.encode(
+            enum_field=TestEnum.key,
+            media_type=CustomMessageSchema.MEDIA_TYPE,
+            opaque_data=dict(foo="bar"),
+            uri="http://example.com",
+        )),
+        is_(equal_to({
+            "mediaType": "application/vnd.globality.pubsub._.created.resource",
+            "opaqueData": {
+                "foo": "bar",
+            },
+            "uri": "http://example.com",
+            "enumField": "key",
         })),
     )
 
@@ -102,17 +189,17 @@ def test_decode_identity_message_schema():
     Message decoding should process standard IdentityMessage fields.
 
     """
-    schema = IdentityMessageSchema(make_media_type("Foo"))
-    codec = PubSubMessageCodec(schema)
+    identity_schema = IdentityMessageSchema(make_media_type("Foo"))
+    codec = PubSubMessageCodec(identity_schema)
     message = dumps({
-        "mediaType": "application/vnd.globality.pubsub.foo",
+        "mediaType": "application/vnd.globality.pubsub._.created.foo",
         "opaqueData": {
             "foo": "bar",
         },
         "id": "1",
     })
     assert_that(codec.decode(message), is_(equal_to({
-        "media_type": "application/vnd.globality.pubsub.foo",
+        "media_type": "application/vnd.globality.pubsub._.created.foo",
         "opaque_data": dict(foo="bar"),
         "id": "1",
     })))
