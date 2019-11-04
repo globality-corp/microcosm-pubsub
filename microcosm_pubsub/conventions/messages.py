@@ -14,10 +14,6 @@ class URIMessageSchema(PubSubMessageSchema):
     the consumer can retry a few times before giving up (e.g. via SQS dead-lettering).
 
     """
-    def __init__(self, media_type, **kwargs):
-        super().__init__(**kwargs)
-        self.MEDIA_TYPE = media_type
-
     uri = fields.String(required=True)
 
 
@@ -42,8 +38,4 @@ class IdentityMessageSchema(PubSubMessageSchema):
     a URI may not be available.
 
     """
-    def __init__(self, media_type, **kwargs):
-        super().__init__(**kwargs)
-        self.MEDIA_TYPE = media_type
-
     id = fields.String(required=True)
