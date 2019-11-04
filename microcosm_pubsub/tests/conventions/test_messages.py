@@ -19,11 +19,9 @@ from microcosm.api import create_object_graph
 from microcosm_pubsub.codecs import PubSubMessageCodec
 from microcosm_pubsub.conventions import (
     IdentityMessageSchema,
-    LifecycleChange,
     URIMessageSchema,
     created,
     deleted,
-    make_media_type,
 )
 from microcosm_pubsub.decorators import schema
 from microcosm_pubsub.tests.fixtures import ExampleDaemon, noop_handler
@@ -84,19 +82,13 @@ class CustomMessageSchema(URIMessageSchema):
     MEDIA_TYPE = created("Resource")
     enumField = EnumField(TestEnum, attribute="enum_field", required=True)
 
-    def __init__(self, **kwargs):
-        super().__init__(
-            media_type=CustomMessageSchema.MEDIA_TYPE,
-            **kwargs,
-        )
-
 
 def test_encode_uri_message_schema():
     """
     Message encoding should include the standard URIMessage fields.
 
     """
-    schema = URIMessageSchema(make_media_type("Foo", lifecycle_change=LifecycleChange.Deleted))
+    schema = URIMessageSchema()
     codec = PubSubMessageCodec(schema)
     assert_that(
         loads(codec.encode(
@@ -145,7 +137,7 @@ def test_encode_identity_message_schema():
     Message encoding should include the standard IdentityMessage fields.
 
     """
-    schema = IdentityMessageSchema(make_media_type("Foo", lifecycle_change=LifecycleChange.Deleted))
+    schema = IdentityMessageSchema()
     codec = PubSubMessageCodec(schema)
     assert_that(
         loads(codec.encode(
@@ -168,7 +160,7 @@ def test_decode_uri_message_schema():
     Message decoding should process standard URIMessage fields.
 
     """
-    schema = URIMessageSchema(make_media_type("Foo"))
+    schema = URIMessageSchema()
     codec = PubSubMessageCodec(schema)
     message = dumps({
         "mediaType": "application/vnd.globality.pubsub.foo",
@@ -189,7 +181,7 @@ def test_decode_identity_message_schema():
     Message decoding should process standard IdentityMessage fields.
 
     """
-    identity_schema = IdentityMessageSchema(make_media_type("Foo"))
+    identity_schema = IdentityMessageSchema()
     codec = PubSubMessageCodec(identity_schema)
     message = dumps({
         "mediaType": "application/vnd.globality.pubsub._.created.foo",

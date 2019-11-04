@@ -77,11 +77,11 @@ class PubSubMessageSchemaRegistry:
         except KeyError:
             # use convention otherwise
             if self.lifecycle_change.Deleted in media_type.split("."):
-                schema = IdentityMessageSchema(media_type)
+                schema = IdentityMessageSchema()
             elif self.lifecycle_change.Changed in media_type.split("."):
-                schema = ChangedURIMessageSchema(media_type)
+                schema = ChangedURIMessageSchema()
             else:
-                schema = URIMessageSchema(media_type)
+                schema = URIMessageSchema()
 
         return PubSubMessageCodec(schema)
 
