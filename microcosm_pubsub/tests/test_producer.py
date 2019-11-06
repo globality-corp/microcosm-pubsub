@@ -53,6 +53,37 @@ def test_produce_no_topic_arn():
     )
 
 
+def test_produce_that_sends_exception():
+    def loader(metadata):
+        return dict(
+            sns_topic_arns=dict(
+                default="topic",
+            )
+        )
+
+    graph = create_object_graph("example", testing=True, loader=loader)
+    graph.sns_producer.sns_client.publish.side_effect = Exception()
+    assert_that(
+        calling(graph.sns_producer.produce).with_args(DerivedSchema.MEDIA_TYPE, data="data"),
+        raises(Exception),
+    )
+
+
+def test_produce_that_sends_metrics():
+    def loader(metadata):
+        return dict(
+            sns_topic_arns=dict(
+                default="topic",
+            )
+        )
+
+    graph = create_object_graph("example", testing=True, loader=loader)
+    graph.sns_producer.sns_client.publish.return_value = dict(MessageId=MESSAGE_ID)
+    with patch.object(graph.sns_producer, "pubsub_producer_metrics") as mocked_metrics:
+        graph.sns_producer.produce(DerivedSchema.MEDIA_TYPE, data="data")
+        assert_that(mocked_metrics.call_count, is_(equal_to(1)))
+
+
 def test_produce_default_topic():
     """
     Producer delegates to SNS client.

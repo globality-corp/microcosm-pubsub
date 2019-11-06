@@ -45,13 +45,23 @@ class SNSProducer:
     """
     logger: Logger
 
-    def __init__(self, opaque, pubsub_message_schema_registry, sns_client, sns_topic_arns, skip, deferred_batch_size):
+    def __init__(
+        self,
+        opaque,
+        pubsub_message_schema_registry,
+        sns_client,
+        sns_topic_arns,
+        skip,
+        deferred_batch_size,
+        pubsub_producer_metrics
+    ):
         self.opaque = opaque
         self.pubsub_message_schema_registry = pubsub_message_schema_registry
         self.sns_client = sns_client
         self.sns_topic_arns = sns_topic_arns
         self.skip = skip
         self.deferred_batch_size = deferred_batch_size
+        self.pubsub_producer_metrics = pubsub_producer_metrics
 
     def produce(self, media_type, dct=None, uri=None, **kwargs):
         """
@@ -100,16 +110,32 @@ class SNSProducer:
             **pubsub_message.opaque_data
         )
         self.logger.debug("Publishing message with media type {media_type}", extra=extra)
+        publish_result = "SUCCESS"
+        publish_exception = None
 
         with elapsed_time(extra):
-            result = self.sns_client.publish(
-                TopicArn=pubsub_message.topic_arn,
-                Message=pubsub_message.message,
-                MessageAttributes=pubsub_message.message_attributes,
-            )
+            try:
+                result = self.sns_client.publish(
+                    TopicArn=pubsub_message.topic_arn,
+                    Message=pubsub_message.message,
+                    MessageAttributes=pubsub_message.message_attributes,
+                )
+            except Exception as e:
+                publish_exception = e
+                publish_result = "FAILURE"
+
+        self.pubsub_producer_metrics(
+            publish_result=publish_result,
+            **extra
+        )
+
+        if publish_exception:
+            raise Exception(f"Could not publish message, SNS producer error: {publish_exception}")
 
         self.logger.debug("Published message with media type {media_type}", extra=extra)
 
+        # This is another layer of protection for the message send
+        # If result is not defined, it will exit with an error here
         return result["MessageId"]
 
     def choose_topic_arn(self, media_type):
@@ -364,4 +390,5 @@ def configure_sns_producer(graph):
         sns_topic_arns=graph.sns_topic_arns,
         skip=skip,
         deferred_batch_size=graph.config.sns_producer.deferred_batch_size,
+        pubsub_producer_metrics=graph.pubsub_producer_metrics,
     )
