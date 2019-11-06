@@ -47,7 +47,6 @@ class SNSProducer:
 
     def __init__(
         self,
-        name,
         opaque,
         pubsub_message_schema_registry,
         sns_client,
@@ -56,7 +55,6 @@ class SNSProducer:
         deferred_batch_size,
         pubsub_producer_metrics
     ):
-        self.name = name
         self.opaque = opaque
         self.pubsub_message_schema_registry = pubsub_message_schema_registry
         self.sns_client = sns_client
@@ -386,7 +384,6 @@ def configure_sns_producer(graph):
         skip = strtobool(graph.config.sns_producer.skip)
 
     return SNSProducer(
-        name=graph.metadata.name,
         opaque=opaque,
         pubsub_message_schema_registry=graph.pubsub_message_schema_registry,
         sns_client=sns_client,
