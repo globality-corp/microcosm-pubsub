@@ -11,6 +11,7 @@ from time import time
 from typing import Dict, List
 
 from boto3 import Session
+from botocore.client import Config
 from microcosm.api import defaults, typed
 from microcosm.errors import NotBoundError
 from microcosm_logging.decorators import logger
@@ -306,6 +307,9 @@ def configure_sns_topic_arns(graph):
     skip=None,
     # the size used to determine batching in the deferred batch producer
     deferred_batch_size=typed(int, default_value=100),
+    # SNS endpoint timeout configuration
+    connect_timeout=typed(int, default_value=60),
+    read_timeout=typed(int, default_value=60),
 )
 def configure_sns_producer(graph):
     """
@@ -330,10 +334,15 @@ def configure_sns_producer(graph):
         profile_name = graph.config.sns_producer.profile_name
         region_name = graph.config.sns_producer.region_name
         session = Session(profile_name=profile_name)
+        config = Config(
+            read_timeout=graph.config.sns_producer.read_timeout,
+            connect_timeout=graph.config.sns_producer.connect_timeout,
+        )
         sns_client = session.client(
             "sns",
             endpoint_url=endpoint_url,
             region_name=region_name,
+            config=config,
         )
     try:
         opaque = graph.opaque
