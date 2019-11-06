@@ -130,7 +130,7 @@ class SNSProducer:
         )
 
         if publish_exception:
-            raise Exception(f"Could not publish message, SNS producer error")
+            raise Exception(f"Could not publish message, SNS producer error: {publish_exception}")
 
         self.logger.debug("Published message with media type {media_type}", extra=extra)
 
