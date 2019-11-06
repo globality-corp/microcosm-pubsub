@@ -43,6 +43,7 @@ setup(
             "pubsub_lifecycle_change = microcosm_pubsub.conventions:LifecycleChange",
             "pubsub_send_batch_metrics = microcosm_pubsub.metrics:PubSubSendBatchMetrics",
             "pubsub_send_metrics = microcosm_pubsub.metrics:PubSubSendMetrics",
+            "pubsub_producer_metrics = microcosm_pubsub.metrics:PubSubProducerMetrics",
             "sqs_message_context = microcosm_pubsub.context:SQSMessageContext",
             "sqs_consumer = microcosm_pubsub.consumer:configure_sqs_consumer",
             "sqs_envelope = microcosm_pubsub.envelope:configure_sqs_envelope",
