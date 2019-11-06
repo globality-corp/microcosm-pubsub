@@ -16,6 +16,7 @@ class URIMessageSchema(PubSubMessageSchema):
     """
     def __init__(self, media_type=None, **kwargs):
         super().__init__(**kwargs)
+        # Left as an optional argument for backwards-compatibility
         if media_type is not None:
             self.MEDIA_TYPE = media_type
 
@@ -45,6 +46,7 @@ class IdentityMessageSchema(PubSubMessageSchema):
     """
     def __init__(self, media_type=None, **kwargs):
         super().__init__(**kwargs)
+        # Left as an optional argument for backwards-compatibility
         if media_type is not None:
             self.MEDIA_TYPE = media_type
 
