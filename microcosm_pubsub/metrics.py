@@ -120,3 +120,52 @@ class PubSubSendBatchMetrics:
             message_batch_size,
             tags=tags,
         )
+
+
+@defaults(
+    enabled=typed(boolean, default_value=True)
+)
+class PubSubProducerMetrics:
+    """
+    Send metrics regarding the producer
+
+    """
+
+    def __init__(self, graph):
+        self.metrics = self.get_metrics(graph)
+        self.enabled = bool(
+            self.metrics
+            and self.metrics.host != "localhost"
+            and graph.config.pubsub_send_metrics.enabled
+        )
+
+    def get_metrics(self, graph):
+        """
+        Fetch the metrics client from the graph.
+
+        Metrics will be disabled if the not configured.
+
+        """
+        try:
+            return graph.metrics
+        except NotBoundError:
+            return None
+
+    def __call__(self, elapsed_time: float, publish_result: bool, **kwargs):
+        """
+        Send metrics for how long it takes to produce a message
+
+        """
+        if not self.enabled:
+            return
+
+        tags = [
+            "source:microcosm-pubsub",
+            f"publish_result:{publish_result}",
+        ]
+
+        self.metrics.histogram(
+            "sns_producer",
+            elapsed_time,
+            tags=tags,
+        )
