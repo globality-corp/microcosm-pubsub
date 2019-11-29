@@ -2,7 +2,7 @@
 Test result handling.
 
 """
-from hamcrest import assert_that, has_entries, has_properties, is_, equal_to
+from hamcrest import assert_that, equal_to, has_entries, has_properties, is_
 from microcosm_logging.decorators import logger
 
 from microcosm_pubsub.errors import (
