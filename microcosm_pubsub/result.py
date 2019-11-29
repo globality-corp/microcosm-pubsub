@@ -71,11 +71,18 @@ class MessageHandlingResultType(Enum):
 class MessageHandlingResult:
     media_type: str
     result: MessageHandlingResultType
+    exc_reason: Optional[str] = None
     exc_info: Optional[Tuple[Any, Any, Any]] = None
     extra: Dict[str, str] = field(default_factory=dict)
     elapsed_time: Optional[float] = None
     handle_start_time: Optional[float] = None
     retry_timeout_seconds: Optional[int] = None
+
+    def __str__(self) -> str:
+        msg = f"Result for media type: {self.media_type} was: {self.result}"
+        if self.exc_reason:
+            msg += f" reason: {self.exc_reason}"
+        return msg
 
     @classmethod
     def invoke(cls, handler, message: SQSMessage):
@@ -92,15 +99,13 @@ class MessageHandlingResult:
         else:
             result = MessageHandlingResultType.SKIPPED
 
-        return cls(
-            media_type=message.media_type,
-            result=result,
-        )
+        return cls(media_type=message.media_type, result=result)
 
     @classmethod
     def from_error(cls, message: SQSMessage, error: Exception, **kwargs):
         if isinstance(error, IgnoreMessage):
             return cls(
+                exc_reason=str(error),
                 extra=error.extra,
                 media_type=message.media_type,
                 result=MessageHandlingResultType.IGNORED,
@@ -108,10 +113,8 @@ class MessageHandlingResult:
 
         if isinstance(error, SkipMessage):
             return cls(
-                extra=dict(
-                    reason=str(error),
-                    **error.extra
-                ),
+                exc_reason=str(error),
+                extra=dict(reason=str(error), **error.extra),
                 media_type=message.media_type,
                 result=MessageHandlingResultType.SKIPPED,
             )
@@ -131,6 +134,7 @@ class MessageHandlingResult:
             )
 
         return cls(
+            exc_reason=str(error),
             exc_info=exc_info(),
             media_type=message.media_type,
             result=MessageHandlingResultType.FAILED,
@@ -141,10 +145,9 @@ class MessageHandlingResult:
         Log this result.
 
         """
-        entry = f"Result for media type: {self.media_type} was : {self.result} "
         logger.log(
             self.result.level,
-            entry,
+            str(self),
             exc_info=self.exc_info,
             extra={**opaque.as_dict(), **self.extra},
         )

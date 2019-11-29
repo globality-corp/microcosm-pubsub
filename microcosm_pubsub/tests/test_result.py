@@ -2,7 +2,7 @@
 Test result handling.
 
 """
-from hamcrest import assert_that, has_entries, has_properties
+from hamcrest import assert_that, has_entries, has_properties, is_, equal_to
 from microcosm_logging.decorators import logger
 
 from microcosm_pubsub.errors import (
@@ -212,4 +212,12 @@ class TestMessageHandlingResult:
         result.log(
             self.graph.logger,
             self.graph.opaque
+        )
+
+    def test_log_message(self):
+        assert_that(
+            str(MessageHandlingResult(
+                media_type="MEDIA", result=MessageHandlingResultType.SKIPPED,
+                exc_reason="Skippity skip")),
+            is_(equal_to("Result for media type: MEDIA was: SKIPPED reason: Skippity skip"))
         )
