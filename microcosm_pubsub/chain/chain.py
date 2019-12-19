@@ -63,6 +63,8 @@ class Chain:
         context = context or self.new_context_type()
         context.update(kwargs)
 
+        res = None
+
         for link in self.links:
             func = self.apply_decorators(context, link)
             res = func()

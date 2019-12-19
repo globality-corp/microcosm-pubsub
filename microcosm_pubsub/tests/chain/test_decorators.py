@@ -13,6 +13,7 @@ from microcosm_pubsub.chain.context_decorators import (
     temporarily_replace_context_keys,
 )
 from microcosm_pubsub.chain.decorators import binds, extracts
+from microcosm_pubsub.chain.exceptions import ContextKeyNotFound
 
 
 class TestDecorators:
@@ -22,13 +23,24 @@ class TestDecorators:
         wrapped = get_from_context(context, lambda arg: arg)
         assert_that(wrapped(), is_(200))
 
+    def test_missing_context_key(self):
+        context = dict()
+        wrapped = get_from_context(context, lambda arg: arg)
+        assert_that(
+            calling(wrapped),
+            raises(
+                ContextKeyNotFound,
+                "Failed to find context key `arg` during evaluation of `<function TestDecorators.test_missing_context_key"  # noqa
+            ),
+        )
+
     def test_get_from_context_default_value(self):
         def function(a, b=10):
             return a + b
 
         context = dict()
         wrapped = get_from_context(context, function)
-        assert_that(calling(wrapped), raises(KeyError))
+        assert_that(calling(wrapped), raises(ContextKeyNotFound))
 
         context = dict(a=190)
         wrapped = get_from_context(context, function)
@@ -187,7 +199,7 @@ class TestDecorators:
         wrapped = temporarily_replace_context_keys(context, func)
         wrapped = get_from_context(context, wrapped)
 
-        assert_that(calling(wrapped), raises(KeyError))
+        assert_that(calling(wrapped), raises(ContextKeyNotFound))
 
     def test_temporarily_replace_missing_keys(self):
         context = dict()

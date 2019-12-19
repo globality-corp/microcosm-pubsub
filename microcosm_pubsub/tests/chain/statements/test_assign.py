@@ -1,6 +1,13 @@
-from hamcrest import assert_that, equal_to, is_
+from hamcrest import (
+    assert_that,
+    calling,
+    equal_to,
+    is_,
+    raises,
+)
 
 from microcosm_pubsub.chain import Chain
+from microcosm_pubsub.chain.exceptions import AttributeNotFound
 from microcosm_pubsub.chain.statements import (
     assign,
     assign_constant,
@@ -143,4 +150,14 @@ def test_assign_function_with_builtin():
     assert_that(
         chain(),
         is_(equal_to(dict())),
+    )
+
+
+def test_assign_missing_property():
+    chain = Chain(
+        assign("arg.missing").to("param"),
+    )
+    assert_that(
+        calling(chain).with_args(arg=dict(data=200)),
+        raises(AttributeNotFound, "Failed to find attribute `missing` on `arg`"),
     )

@@ -2,6 +2,7 @@ from functools import WRAPPER_ASSIGNMENTS, wraps
 from inspect import Parameter, Signature, signature
 
 from microcosm_pubsub.chain.decorators import BINDS, EXTRACTS
+from microcosm_pubsub.chain.exceptions import ContextKeyNotFound
 
 
 DEFAULT_ASSIGNED = (EXTRACTS, BINDS)
@@ -33,11 +34,15 @@ def get_from_context(context, func, assigned=DEFAULT_ASSIGNED):
 
     @wraps(func, assigned=assigned + WRAPPER_ASSIGNMENTS)
     def decorate(*args, **kwargs):
-        context_kwargs = {
-            arg_name: (context[arg_name] if default is Signature.empty else context.get(arg_name, default))
-            for arg_name, default in positional_args[len(args):]
-            if arg_name not in kwargs
-        }
+        try:
+            context_kwargs = {
+                arg_name: (context[arg_name] if default is Signature.empty else context.get(arg_name, default))
+                for arg_name, default in positional_args[len(args):]
+                if arg_name not in kwargs
+            }
+        except KeyError as error:
+            raise ContextKeyNotFound(error, func)
+
         return func(*args, **kwargs, **context_kwargs)
     return decorate
 
