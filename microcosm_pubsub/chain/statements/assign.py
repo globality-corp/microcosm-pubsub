@@ -5,6 +5,8 @@ assign_constant(1).to("qux")
 """
 from inspect import getfullargspec
 
+from microcosm_pubsub.chain.exceptions import AttributeNotFound
+
 
 class Reference:
 
@@ -22,7 +24,10 @@ class Reference:
             if hasattr(value, part):
                 value = getattr(value, part)
             else:
-                value = value[part]
+                try:
+                    value = value[part]
+                except KeyError:
+                    raise AttributeNotFound(self.parts[0], part)
 
         return value
 
