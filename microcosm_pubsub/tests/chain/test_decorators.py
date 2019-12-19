@@ -30,7 +30,7 @@ class TestDecorators:
             calling(wrapped),
             raises(
                 ContextKeyNotFound,
-                "Failed to find context_key `arg` during evaluation of `<function TestDecorators.test_missing_context_key"  # noqa
+                "Failed to find context key `arg` during evaluation of `<function TestDecorators.test_missing_context_key"  # noqa
             ),
         )
 
