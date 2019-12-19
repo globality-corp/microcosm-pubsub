@@ -17,6 +17,7 @@ setup(
     zip_safe=False,
     python_requires=">=3.6",
     install_requires=[
+        "tornado<6",
         "boto3>=1.5.8",
         "dataclasses;python_version<'3.7'",
         "marshmallow>=3.0.0",
