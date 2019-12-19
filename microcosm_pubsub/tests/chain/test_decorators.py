@@ -23,6 +23,17 @@ class TestDecorators:
         wrapped = get_from_context(context, lambda arg: arg)
         assert_that(wrapped(), is_(200))
 
+    def test_missing_context_key(self):
+        context = dict()
+        wrapped = get_from_context(context, lambda arg: arg)
+        assert_that(
+            calling(wrapped),
+            raises(
+                ContextKeyNotFound,
+                "Failed to find context_key `arg` during evaluation of `<function TestDecorators.test_missing_context_key"  # noqa
+            ),
+        )
+
     def test_get_from_context_default_value(self):
         def function(a, b=10):
             return a + b
