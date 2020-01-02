@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 from hamcrest import (
     assert_that,
@@ -11,10 +11,11 @@ from hamcrest import (
 )
 from microcosm.api import create_object_graph
 from microcosm.loaders import load_from_dict
+from microcosm_logging.decorators import logger
 from nose.plugins.attrib import attr
 
 from microcosm_pubsub.constants import DEFAULT_RESOURCE_CACHE_TTL
-from microcosm_pubsub.errors import Nack
+from microcosm_pubsub.errors import Nack, SkipMessage
 from microcosm_pubsub.handlers import URIHandler
 
 
@@ -451,3 +452,46 @@ class TestURIHandler:
                 calling(handler.get_resource).with_args(message, uri),
                 not_(raises(Nack)),
             )
+
+    def test_skip_pre_fetch(self):
+        graph = MagicMock()
+
+        @logger
+        class BazURIHandler(URIHandler):
+
+            @property
+            def resource_type(self):
+                return Baz
+
+            def get_reason_to_skip(self, message, uri):
+                raise SkipMessage("Wow!")
+
+        message = dict(uri="http://uri")
+
+        handler = BazURIHandler(graph)
+        assert_that(
+            calling(handler).with_args(message),
+            raises(SkipMessage),
+        )
+
+    def test_no_fetch(self):
+        graph = MagicMock(
+            config=Mock(
+                sqs_message_dispatcher=Mock(
+                    fetch_uri_resource=False,
+                ),
+            ),
+        )
+
+        @logger
+        class BazURIHandler(URIHandler):
+            pass
+
+        message = dict(uri="http://uri")
+        handler = BazURIHandler(graph)
+        with patch("microcosm_pubsub.handlers.uri_handler.get") as mocked_get:
+            assert_that(
+                handler(message),
+                is_(True),
+            )
+            mocked_get.assert_not_called()
