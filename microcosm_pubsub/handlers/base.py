@@ -63,11 +63,6 @@ class PubSubHandler(metaclass=ABCMeta):
         self.resource_cache_whitelist_callable = resource_cache_whitelist_callable
 
     @property
-    def nack_timeout(self):
-        """Deprecated, use retry_nack_timeout"""
-        return self.retry_nack_timeout
-
-    @property
     def name(self):
         return titleize(self.__class__.__name__)
 

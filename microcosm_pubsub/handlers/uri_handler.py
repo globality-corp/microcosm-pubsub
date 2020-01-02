@@ -44,6 +44,11 @@ class URIHandler(PubSubHandler):
             self.on_ignore(message, uri, resource=resource)
             return False
 
+    @property
+    def nack_timeout(self):
+        """Deprecated, use retry_nack_timeout"""
+        return self.retry_nack_timeout
+
     def validate_changed_field(self, message, resource):
         if message.get('field_name') and self.nack_if_not_found:
             field_name = message["field_name"]
