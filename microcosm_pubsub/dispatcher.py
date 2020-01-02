@@ -1,6 +1,31 @@
 """
 Process batches of messages.
 
+Flow diagram:
+
++-----------------------+                        +-------------+                                            +----------+
+|                       |                        |             |                                            |          |
+|                       |     1. Get messages    |             |                                            |          |
+| SQSMessageDispatcher  |<-----------------------+             +<-------------------------------------------+          |
+|                       |                        |             |                                            |          |
+|                       |                        |             |                                            |          |
++-------+-+-------------+                        |             |                                            |          |
+           | ˆ                                   |             |                                            |          |
+           | | 2. Get handling result            |             |                                            |          |
+           | |        +-------------------+      |             |                                            |          |
+           | |        |                   |      | SQSConsumer |                                            |   SQS    |
+           | |        |                   |      |             |                                            |          |
+           | +------->+     Handlers      |      |             |                                            |          |
+           |          |                   |      |             |                                            |          |
+           |          |                   |      |             |                                            |          |
+           |          +-------------------+      |             |                                            |          |
+           |                                     |             |                                            |          |
+           |  3. Propagate result to SQS         |             |  Action taken depends on handler result:   |          |
+           +------------------------------------>+             +------------------------------------------->+          |
+                                                 |             |  - SUCCEED/SKIP: delete message from queue |          |
+                                                 +-------------+  - FAIL/RETRY: change message visibility   +----------+
+                                                                    for future reprocessing.
+
 """
 from logging import Logger
 from time import time
