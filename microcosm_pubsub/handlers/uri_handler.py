@@ -37,11 +37,11 @@ class URIHandler(PubSubHandler):
                 self.get_resource(message, uri),
             )
 
-        if self.handle(message, uri, resource=resource):
-            self.on_handle(message, uri, resourc=resource)
+        if self.handle(message, uri, resource):
+            self.on_handle(message, uri, resource)
             return True
         else:
-            self.on_ignore(message, uri, resource=resource)
+            self.on_ignore(message, uri, resource)
             return False
 
     @property
