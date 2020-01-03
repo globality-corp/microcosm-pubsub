@@ -3,7 +3,7 @@ from setuptools import find_packages, setup
 
 
 project = "microcosm-pubsub"
-version = "2.9.0"
+version = "2.9.1"
 
 setup(
     name=project,
@@ -22,7 +22,7 @@ setup(
         "dataclasses;python_version<'3.7'",
         "marshmallow>=3.0.0",
         "microcosm>=2.12.0",
-        "microcosm-caching>=0.2.0",
+        "microcosm-caching>=0.9.0",
         "microcosm-daemon>=1.0.0",
         "microcosm-logging>=1.3.0",
         "tornado<6",
