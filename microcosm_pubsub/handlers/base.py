@@ -93,11 +93,13 @@ class PubSubHandler(metaclass=ABCMeta):
         uri = message["uri"]
         self._pre_handle(message, uri)
 
-        if self.handle(message, uri):
-            self.on_handle(message, uri)
+        # XXX: `None` is for backwards-compatibility with URIHandler signature
+        # Proper separation will come if we move forward with no-fetch handling
+        if self.handle(message, uri, None):
+            self.on_handle(message, uri, None)
             return True
         else:
-            self.on_ignore(message, uri)
+            self.on_ignore(message, uri, None)
             return False
 
     def on_call(self, message, uri):
@@ -119,7 +121,7 @@ class PubSubHandler(metaclass=ABCMeta):
             ),
         )
 
-    def on_handle(self, message, uri, **kwargs):
+    def on_handle(self, message, uri, resource):
         self.logger.debug(
             "Handled {handler}",
             extra=dict(
@@ -128,7 +130,7 @@ class PubSubHandler(metaclass=ABCMeta):
             ),
         )
 
-    def on_ignore(self, message, uri, **kwargs):
+    def on_ignore(self, message, uri, resource):
         self.logger.info(
             "Ignored {handler}",
             extra=dict(
@@ -151,5 +153,5 @@ class PubSubHandler(metaclass=ABCMeta):
         """
         return self.opaque.as_dict()
 
-    def handle(self, message, uri, **kwargs):
+    def handle(self, message, uri, resource):
         return True
