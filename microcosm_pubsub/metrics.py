@@ -162,6 +162,7 @@ class PubSubProducerMetrics:
         tags = [
             "source:microcosm-pubsub",
             f"publish_result:{publish_result}",
+            f"media_type:{kwargs['media_type']}",
         ]
 
         self.metrics.histogram(
