@@ -44,7 +44,8 @@ from microcosm_pubsub.result import MessageHandlingResult, MessageHandlingResult
 @logger
 @defaults(
     # Number of failed attempts after which the message stops being processed
-    message_max_processing_attempts=typed(int, default_value=None)
+    message_max_processing_attempts=typed(int, default_value=None),
+    fetch_uri_resource=typed(bool, default_value=True),
 )
 class SQSMessageDispatcher:
     """
