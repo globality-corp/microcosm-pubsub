@@ -28,6 +28,7 @@ Flow diagram:
 
 """
 from logging import Logger
+from os import environ
 from time import time
 from typing import List
 
@@ -110,6 +111,9 @@ class SQSMessageDispatcher:
                 try:
                     self.validate_message(message)
                     handler = self.find_handler(message, bound_handlers)
+                    self.opaque["X-Request-Handler"] = handler.__name__
+                    # XXX tech debt story to fix setting of metrics name
+                    self.opaque["X-Request-Daemon"] = environ.get("METRICS_NAME", "Unknown")
                     instance = MessageHandlingResult.invoke(
                         handler=self.wrap_handler(handler),
                         message=message,
