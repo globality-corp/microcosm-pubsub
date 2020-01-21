@@ -57,13 +57,34 @@ class PubSubMessageSchemaRegistry:
             ))
         self._mappings[media_type] = value
 
+    def find_matching_media_type(self, media_type):
+        """
+        Find if a media type is present in the registry, either as an exact match,
+        or as a pattern match
+
+        The only non-exact pattern currently supported is a trailing *, which can match any character except `.`
+        e.g. "application/vnd.globality.pubsub._.created.foo.*"
+
+        """
+        # `media_type` is present as an exact match
+        if media_type in self._media_types:
+            return media_type
+        # Otherwise look for a pattern match
+        media_type_prefix = ".".join(media_type.split(".")[0:-1])
+        wildcard_media_type = f"{media_type_prefix}.*"
+        if wildcard_media_type in self._media_types:
+            return wildcard_media_type
+
+        return None
+
     def find(self, media_type):
         """
         Create a codec or raise KeyError. If autoregistration is enabled, falls
         back to the URIMessageSchema.
 
         """
-        if media_type not in self._media_types:
+        matching_media_type = self.find_matching_media_type(media_type)
+        if matching_media_type is None:
             if self.auto_register and self.lifecycle_change.matches(media_type):
                 # When using convention-based media types, we may need to auto-register
                 self._media_types.add(media_type)
@@ -72,7 +93,7 @@ class PubSubMessageSchemaRegistry:
 
         try:
             # use a concrete schema class if any
-            schema_cls = self._mappings[media_type]
+            schema_cls = self._mappings[matching_media_type]
             schema = schema_cls()
         except KeyError:
             # use convention otherwise
