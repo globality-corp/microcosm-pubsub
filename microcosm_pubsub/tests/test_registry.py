@@ -15,6 +15,7 @@ from microcosm.api import binding, create_object_graph
 from microcosm_pubsub.codecs import DEFAULT_MEDIA_TYPE, PubSubMessageCodec, PubSubMessageSchema
 from microcosm_pubsub.conventions import changed
 from microcosm_pubsub.conventions.messages import ChangedURIMessageSchema
+from microcosm_pubsub.decorators import schema
 from microcosm_pubsub.registry import AlreadyRegisteredError
 from microcosm_pubsub.tests.fixtures import DerivedSchema, ExampleDaemon, noop_handler
 
@@ -42,6 +43,11 @@ class AnotherSchema(PubSubMessageSchema):
 
 class ChangedSchema(PubSubMessageSchema):
     MEDIA_TYPE = changed("Foo")
+
+
+@schema
+class WildcardSchema(PubSubMessageSchema):
+    MEDIA_TYPE = "application/vnd.microcosm.wildcard.*"
 
 
 class TestDerivedPubSubMessageCodecRegistry:
@@ -85,6 +91,18 @@ class TestDerivedPubSubMessageCodecRegistry:
         schema = self.registry.find(DerivedSchema.MEDIA_TYPE)
         assert_that(schema, is_(instance_of(PubSubMessageCodec)))
         assert_that(schema.schema, is_(instance_of(DerivedSchema)))
+
+    def test_find_wildcard(self):
+        schema = self.registry.find("application/vnd.microcosm.wildcard.foo_12")
+        assert_that(schema, is_(instance_of(PubSubMessageCodec)))
+        assert_that(schema.schema, is_(instance_of(WildcardSchema)))
+
+    def test_wildcard_does_not_match_extended(self):
+        # The postfix `*` wildcard doesn't match on `.` separators
+        assert_that(
+            calling(self.registry.find).with_args("application/vnd.microcosm.wildcard.foo.bar"),
+            raises(KeyError),
+        )
 
     def test_find_changed(self):
         schema = self.registry.find(ChangedSchema.MEDIA_TYPE)
