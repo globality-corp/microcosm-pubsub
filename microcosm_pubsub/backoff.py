@@ -6,7 +6,7 @@ from abc import ABCMeta, abstractmethod
 from random import randint
 
 
-# we cannot go over 12 hours
+# We cannot go over 12 hours
 MAX_BACKOFF_TIMEOUT = 60 * 60 * 12
 
 
