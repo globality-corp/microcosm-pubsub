@@ -109,15 +109,6 @@ class TestDerivedPubSubMessageCodecRegistry:
         assert_that(schema, is_(instance_of(PubSubMessageCodec)))
         assert_that(schema.schema, is_(instance_of(ChangedURIMessageSchema)))
 
-    def test_serialize_unknown_field(self):
-        schema = self.registry.find(ChangedSchema.MEDIA_TYPE)
-        # No exception raised
-        schema.encode(dict(
-            foo="bar",
-            media_type=changed("Foo"),
-            uri="http://uri",
-        ))
-
 
 class TestDerivedSQSMessageHandlerRegistry:
 
