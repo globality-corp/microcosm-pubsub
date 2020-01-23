@@ -29,11 +29,7 @@ class PublishedMessageBuilder:
         self.opaque = graph.opaque
         self.pubsub_message_schema_registry = graph.pubsub_message_schema_registry
 
-    def __call__(self, media_type, uri=None, opaque_data=None, **kwargs) -> PublishedMessage:
-        """
-        Build a message for publishing
-
-        """
+    def _merge_opaque_data(self, opaque_data):
         if opaque_data is None:
             opaque_data = dict()
 
@@ -41,13 +37,23 @@ class PublishedMessageBuilder:
             opaque_data.update(self.opaque.as_dict())
 
         opaque_data[PUBLISHED_KEY] = str(time())
+        return opaque_data
 
-        message = self.pubsub_message_schema_registry.find(media_type).encode(
+    def _encode_message(self, media_type, uri, opaque_data, **kwargs):
+        return self.pubsub_message_schema_registry.find(media_type).encode(
             opaque_data=opaque_data,
             media_type=media_type,
             uri=uri,
             **kwargs
         )
+
+    def __call__(self, media_type, uri=None, opaque_data=None, **kwargs) -> PublishedMessage:
+        """
+        Build a message for publishing
+
+        """
+        opaque_data = self._merge_opaque_data(opaque_data)
+        message = self._encode_message(media_type, uri, opaque_data, **kwargs)
         return PublishedMessage(
             media_type=media_type,
             message=message,
