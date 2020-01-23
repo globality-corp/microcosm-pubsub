@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from time import time
-from typing import Dict
+from typing import Dict, Optional
 
 from microcosm.api import binding
 
@@ -19,8 +19,8 @@ class PublishedMessage:
     opaque_data: dict
 
     # Deprecated: those attributes are SNS-specific and will be removed from this class
-    message_attributes: Dict[str, Dict[str, str]] = None
-    topic_arn: str = None
+    message_attributes: Optional[Dict[str, Dict[str, str]]] = None
+    topic_arn: Optional[str] = None
 
 
 @binding("published_message_builder")
