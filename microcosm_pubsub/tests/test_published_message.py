@@ -1,18 +1,14 @@
 from json import loads
 from unittest.mock import ANY, patch
 
-from marshmallow import fields
 import microcosm.opaque  # noqa
-from hamcrest import (
-    assert_that,
-    has_entries,
-    has_properties,
-)
+from hamcrest import assert_that, has_entries, has_properties
+from marshmallow import fields
 from microcosm.api import create_object_graph
 
 import microcosm_pubsub.published_message  # noqa: F401
+from microcosm_pubsub.codecs import PubSubMessageCodec, PubSubMessageSchema
 from microcosm_pubsub.constants import PUBLISHED_KEY
-from microcosm_pubsub.codecs import PubSubMessageSchema, PubSubMessageCodec
 
 
 class MessageSchema(PubSubMessageSchema):
