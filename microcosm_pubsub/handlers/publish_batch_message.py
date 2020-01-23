@@ -8,7 +8,8 @@ from microcosm_logging.decorators import logger
 
 from microcosm_pubsub.conventions import created
 from microcosm_pubsub.decorators import handles
-from microcosm_pubsub.producer import PubsubMessage, SNSProducer
+from microcosm_pubsub.producer import SNSProducer
+from microcosm_pubsub.published_message import PublishedMessage
 
 
 @binding("publish_message_batch")
@@ -22,7 +23,7 @@ class PublishBatchMessage:
     def __call__(self, message):
         messages = message["messages"]
         for message in messages:
-            pubsub_message = PubsubMessage(
+            pubsub_message = PublishedMessage(
                 media_type=message["media_type"],
                 message=message["message"],
                 message_attributes=message["message_attributes"],

@@ -3,7 +3,6 @@ Message producer.
 
 """
 from collections import defaultdict
-from dataclasses import dataclass
 from distutils.util import strtobool
 from functools import wraps
 from logging import Logger
@@ -21,20 +20,7 @@ from microcosm_pubsub.batch import MessageBatchSchema
 from microcosm_pubsub.constants import PUBLISHED_KEY
 from microcosm_pubsub.conventions.naming import make_media_type
 from microcosm_pubsub.errors import TopicNotDefinedError
-
-
-@dataclass
-class PubsubMessage:
-    """
-    Container class encapsulating all of the necessary components for
-    publishing a given message
-
-    """
-    media_type: str
-    message: str
-    message_attributes: Dict[str, Dict[str, str]]
-    opaque_data: dict
-    topic_arn: str
+from microcosm_pubsub.published_message import PublishedMessage
 
 
 @logger
@@ -53,7 +39,7 @@ class SNSProducer:
         sns_topic_arns,
         skip,
         deferred_batch_size,
-        pubsub_producer_metrics
+        pubsub_producer_metrics,
     ):
         self.opaque = opaque
         self.pubsub_message_schema_registry = pubsub_message_schema_registry
@@ -63,7 +49,7 @@ class SNSProducer:
         self.deferred_batch_size = deferred_batch_size
         self.pubsub_producer_metrics = pubsub_producer_metrics
 
-    def produce(self, media_type, dct=None, uri=None, **kwargs):
+    def produce(self, media_type, dct=None, uri=None, pubsub_message=None, **kwargs):
         """
         Produce a message.
 
@@ -73,10 +59,17 @@ class SNSProducer:
 
         if self.skip:
             return
-        pubsub_message = self.create_message(media_type, dct, uri, **kwargs)
+
+        if pubsub_message is None:
+            pubsub_message = self.create_message(media_type, dct, uri, **kwargs)
         return self.publish_message(pubsub_message)
 
-    def create_message(self, media_type, dct, uri=None, opaque_data=None, **kwargs) -> PubsubMessage:
+    def create_message(self, media_type, dct, uri=None, opaque_data=None, **kwargs) -> PublishedMessage:
+        """
+        DEPRECATED – Build the message using the `pubsub_message_builder` component instead, and pass it in
+        as an argument to `sns_producer.produce`
+
+        """
         if opaque_data is None:
             opaque_data = dict()
 
@@ -85,10 +78,6 @@ class SNSProducer:
 
         opaque_data[PUBLISHED_KEY] = str(time())
 
-        topic_arn = self.choose_topic_arn(media_type)
-
-        message_attributes = self.choose_message_attributes(media_type)
-
         message = self.pubsub_message_schema_registry.find(media_type).encode(
             dct,
             opaque_data=opaque_data,
@@ -96,29 +85,30 @@ class SNSProducer:
             uri=uri,
             **kwargs
         )
-        return PubsubMessage(
+        return PublishedMessage(
             media_type=media_type,
             message=message,
-            message_attributes=message_attributes,
             opaque_data=opaque_data,
-            topic_arn=topic_arn,
         )
 
-    def publish_message(self, pubsub_message: PubsubMessage):
+    def publish_message(self, message: PublishedMessage):
         extra = dict(
-            media_type=pubsub_message.media_type,
-            **pubsub_message.opaque_data
+            media_type=message.media_type,
+            **message.opaque_data
         )
         self.logger.debug("Publishing message with media type {media_type}", extra=extra)
         publish_result = "SUCCESS"
         publish_exception = None
 
+        # Run this before `try` block to avoid TopicNotDefinedError being swallowed
+        topic_arn = self.choose_topic_arn(message.media_type)
+
         with elapsed_time(extra):
             try:
                 result = self.sns_client.publish(
-                    TopicArn=pubsub_message.topic_arn,
-                    Message=pubsub_message.message,
-                    MessageAttributes=pubsub_message.message_attributes,
+                    TopicArn=topic_arn,
+                    Message=message.message,
+                    MessageAttributes=self.choose_message_attributes(message.media_type),
                 )
             except Exception as e:
                 publish_exception = e
@@ -176,11 +166,12 @@ class DeferredProducer:
         self.producer = producer
         self.messages = []
 
-    def produce(self, media_type, dct=None, **kwargs):
+    def produce(self, media_type, dct=None, pubsub_message=None, **kwargs):
         if self.producer.skip:
             return
 
-        pubsub_message = self.producer.create_message(media_type, dct, **kwargs)
+        if pubsub_message is None:
+            pubsub_message = self.producer.create_message(media_type, dct, **kwargs)
         self.messages.append(pubsub_message)
 
     def __enter__(self):
@@ -201,16 +192,16 @@ class DeferredBatchProducer(DeferredProducer):
         for i in range(0, len(messages), deferred_batch_size):
             yield messages[i:i + deferred_batch_size]
 
-    def construct_batch_pubsub_message(self, message_batch: List[PubsubMessage]):
+    def construct_batch_pubsub_message(self, message_batch: List[PublishedMessage]):
         return [
             dict(
-                media_type=pubsub_message.media_type,
-                message=pubsub_message.message,
-                message_attributes=pubsub_message.message_attributes,
-                opaque_data=pubsub_message.opaque_data,
-                topic_arn=pubsub_message.topic_arn,
+                media_type=message.media_type,
+                message=message.message,
+                message_attributes=self.producer.choose_message_attributes(message.media_type),
+                opaque_data=message.opaque_data,
+                topic_arn=self.producer.choose_topic_arn(message.media_type),
             )
-            for pubsub_message in message_batch
+            for message in message_batch
         ]
 
     def __exit__(self, type, value, traceback):
