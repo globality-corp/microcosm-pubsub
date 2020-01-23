@@ -5,7 +5,6 @@ Registry of SQS message handlers.
 from collections import defaultdict
 from inspect import isclass
 
-from marshmallow import EXCLUDE
 from microcosm.api import defaults
 from microcosm_logging.decorators import logger
 
@@ -95,7 +94,7 @@ class PubSubMessageSchemaRegistry:
         try:
             # use a concrete schema class if any
             schema_cls = self._mappings[matching_media_type]
-            schema = schema_cls(unknown=EXCLUDE)
+            schema = schema_cls()
         except KeyError:
             # use convention otherwise
             if self.lifecycle_change.Deleted in media_type.split("."):
