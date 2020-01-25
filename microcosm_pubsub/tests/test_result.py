@@ -204,6 +204,7 @@ class TestMessageHandlingResult:
         ).resolve(self.message)
 
         result.extra = dict(
+            media_type="foo.created",
             foo="bar"
         )
         self.graph.opaque["foo"] = "baz"
@@ -211,5 +212,5 @@ class TestMessageHandlingResult:
         # This doesn't error
         result.log(
             self.graph.logger,
-            self.graph.opaque
+            self.graph.opaque,
         )
