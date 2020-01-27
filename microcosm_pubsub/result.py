@@ -146,7 +146,11 @@ class MessageHandlingResult:
             self.result.level,
             entry,
             exc_info=self.exc_info,
-            extra={**opaque.as_dict(), **self.extra},
+            extra={
+                "media_type": self.media_type,
+                **opaque.as_dict(),
+                **self.extra,
+            },
         )
 
     def resolve(self, message):
