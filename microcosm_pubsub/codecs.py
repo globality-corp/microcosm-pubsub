@@ -79,12 +79,8 @@ class PubSubMessageCodec:
         message = dct.copy() if dct else dict()
         message.update(kwargs)
 
+        # Note that `dump` doesn't perform any validation
         dumped = self.schema.dump(message)
-
-        # NB: Schema dump doesn't run validation
-        errors = self.schema.validate(dumped)
-        if errors:
-            raise ValidationError(message=errors)
 
         # Dump to string
         return dumps(dumped)
