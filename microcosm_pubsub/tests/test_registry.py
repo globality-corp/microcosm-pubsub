@@ -10,6 +10,7 @@ from hamcrest import (
     is_,
     raises,
 )
+from marshmallow import ValidationError, fields
 from microcosm.api import binding, create_object_graph
 
 from microcosm_pubsub.codecs import DEFAULT_MEDIA_TYPE, PubSubMessageCodec, PubSubMessageSchema
@@ -43,6 +44,13 @@ class AnotherSchema(PubSubMessageSchema):
 
 class ChangedSchema(PubSubMessageSchema):
     MEDIA_TYPE = changed("Foo")
+
+
+@schema
+class BarSchema(PubSubMessageSchema):
+    MEDIA_TYPE = "application/vnd.microcosm.bar"
+    foo = fields.String(dump_only=True)
+    bar = fields.String()
 
 
 @schema
@@ -109,14 +117,35 @@ class TestDerivedPubSubMessageCodecRegistry:
         assert_that(schema, is_(instance_of(PubSubMessageCodec)))
         assert_that(schema.schema, is_(instance_of(ChangedURIMessageSchema)))
 
-    def test_serialize_unknown_field(self):
-        schema = self.registry.find(ChangedSchema.MEDIA_TYPE)
+    def test_serialize_dump_only_field(self):
+        """
+        `dump_only` fields are ignored by `schema.validate`, meaning they'll
+        be treated as unknown fields.
+
+        """
+        schema = self.registry.find(BarSchema.MEDIA_TYPE)
         # No exception raised
         schema.encode(dict(
             foo="bar",
+            bar="baz",
             media_type=changed("Foo"),
             uri="http://uri",
         ))
+
+    def test_serialize_non_nullable_field(self):
+        """
+        `foo` is not nullable, we should error
+
+        """
+        schema = self.registry.find(BarSchema.MEDIA_TYPE)
+        assert_that(
+            calling(schema.encode).with_args(dict(
+                bar=None,
+                media_type=changed("Foo"),
+                uri="http://uri",
+            )),
+            raises(ValidationError),
+        )
 
 
 class TestDerivedSQSMessageHandlerRegistry:
