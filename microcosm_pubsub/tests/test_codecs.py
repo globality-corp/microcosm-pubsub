@@ -53,6 +53,16 @@ def test_encode():
     })))
 
 
+def test_encode_missing_field():
+    """
+    An invalid message will raise errors.
+
+    """
+    graph = create_object_graph("example", testing=True)
+    codec = graph.pubsub_message_schema_registry.find(DerivedSchema.MEDIA_TYPE)
+    assert_that(calling(codec.encode), raises(ValidationError))
+
+
 def test_decode():
     """
     A message will be decoded according to its schema.
