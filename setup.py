@@ -5,7 +5,6 @@ from setuptools import find_packages, setup
 project = "microcosm-pubsub"
 version = "2.19.0"
 
-
 setup(
     name=project,
     version=version,
