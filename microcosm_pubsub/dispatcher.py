@@ -111,7 +111,7 @@ class SQSMessageDispatcher:
                 try:
                     self.validate_message(message)
                     handler = self.find_handler(message, bound_handlers)
-                    self.opaque["X-Request-Handler"] = handler.__name__
+                    self.opaque["X-Request-Handler"] = handler.__class__.__name__
                     # XXX tech debt story to fix setting of metrics name
                     self.opaque["X-Request-Daemon"] = environ.get("METRICS_NAME", "Unknown")
                     instance = MessageHandlingResult.invoke(
