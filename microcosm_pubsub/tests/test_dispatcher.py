@@ -3,14 +3,14 @@ Dispatcher tests.
 
 """
 from json import dumps
+from unittest.mock import ANY
 
 from hamcrest import assert_that, greater_than, has_properties
 
 from microcosm_pubsub.conventions import created
 from microcosm_pubsub.message import SQSMessage
 from microcosm_pubsub.result import MessageHandlingResultType
-from microcosm_pubsub.tests.fixtures import DerivedSchema, ExampleDaemon
-
+from microcosm_pubsub.tests.fixtures import DerivedSchema, ExampleDaemon, noop_handler
 
 MESSAGE_ID = "message-id"
 
@@ -46,6 +46,35 @@ class TestDispatcher:
                 result=MessageHandlingResultType.SUCCEEDED,
             ),
         )
+
+    def test_handle_message_succeeded_with_opaque(self):
+        self.message.content = dict(
+            opaque_data={
+                "X-Request-Ttl": "666",
+            },
+        )
+        from unittest.mock import patch
+        with patch.object(noop_handler, "logger") as mocked_logger:
+            result = self.dispatcher.handle_message(
+                message=self.message,
+                bound_handlers=self.daemon.bound_handlers,
+            )
+            assert_that(
+                result,
+                has_properties(
+                    elapsed_time=greater_than(0.0),
+                    result=MessageHandlingResultType.SUCCEEDED,
+                ),
+            )
+            mocked_logger.log.assert_called_with(ANY, ANY, exc_info=None, extra={
+                'media_type': 'application/vnd.microcosm.derived',
+                'X-Request-Ttl': '665',
+                'message_id': 'message-id',
+                'handler': 'Function',
+                'X-Request-Handler': 'function',
+                'X-Request-Daemon': 'Unknown',
+                'elapsed_time': ANY,
+            })
 
     def test_handle_message_ignored(self):
         """
