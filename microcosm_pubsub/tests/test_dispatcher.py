@@ -12,6 +12,7 @@ from microcosm_pubsub.message import SQSMessage
 from microcosm_pubsub.result import MessageHandlingResultType
 from microcosm_pubsub.tests.fixtures import DerivedSchema, ExampleDaemon, noop_handler
 
+
 MESSAGE_ID = "message-id"
 
 
