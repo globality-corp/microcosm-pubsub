@@ -53,6 +53,7 @@ class ConsumerDaemon(Daemon):
                 ),
                 sqs_consumer=dict(
                     sqs_queue_url=STDIN,
+                    sqs_event=""
                 ),
             )
 
@@ -60,6 +61,7 @@ class ConsumerDaemon(Daemon):
             config.update(
                 sqs_consumer=dict(
                     sqs_queue_url=self.args.sqs_queue_url,
+                    sqs_event=""
                 ),
             )
 
@@ -81,7 +83,7 @@ class ConsumerDaemon(Daemon):
                     sqs_event=self.sqs_event,
                     sqs_queue_url="",
                 )
-            )            
+            )
         return config
 
     @property

@@ -145,7 +145,7 @@ def configure_sqs_consumer(graph):
     if graph.metadata.testing or sqs_queue_url == "test":
         from unittest.mock import MagicMock
         sqs_client = MagicMock()
-    elif sqs_event: # AWS Lambda invocation
+    elif sqs_event:  # AWS Lambda invocation
         sqs_client = SQSJsonReader(sqs_event)
     elif sqs_queue_url == STDIN:
         sqs_client = SQSStdInReader()
