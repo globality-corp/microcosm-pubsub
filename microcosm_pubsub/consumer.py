@@ -10,7 +10,7 @@ from microcosm.api import defaults, typed
 from microcosm_logging.decorators import logger
 
 from microcosm_pubsub.backoff import BackoffPolicy
-from microcosm_pubsub.reader import SQSFileReader, SQSStdInReader, SQSJsonReader
+from microcosm_pubsub.reader import SQSFileReader, SQSJsonReader, SQSStdInReader
 
 
 STDIN = "STDIN"
