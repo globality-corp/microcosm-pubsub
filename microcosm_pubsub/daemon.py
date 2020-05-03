@@ -72,7 +72,12 @@ class ConsumerDaemon(Daemon):
                 ),
             )
         # for AWS Lambda
-        # event is argument of handler invoked by SQS Query
+        # SQS message comes as function argument
+        # e.g
+        # ```
+        # def handler(event, context):
+        #     # processing event
+        # ```
         # we don't use command line args here
         if self.sqs_event:
             config.update(
