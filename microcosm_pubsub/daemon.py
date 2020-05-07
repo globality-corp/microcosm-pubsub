@@ -12,10 +12,10 @@ from microcosm_pubsub.envelope import NaiveSQSEnvelope, SQSEnvelope
 
 class ConsumerDaemon(Daemon):
 
-    def __init__(self, event={}):
+    def __init__(self, event=None):
         super().__init__()
         self.bound_handlers = None
-        self.sqs_event = event
+        self.sqs_event = event or {}
 
     def make_arg_parser(self):
         parser = super().make_arg_parser()
