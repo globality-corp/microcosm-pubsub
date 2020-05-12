@@ -12,7 +12,7 @@ from hamcrest import (
 )
 
 from microcosm_pubsub.tests.fixtures import DerivedSchema, ExampleDaemon
-
+from microcosm_pubsub.reader import SQSJsonReader
 
 MESSAGE_ID = "message-id"
 RECEIPT_HANDLE = "receipt-handle"
@@ -100,3 +100,68 @@ def test_raw_consume():
         data="data",
         media_type=DerivedSchema.MEDIA_TYPE,
     ))))
+
+def test_json_reader():
+    """
+    Test that message consumed by SQS JSON Reader returns correct value
+    """
+    message = dict(
+            MessageId=MESSAGE_ID,
+            ReceiptHandle=RECEIPT_HANDLE,
+            MD5OfBody="7efaa8404863d47c51ed0e20b9014aec",
+            Body=dumps(dict(
+                data="data",
+                mediaType=DerivedSchema.MEDIA_TYPE,
+            )),
+        )
+    reader = SQSJsonReader(message)
+    assert_that(
+        reader.receive_message(), 
+        is_(equal_to(dict(Messages=[message])))
+    )
+
+
+def test_json_consume():
+    """
+    Test that message sent as JSON could be delivered
+    """
+    graph = ExampleDaemon.create_for_testing().graph
+    # simulate the response structure
+    graph.sqs_consumer.sqs_client.receive_message.return_value = dict(Messages=[
+        dict(
+            MessageId=MESSAGE_ID,
+            ReceiptHandle=RECEIPT_HANDLE,
+            MD5OfBody="7efaa8404863d47c51ed0e20b9014aec",
+            Body=dumps(dict(
+                data="data",
+                mediaType=DerivedSchema.MEDIA_TYPE,
+            )),
+        ),
+    ])
+    # need to replace magic mock with real reader
+    print('>>>', graph.sqs_consumer.sqs_client)
+    graph.sqs_consumer.sqs_client = SQSJsonReader({})
+    messages = graph.sqs_consumer.consume()
+    from unittest.mock import MagicMock
+    graph.sqs_consumer.sqs_client = MagicMock()
+    
+    # SQS should have been called
+    graph.sqs_consumer.sqs_client.receive_message.assert_called_with(
+        AttributeNames=[
+            "ApproximateReceiveCount",
+        ],
+        QueueUrl="queue",
+        MaxNumberOfMessages=10,
+        WaitTimeSeconds=1,
+    )
+
+    # and response translated properly
+    assert_that(messages, has_length(1))
+    assert_that(messages[0].consumer, is_(equal_to(graph.sqs_consumer)))
+    assert_that(messages[0].message_id, is_(equal_to(MESSAGE_ID)))
+    assert_that(messages[0].receipt_handle, is_(equal_to(RECEIPT_HANDLE)))
+    assert_that(messages[0].content, is_(equal_to(dict(
+        data="data",
+        media_type=DerivedSchema.MEDIA_TYPE,
+    ))))
+
