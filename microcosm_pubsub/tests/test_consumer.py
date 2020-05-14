@@ -3,6 +3,7 @@ Consumer tests.
 
 """
 from json import dumps
+from unittest.mock import MagicMock
 
 from hamcrest import (
     assert_that,
@@ -10,6 +11,7 @@ from hamcrest import (
     has_length,
     is_,
 )
+from microcosm.caching import NaiveCache
 
 from microcosm_pubsub.tests.fixtures import DerivedSchema, ExampleDaemon
 from microcosm_pubsub.reader import SQSJsonReader
@@ -18,12 +20,18 @@ MESSAGE_ID = "message-id"
 RECEIPT_HANDLE = "receipt-handle"
 
 
+def create_daemon():
+    # Use NaiveCache here to avoid reusing the graph components between tests,
+    # as we're modifying the `sqs_consumer.sqs_client` in some tests
+    return ExampleDaemon.create_for_testing(cache=NaiveCache()).graph
+
+
 def test_consume():
     """
     Consumer delegates to SQS client.
 
     """
-    graph = ExampleDaemon.create_for_testing().graph
+    graph = create_daemon()
     # simulate the response structure
     graph.sqs_consumer.sqs_client.receive_message.return_value = dict(Messages=[dict(
         MessageId=MESSAGE_ID,
@@ -65,7 +73,7 @@ def test_raw_consume():
     Test that messages sent via raw message delivery can be handled
 
     """
-    graph = ExampleDaemon.create_for_testing().graph
+    graph = create_daemon()
     # simulate the response structure
     graph.sqs_consumer.sqs_client.receive_message.return_value = dict(Messages=[
         dict(
@@ -100,6 +108,7 @@ def test_raw_consume():
         data="data",
         media_type=DerivedSchema.MEDIA_TYPE,
     ))))
+
 
 def test_json_reader():
     """
@@ -116,7 +125,7 @@ def test_json_reader():
         )
     reader = SQSJsonReader(message)
     assert_that(
-        reader.receive_message(), 
+        reader.receive_message(),
         is_(equal_to(dict(Messages=[message])))
     )
 
@@ -124,8 +133,9 @@ def test_json_reader():
 def test_json_consume():
     """
     Test that message sent as JSON could be delivered
+
     """
-    graph = ExampleDaemon.create_for_testing().graph
+    graph = create_daemon()
     # simulate the response structure
     graph.sqs_consumer.sqs_client.receive_message.return_value = dict(Messages=[
         dict(
@@ -142,9 +152,7 @@ def test_json_consume():
     print('>>>', graph.sqs_consumer.sqs_client)
     graph.sqs_consumer.sqs_client = SQSJsonReader({})
     messages = graph.sqs_consumer.consume()
-    from unittest.mock import MagicMock
-    graph.sqs_consumer.sqs_client = MagicMock()
-    
+
     # SQS should have been called
     graph.sqs_consumer.sqs_client.receive_message.assert_called_with(
         AttributeNames=[
@@ -164,4 +172,3 @@ def test_json_consume():
         data="data",
         media_type=DerivedSchema.MEDIA_TYPE,
     ))))
-
