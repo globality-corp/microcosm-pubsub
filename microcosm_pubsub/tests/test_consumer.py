@@ -12,8 +12,9 @@ from hamcrest import (
 )
 from microcosm.caching import NaiveCache
 
-from microcosm_pubsub.tests.fixtures import DerivedSchema, ExampleDaemon
 from microcosm_pubsub.reader import SQSJsonReader
+from microcosm_pubsub.tests.fixtures import DerivedSchema, ExampleDaemon
+
 
 MESSAGE_ID = "message-id"
 RECEIPT_HANDLE = "receipt-handle"
