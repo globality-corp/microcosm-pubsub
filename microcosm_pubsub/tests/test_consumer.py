@@ -3,7 +3,6 @@ Consumer tests.
 
 """
 from json import dumps
-from unittest.mock import MagicMock
 
 from hamcrest import (
     assert_that,
@@ -21,6 +20,10 @@ RECEIPT_HANDLE = "receipt-handle"
 
 
 def create_daemon():
+    return ExampleDaemon.create_for_testing().graph
+
+
+def create_daemon_with_naive_cache():
     # Use NaiveCache here to avoid reusing the graph components between tests,
     # as we're modifying the `sqs_consumer.sqs_client` in some tests
     return ExampleDaemon.create_for_testing(cache=NaiveCache()).graph
@@ -110,35 +113,15 @@ def test_raw_consume():
     ))))
 
 
-def test_json_reader():
-    """
-    Test that message consumed by SQS JSON Reader returns correct value
-    """
-    message = dict(
-            MessageId=MESSAGE_ID,
-            ReceiptHandle=RECEIPT_HANDLE,
-            MD5OfBody="7efaa8404863d47c51ed0e20b9014aec",
-            Body=dumps(dict(
-                data="data",
-                mediaType=DerivedSchema.MEDIA_TYPE,
-            )),
-        )
-    reader = SQSJsonReader(message)
-    assert_that(
-        reader.receive_message(),
-        is_(equal_to(dict(Messages=[message])))
-    )
-
-
 def test_json_consume():
     """
     Test that message sent as JSON could be delivered
 
     """
-    graph = create_daemon()
+    graph = create_daemon_with_naive_cache()
     # simulate the response structure
-    graph.sqs_consumer.sqs_client.receive_message.return_value = dict(Messages=[
-        dict(
+    # replacing MagicMock with real reader
+    graph.sqs_consumer.sqs_client = SQSJsonReader(dict(
             MessageId=MESSAGE_ID,
             ReceiptHandle=RECEIPT_HANDLE,
             MD5OfBody="7efaa8404863d47c51ed0e20b9014aec",
@@ -147,21 +130,9 @@ def test_json_consume():
                 mediaType=DerivedSchema.MEDIA_TYPE,
             )),
         ),
-    ])
-    # need to replace magic mock with real reader
-    print('>>>', graph.sqs_consumer.sqs_client)
-    graph.sqs_consumer.sqs_client = SQSJsonReader({})
-    messages = graph.sqs_consumer.consume()
-
-    # SQS should have been called
-    graph.sqs_consumer.sqs_client.receive_message.assert_called_with(
-        AttributeNames=[
-            "ApproximateReceiveCount",
-        ],
-        QueueUrl="queue",
-        MaxNumberOfMessages=10,
-        WaitTimeSeconds=1,
     )
+
+    messages = graph.sqs_consumer.consume()
 
     # and response translated properly
     assert_that(messages, has_length(1))
