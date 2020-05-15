@@ -25,6 +25,7 @@ setup(
         "microcosm-caching>=0.2.0",
         "microcosm-daemon>=1.0.0",
         "microcosm-logging>=1.3.0",
+        "sentry-sdk>=0.14.4",
     ],
     extras_require={
         "metrics": "microcosm-metrics>=2.5.0",
@@ -52,6 +53,7 @@ setup(
             "sqs_message_handler_registry = microcosm_pubsub.registry:configure_handler_registry",
             "sns_producer = microcosm_pubsub.producer:configure_sns_producer",
             "sns_topic_arns = microcosm_pubsub.producer:configure_sns_topic_arns",
+            "sentry_logging = microcosm_pubsub.sentry:configure_sentry",
         ]
     },
     tests_require=[
