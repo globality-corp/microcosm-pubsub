@@ -110,7 +110,7 @@ handlers will be a class with its own `@binding` to pass other collaborators:
             return True
 
 
-Subclass the `ConsumerDaemon` and override any required attribtes (notably `name`):
+Subclass the `ConsumerDaemon` and override any required attributes (notably `name`):
 
     class SimpleConsumerDaemon(ConsumerDaemon):
 
