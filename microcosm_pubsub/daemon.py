@@ -12,9 +12,10 @@ from microcosm_pubsub.envelope import NaiveSQSEnvelope, SQSEnvelope
 
 class ConsumerDaemon(Daemon):
 
-    def __init__(self):
+    def __init__(self, event=None):
         super().__init__()
         self.bound_handlers = None
+        self.sqs_event = event or {}
 
     def make_arg_parser(self):
         parser = super().make_arg_parser()
@@ -52,6 +53,7 @@ class ConsumerDaemon(Daemon):
                 ),
                 sqs_consumer=dict(
                     sqs_queue_url=STDIN,
+                    sqs_event=""
                 ),
             )
 
@@ -59,6 +61,7 @@ class ConsumerDaemon(Daemon):
             config.update(
                 sqs_consumer=dict(
                     sqs_queue_url=self.args.sqs_queue_url,
+                    sqs_event=""
                 ),
             )
 
@@ -68,7 +71,24 @@ class ConsumerDaemon(Daemon):
                     strategy_name=self.args.envelope,
                 ),
             )
-
+        # for AWS Lambda
+        # SQS message comes as function argument
+        # e.g
+        # ```
+        # def handler(event, context):
+        #     # processing event
+        # ```
+        # we don't use command line args here
+        if self.sqs_event:
+            config.update(
+                sqs_envelope=dict(
+                    strategy_name=NaiveSQSEnvelope.__name__,
+                ),
+                sqs_consumer=dict(
+                    sqs_event=self.sqs_event,
+                    sqs_queue_url="",
+                )
+            )
         return config
 
     @property

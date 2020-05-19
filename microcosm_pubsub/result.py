@@ -153,6 +153,18 @@ class MessageHandlingResult:
             },
         )
 
+    def error_reporting(self, sentry_enabled, opaque):
+        if not sentry_enabled:
+            return
+        from sentry_sdk import capture_exception
+        from sentry_sdk import configure_scope
+        opaque = opaque.as_dict()
+        with configure_scope() as scope:
+            scope.set_tag("x-request-id", opaque.get("X-Request-Id"))
+            scope.set_tag("message-id", opaque.get("message_id"))
+            scope.set_tag("media-type", opaque.get("media_type"))
+            capture_exception(self.exc_info)
+
     def resolve(self, message):
         if self.result.retry:
             message.nack(self.retry_timeout_seconds)

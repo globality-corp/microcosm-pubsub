@@ -64,3 +64,22 @@ class SQSStdInReader:
 
     def change_message_visibility(self, *args, **kwargs):
         pass
+
+
+class SQSJsonReader:
+    """
+    Read message data from a JSON string.
+    Accepts single message, but appended to list for backward compatibility
+
+    """
+    def __init__(self, message):
+        self.message = message
+
+    def receive_message(self, **kwargs):
+        return dict(Messages=[self.message])
+
+    def delete_message(self, *args, **kwargs):
+        pass
+
+    def change_message_visibility(self, *args, **kwargs):
+        pass
