@@ -154,13 +154,13 @@ class MessageHandlingResult:
         )
 
     def error_reporting(self, sentry_enabled, opaque):
-        if any([
-            not sentry_enabled,
-            self.result not in [
+        if not all([
+            sentry_enabled,
+            self.result in [
                 MessageHandlingResultType.FAILED,
                 MessageHandlingResultType.EXPIRED,
             ],
-            not self.exc_info,
+            self.exc_info,
         ]):
             return
         self._report_error(opaque)
