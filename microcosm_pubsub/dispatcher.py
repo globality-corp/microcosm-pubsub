@@ -130,7 +130,8 @@ class SQSMessageDispatcher:
                 opaque=self.opaque,
             )
             instance.error_reporting(
-                self.sentry_enabled, self.opaque,
+                sentry_enabled=self.sentry_enabled,
+                opaque=self.opaque,
             )
             instance.resolve(message)
             return instance
