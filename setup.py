@@ -30,6 +30,12 @@ setup(
     extras_require={
         "metrics": "microcosm-metrics>=2.5.0",
         "sentry": "sentry-sdk>=0.14.4",
+        "test": [
+            "sentry-sdk>=0.14.4",
+            "PyHamcrest",
+            "coverage",
+            "parameterized"
+        ],
     },
     setup_requires=[
         "nose>=1.3.6",

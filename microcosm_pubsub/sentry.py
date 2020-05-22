@@ -7,6 +7,7 @@ from microcosm.decorators import defaults
 from microcosm.object_graph import ObjectGraph
 from microcosm_logging.decorators import logger
 
+
 try:
     import sentry_sdk
     from sentry_sdk.utils import BadDsn
