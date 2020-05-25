@@ -154,8 +154,18 @@ class MessageHandlingResult:
         )
 
     def error_reporting(self, sentry_enabled, opaque):
-        if not sentry_enabled:
+        if not all([
+            sentry_enabled,
+            self.result in [
+                MessageHandlingResultType.FAILED,
+                MessageHandlingResultType.EXPIRED,
+            ],
+            self.exc_info,
+        ]):
             return
+        self._report_error(opaque)
+
+    def _report_error(self, opaque):
         from sentry_sdk import capture_exception
         from sentry_sdk import configure_scope
         opaque = opaque.as_dict()

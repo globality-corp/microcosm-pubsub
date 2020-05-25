@@ -2,8 +2,11 @@
 Test result handling.
 
 """
+from unittest.mock import patch
+
 from hamcrest import assert_that, has_entries, has_properties
 from microcosm_logging.decorators import logger
+from parameterized import parameterized
 
 from microcosm_pubsub.errors import (
     IgnoreMessage,
@@ -214,3 +217,22 @@ class TestMessageHandlingResult:
             self.graph.logger,
             self.graph.opaque,
         )
+
+    @parameterized([
+        (MessageHandlingResultType.FAILED, True),
+        (MessageHandlingResultType.EXPIRED, True),
+        (MessageHandlingResultType.SKIPPED, False),
+        (MessageHandlingResultType.SUCCEEDED, False),
+        (MessageHandlingResultType.IGNORED, False),
+        (MessageHandlingResultType.RETRIED, False),
+    ])
+    def test_error_reporting_only_sends_on_relevant_result_type(self, result_type, error_reported):
+        result = MessageHandlingResult(result=result_type, media_type="media", exc_info=(1, 2, 3))
+
+        with patch.object(result, "_report_error") as mock_report:
+            result.error_reporting(True, self.graph.opaque)
+
+        if error_reported:
+            mock_report.assert_called_once_with(self.graph.opaque)
+        else:
+            mock_report.assert_not_called()
