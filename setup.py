@@ -3,7 +3,7 @@ from setuptools import find_packages, setup
 
 
 project = "microcosm-pubsub"
-version = "2.18.0"
+version = "2.19.0"
 
 
 setup(
@@ -26,10 +26,16 @@ setup(
         "microcosm-caching>=0.2.0",
         "microcosm-daemon>=1.0.0",
         "microcosm-logging>=1.3.0",
-        "sentry-sdk>=0.14.4",
     ],
     extras_require={
         "metrics": "microcosm-metrics>=2.5.0",
+        "sentry": "sentry-sdk>=0.14.4",
+        "test": [
+            "sentry-sdk>=0.14.4",
+            "PyHamcrest",
+            "coverage",
+            "parameterized"
+        ],
     },
     setup_requires=[
         "nose>=1.3.6",
@@ -61,5 +67,6 @@ setup(
         "coverage>=3.7.1",
         "parameterized>=0.7.0",
         "PyHamcrest>=1.8.5",
+        "parameterized>=0.7.4",
     ],
 )

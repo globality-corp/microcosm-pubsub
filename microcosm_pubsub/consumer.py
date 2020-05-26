@@ -96,7 +96,7 @@ class SQSConsumer:
              the sqs consumer's config and override the SQS queue's visibility with a known, smallish value.
 
              We choose the latter under the assumption that 30s is too long to reprocess most messages
-             as a defult and that long-running handlers will be configured accordingly (see: 2a).
+             as a default and that long-running handlers will be configured accordingly (see: 2a).
 
         Therefore: we always invoke `change_message_visibility`
 
