@@ -3,8 +3,8 @@ Test fixtures.
 
 """
 from argparse import Namespace
-from marshmallow import Schema, fields
 
+from marshmallow import Schema, fields
 from microcosm.api import binding
 from microcosm.caching import ProcessCache
 from microcosm.loaders import load_each, load_from_dict
