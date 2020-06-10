@@ -14,7 +14,7 @@ from hamcrest import (
 from microcosm.caching import NaiveCache
 
 from microcosm_pubsub.consumer import SQSConsumer
-from microcosm_pubsub.envelope import RawSQSEnvelope
+from microcosm_pubsub.envelope import CodecSQSEnvelope
 from microcosm_pubsub.reader import SQSJsonReader
 from microcosm_pubsub.tests.fixtures import DerivedSchema, ExampleDaemon, SQSReaderExampleDaemon
 
@@ -143,11 +143,11 @@ def test_json_consume():
 
     # and response translated properly
     assert_that(graph.sqs_consumer, is_(instance_of(SQSConsumer)))
-    assert_that(graph.sqs_envelope, is_(instance_of(RawSQSEnvelope)))
+    assert_that(graph.sqs_envelope, is_(instance_of(CodecSQSEnvelope)))
     assert_that(messages, has_length(1))
     assert_that(messages[0].consumer, is_(equal_to(graph.sqs_consumer)))
     assert_that(messages[0].receipt_handle, is_(equal_to(RECEIPT_HANDLE)))
     assert_that(messages[0].content, is_(equal_to(dict(
         data="data",
-        mediaType=DerivedSchema.MEDIA_TYPE,
+        media_type=DerivedSchema.MEDIA_TYPE,
     ))))
