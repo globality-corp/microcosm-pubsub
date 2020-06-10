@@ -7,7 +7,7 @@ from microcosm_daemon.api import SleepNow
 from microcosm_daemon.daemon import Daemon
 
 from microcosm_pubsub.consumer import STDIN
-from microcosm_pubsub.envelope import NaiveSQSEnvelope, SQSEnvelope, CodecSQSEnvelope
+from microcosm_pubsub.envelope import CodecSQSEnvelope, NaiveSQSEnvelope, SQSEnvelope
 
 
 class ConsumerDaemon(Daemon):
