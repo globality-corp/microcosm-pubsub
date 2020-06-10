@@ -129,3 +129,54 @@ the usual boilerplate:
 When running the daemon, pass the `--sqs-queue-url` arguments and the usual `--testing`/`--debug` flags as appropriate:
 
     python /path/to/simple_daemon.py --sqs-queue-url <queue name> --debug
+
+
+## Configuring Sentry Support
+
+An example of a full config to enable and customise the usage of sentry in an
+Application using `microcosm_pubsub`.
+
+```json
+{
+  "sentry_logging": {
+    "enabled": true,
+    "dsn": "https://some-value@numbers.ingest.sentry.io/project-id",
+    "custom_tags_mapping": {
+      "opaque-key": "sentry-tag-name"
+    },
+    "custom_user_id": "my-opaque-user-id"
+  }
+}
+```
+
+- `sentry_logging.enabled` - boolean
+- `sentry_logging.dsn` - url - the url of the project that errors will be
+ sent to
+- `sentry_logging.custom_tags_mapping` - key/value mapping - defines what data
+ stored in `Opaque` data should be sent to sentry and what the tag in sentry
+ should be.
+- `sentry_logging.custom_user_id` - string - defines what data within `Opaque`
+should be sent to `sentry` as `user.id`.
+
+### Overriding the default before_send
+`before_send` is a function that runs before each event that is sent to sentry.
+It is used to remove sensitive data, the default one provided is reasonably
+strict removing most data in a quite a generic way. To customise this behaviour 
+in an Application the following can be done.
+
+```python
+from microcosm.decorators import binding
+from microcosm.api import create_object_graph
+
+
+@binding("sentry_before_send")
+def custom_before_send_factory(graph):
+    def before_send(event, hint):
+        # this would disable all filtering
+        return event
+    return before_send
+
+graph = create_object_graph("example")
+graph.use("sentry_before_send")
+```
+
