@@ -16,6 +16,7 @@ from microcosm_pubsub.errors import (
 )
 from microcosm_pubsub.message import SQSMessage
 from microcosm_pubsub.result import MessageHandlingResult, MessageHandlingResultType
+from microcosm_pubsub.sentry import SentryConfig
 from microcosm_pubsub.tests.fixtures import DerivedSchema, ExampleDaemon
 
 
@@ -228,11 +229,11 @@ class TestMessageHandlingResult:
     ])
     def test_error_reporting_only_sends_on_relevant_result_type(self, result_type, error_reported):
         result = MessageHandlingResult(result=result_type, media_type="media", exc_info=(1, 2, 3))
-
+        sentry_config = SentryConfig(enabled=True)
         with patch.object(result, "_report_error") as mock_report:
-            result.error_reporting(True, self.graph.opaque)
+            result.error_reporting(sentry_config, self.graph.opaque)
 
         if error_reported:
-            mock_report.assert_called_once_with(self.graph.opaque)
+            mock_report.assert_called_once_with(self.graph.opaque, dict(), None)
         else:
             mock_report.assert_not_called()

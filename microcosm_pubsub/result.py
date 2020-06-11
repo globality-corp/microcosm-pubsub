@@ -13,6 +13,8 @@ from typing import (
     Tuple,
 )
 
+from microcosm.opaque import Opaque
+
 from microcosm_pubsub.errors import (
     IgnoreMessage,
     Nack,
@@ -20,6 +22,7 @@ from microcosm_pubsub.errors import (
     TTLExpired,
 )
 from microcosm_pubsub.message import SQSMessage
+from microcosm_pubsub.sentry import SentryConfig
 
 
 @dataclass
@@ -153,9 +156,9 @@ class MessageHandlingResult:
             },
         )
 
-    def error_reporting(self, sentry_enabled, opaque):
+    def error_reporting(self, sentry_config: SentryConfig, opaque: Opaque) -> None:
         if not all([
-            sentry_enabled,
+            sentry_config.enabled,
             self.result in [
                 MessageHandlingResultType.FAILED,
                 MessageHandlingResultType.EXPIRED,
@@ -163,17 +166,17 @@ class MessageHandlingResult:
             self.exc_info,
         ]):
             return
-        self._report_error(opaque)
+        self._report_error(opaque, sentry_config.tag_mapping, sentry_config.user_id_key)
 
-    def _report_error(self, opaque):
+    def _report_error(self, opaque, tag_mapping, user_id_key):
         from sentry_sdk import capture_exception
         from sentry_sdk import configure_scope
         opaque = opaque.as_dict()
         with configure_scope() as scope:
-            scope.set_tag("x-request-id", opaque.get("X-Request-Id"))
-            scope.set_tag("message-id", opaque.get("message_id"))
-            scope.set_tag("media-type", opaque.get("media_type"))
-            capture_exception(self.exc_info)
+            scope.user = {"id": opaque.get(user_id_key)}
+            for opaque_key, tag_key in tag_mapping.items():
+                scope.set_tag(tag_key, opaque.get(opaque_key))
+            capture_exception(self.exc_info, scope=scope)
 
     def resolve(self, message):
         if self.result.retry:
