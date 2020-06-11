@@ -3,7 +3,7 @@ from setuptools import find_packages, setup
 
 
 project = "microcosm-pubsub"
-version = "2.19.0"
+version = "2.20.0"
 
 
 setup(
@@ -34,7 +34,7 @@ setup(
             "sentry-sdk>=0.14.4",
             "PyHamcrest",
             "coverage",
-            "parameterized"
+            "parameterized",
         ],
     },
     setup_requires=[
@@ -61,7 +61,7 @@ setup(
             "sns_producer = microcosm_pubsub.producer:configure_sns_producer",
             "sns_topic_arns = microcosm_pubsub.producer:configure_sns_topic_arns",
             "sentry_logging = microcosm_pubsub.sentry:configure_sentry",
-        ]
+        ],
     },
     tests_require=[
         "coverage>=3.7.1",
