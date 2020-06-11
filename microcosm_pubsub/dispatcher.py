@@ -61,7 +61,7 @@ class SQSMessageDispatcher:
         self.send_metrics = graph.pubsub_send_metrics
         self.send_batch_metrics = graph.pubsub_send_batch_metrics
         self.max_processing_attempts = graph.config.sqs_message_dispatcher.message_max_processing_attempts
-        self.sentry_enabled = graph.sentry_logging.enabled
+        self.sentry_config = graph.sentry_logging
 
     def handle_batch(self, bound_handlers) -> List[MessageHandlingResult]:
         """
@@ -130,7 +130,7 @@ class SQSMessageDispatcher:
                 opaque=self.opaque,
             )
             instance.error_reporting(
-                sentry_enabled=self.sentry_enabled,
+                sentry_config=self.sentry_config,
                 opaque=self.opaque,
             )
             instance.resolve(message)
