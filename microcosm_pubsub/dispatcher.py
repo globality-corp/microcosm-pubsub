@@ -44,7 +44,7 @@ from microcosm_pubsub.result import MessageHandlingResult, MessageHandlingResult
 @logger
 @defaults(
     # Number of failed attempts after which the message stops being processed
-    message_max_processing_attempts=typed(int, default_value=None)
+    message_max_processing_attempts=typed(int, default_value=None),
 )
 class SQSMessageDispatcher:
     """
@@ -61,7 +61,7 @@ class SQSMessageDispatcher:
         self.send_metrics = graph.pubsub_send_metrics
         self.send_batch_metrics = graph.pubsub_send_batch_metrics
         self.max_processing_attempts = graph.config.sqs_message_dispatcher.message_max_processing_attempts
-        self.sentry_config = graph.sentry_logging
+        self.sentry_config = graph.sentry_logging_pubsub
 
     def handle_batch(self, bound_handlers) -> List[MessageHandlingResult]:
         """

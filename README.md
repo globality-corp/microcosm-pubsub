@@ -149,19 +149,19 @@ Application using `microcosm_pubsub`.
 }
 ```
 
-- `sentry_logging.enabled` - boolean
-- `sentry_logging.dsn` - url - the url of the project that errors will be
+- `sentry_logging_pubsub.enabled` - boolean
+- `sentry_logging_pubsub.dsn` - url - the url of the project that errors will be
  sent to
-- `sentry_logging.custom_tags_mapping` - key/value mapping - defines what data
+- `sentry_logging_pubsub.custom_tags_mapping` - key/value mapping - defines what data
  stored in `Opaque` data should be sent to sentry and what the tag in sentry
  should be.
-- `sentry_logging.custom_user_id` - string - defines what data within `Opaque`
+- `sentry_logging_pubsub.custom_user_id` - string - defines what data within `Opaque`
 should be sent to `sentry` as `user.id`.
 
 ### Overriding the default before_send
 `before_send` is a function that runs before each event that is sent to sentry.
 It is used to remove sensitive data, the default one provided is reasonably
-strict removing most data in a quite a generic way. To customise this behaviour 
+strict removing most data in a quite a generic way. To customise this behaviour
 in an Application the following can be done.
 
 ```python
@@ -179,4 +179,3 @@ def custom_before_send_factory(graph):
 graph = create_object_graph("example")
 graph.use("sentry_before_send")
 ```
-

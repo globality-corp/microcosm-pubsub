@@ -22,7 +22,7 @@ from microcosm_pubsub.errors import (
     TTLExpired,
 )
 from microcosm_pubsub.message import SQSMessage
-from microcosm_pubsub.sentry import SentryConfig
+from microcosm_pubsub.sentry import SentryConfigPubsub
 
 
 @dataclass
@@ -156,7 +156,7 @@ class MessageHandlingResult:
             },
         )
 
-    def error_reporting(self, sentry_config: SentryConfig, opaque: Opaque) -> None:
+    def error_reporting(self, sentry_config: SentryConfigPubsub, opaque: Opaque) -> None:
         if not all([
             sentry_config.enabled,
             self.result in [

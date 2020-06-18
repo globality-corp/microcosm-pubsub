@@ -60,7 +60,7 @@ setup(
             "sqs_message_handler_registry = microcosm_pubsub.registry:configure_handler_registry",
             "sns_producer = microcosm_pubsub.producer:configure_sns_producer",
             "sns_topic_arns = microcosm_pubsub.producer:configure_sns_topic_arns",
-            "sentry_logging = microcosm_pubsub.sentry:configure_sentry",
+            "sentry_logging_pubsub = microcosm_pubsub.sentry:configure_sentry_pubsub",
         ],
     },
     tests_require=[
