@@ -23,13 +23,13 @@ def test_sentry_config_bad_dsn():
         )
 
     graph = create_object_graph("example", testing=False, loader=loader)
-    assert_that(graph.sentry_logging.enabled, is_(equal_to(False)))
+    assert_that(graph.sentry_logging_pubsub.enabled, is_(equal_to(False)))
 
 
 def test_sentry_client_loaded_to_graph_testing():
     def loader(metadata):
         return dict(
-            sentry_logging=dict(
+            sentry_logging_pubsub=dict(
                 dsn="topic",
                 enabled=True,
             ),
@@ -37,7 +37,7 @@ def test_sentry_client_loaded_to_graph_testing():
 
     graph = create_object_graph("example", testing=True, loader=loader)
     assert_that(
-        graph.sentry_logging.dsn,
+        graph.sentry_logging_pubsub.dsn,
         is_(equal_to("topic")),
     )
 
@@ -49,7 +49,7 @@ def test_sentry_client_default_to_None_no_dsn_set():
     graph = create_object_graph("example", testing=True, loader=loader)
 
     assert_that(
-        graph.sentry_logging.enabled,
+        graph.sentry_logging_pubsub.enabled,
         is_(equal_to(False)),
     )
 
@@ -94,7 +94,7 @@ def test_custom_before_send():
 
     def loader(metadata):
         return dict(
-            sentry_logging=dict(
+            sentry_logging_pubsub=dict(
                 dsn="topic",
                 enabled=True,
                 custom_before_send_func="microcosm_pubsub.tests.test_sentry._test_custom_before_send",
@@ -104,5 +104,5 @@ def test_custom_before_send():
     graph = create_object_graph("example", testing=True, loader=loader)
     graph.use("sentry_before_send")
 
-    client = graph.sentry_logging.client
+    client = graph.sentry_logging_pubsub.client
     assert_that(client.default_before_send(1, 1), "TESTING")

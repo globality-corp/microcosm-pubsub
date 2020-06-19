@@ -28,7 +28,7 @@ DEFAULT_USER_ID_KEY = "X-Request-User"
 
 
 @dataclass
-class SentryConfig:
+class SentryConfigPubsub:
     dsn: Optional[str] = None
     enabled: bool = False
     client: Optional[Any] = None
@@ -73,13 +73,13 @@ def default_before_send(event: Dict[str, Any], hint) -> Dict[str, Any]:
     custom_user_id=None,
 )
 @logger
-def configure_sentry(graph: ObjectGraph) -> SentryConfig:
+def configure_sentry_pubsub(graph: ObjectGraph) -> SentryConfigPubsub:
     enabled, dsn, sentry = False, None, None
     tag_mapping, custom_user_id_key = DEFAULT_TAG_MAPPING, DEFAULT_USER_ID_KEY
 
-    if graph.config.sentry_logging.enabled and graph.config.sentry_logging.dsn and sentry_sdk:
-        enabled = graph.config.sentry_logging.enabled
-        dsn = graph.config.sentry_logging.dsn
+    if graph.config.sentry_logging_pubsub.enabled and graph.config.sentry_logging_pubsub.dsn and sentry_sdk:
+        enabled = graph.config.sentry_logging_pubsub.enabled
+        dsn = graph.config.sentry_logging_pubsub.dsn
 
         try:
             before_send_func = graph.sentry_before_send
@@ -102,14 +102,13 @@ def configure_sentry(graph: ObjectGraph) -> SentryConfig:
                 sentry = sentry_sdk.init(**sentry_kwargs)
             except BadDsn:
                 enabled, dsn, sentry = False, None, None
-                configure_sentry.logger.error("Bad DSN value set")
+                configure_sentry_pubsub.logger.error("Bad DSN value set")
+    if graph.config.sentry_logging_pubsub.custom_tags_mapping:
+        tag_mapping.update(graph.config.sentry_logging_pubsub.custom_tags)
+    if graph.config.sentry_logging_pubsub.custom_user_id:
+        custom_user_id_key = graph.config.sentry_logging_pubsub.custom_user_id
 
-    if graph.config.sentry_logging.custom_tags_mapping:
-        tag_mapping.update(graph.config.sentry_logging.custom_tags)
-    if graph.config.sentry_logging.custom_user_id:
-        custom_user_id_key = graph.config.sentry_logging.custom_user_id
-
-    return SentryConfig(
+    return SentryConfigPubsub(
         dsn=dsn,
         enabled=enabled,
         client=sentry,
