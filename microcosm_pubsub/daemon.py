@@ -7,7 +7,7 @@ from microcosm_daemon.api import SleepNow
 from microcosm_daemon.daemon import Daemon
 
 from microcosm_pubsub.consumer import STDIN
-from microcosm_pubsub.envelope import NaiveSQSEnvelope, SQSEnvelope
+from microcosm_pubsub.envelope import CodecSQSEnvelope, NaiveSQSEnvelope, SQSEnvelope
 
 
 class ConsumerDaemon(Daemon):
@@ -82,7 +82,7 @@ class ConsumerDaemon(Daemon):
         if self.sqs_event:
             config.update(
                 sqs_envelope=dict(
-                    strategy_name=NaiveSQSEnvelope.__name__,
+                    strategy_name=CodecSQSEnvelope.__name__,
                 ),
                 sqs_consumer=dict(
                     sqs_event=self.sqs_event,
