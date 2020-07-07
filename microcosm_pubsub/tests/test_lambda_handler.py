@@ -1,10 +1,7 @@
 """
 Testing Lambda handler
 """
-from hamcrest import (
-    assert_that,
-    is_,
-)
+from hamcrest import assert_that, is_
 
 from microcosm_pubsub.tests.fixtures import ExampleDaemon
 
