@@ -26,6 +26,7 @@ setup(
         "microcosm-caching>=0.2.0",
         "microcosm-daemon>=1.0.0",
         "microcosm-logging>=1.3.0",
+        "isort<5.0.0",
     ],
     extras_require={
         "metrics": "microcosm-metrics>=2.5.0",

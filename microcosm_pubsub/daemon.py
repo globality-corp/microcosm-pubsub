@@ -2,6 +2,8 @@
 Consume Daemon main.
 
 """
+from json import loads
+
 from microcosm.loaders import load_each, load_from_dict
 from microcosm_daemon.api import SleepNow
 from microcosm_daemon.daemon import Daemon
@@ -41,6 +43,38 @@ class ConsumerDaemon(Daemon):
             ))
 
         super().run_state_machine()
+
+    def process(self):
+        """
+        Lambda Function method that runs only once
+        """
+        self.initialize()
+        self.graph.logger.info("Local starting daemon {}".format(self.name))
+        with self.graph.error_policy:
+            self.graph.sqs_message_dispatcher.handle_batch(self.bound_handlers)
+
+    @classmethod
+    def make_lambda_handler(cls):
+        def handler(event, context):
+            """
+            AWS Lambda function handler.
+            """
+            # this is for the warmup event.
+            # just return something and don't continue
+            if "warm" in event:
+                return "warming up"
+
+            message = event["Records"][0]["body"]
+            # we configure SQS Queue to use batches of 1,
+            # so received event contains
+            # another stringified json with actual message inside
+            daemon = cls(
+                event=loads(
+                    loads(message)["Message"],
+                )
+            )
+            daemon.process()
+        return handler
 
     @property
     def defaults(self):
