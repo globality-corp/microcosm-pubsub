@@ -1,15 +1,12 @@
 """
 Testing Lambda handler
 """
-from json import dumps, loads
 from hamcrest import (
     assert_that,
     is_,
-    instance_of,
 )
 
-from microcosm_pubsub.reader import SQSJsonReader
-from microcosm_pubsub.tests.fixtures import DerivedSchema, ExampleDaemon
+from microcosm_pubsub.tests.fixtures import ExampleDaemon
 
 
 MESSAGE_ID = "message-id"
