@@ -14,7 +14,7 @@ from hamcrest import (
 from microcosm.caching import NaiveCache
 
 from microcosm_pubsub.consumer import SQSConsumer
-from microcosm_pubsub.envelope import CodecSQSEnvelope
+from microcosm_pubsub.envelope import LambdaSQSEnvelope
 from microcosm_pubsub.reader import SQSJsonReader
 from microcosm_pubsub.tests.fixtures import DerivedSchema, ExampleDaemon, SQSReaderExampleDaemon
 
@@ -123,13 +123,19 @@ def test_raw_consume():
 def test_json_consume():
     """
     Test that message sent as JSON could be delivered
+    AWS Lambda receives a event through handler parameter
 
+    def handler(event, context):
+        ....
+        process(event)
+
+    Messages should be extracted from event before they can be consumed.
     """
     event = dict(
-            MessageId=MESSAGE_ID,
-            ReceiptHandle=RECEIPT_HANDLE,
-            MD5OfBody="7efaa8404863d47c51ed0e20b9014aec",
-            Body=dumps(dict(
+            messageId=MESSAGE_ID,
+            receiptHandle=RECEIPT_HANDLE,
+            md5OfBody="7efaa8404863d47c51ed0e20b9014aec",
+            body=dumps(dict(
                 data="data",
                 mediaType=DerivedSchema.MEDIA_TYPE,
             )),
@@ -143,7 +149,7 @@ def test_json_consume():
 
     # and response translated properly
     assert_that(graph.sqs_consumer, is_(instance_of(SQSConsumer)))
-    assert_that(graph.sqs_envelope, is_(instance_of(CodecSQSEnvelope)))
+    assert_that(graph.sqs_envelope, is_(instance_of(LambdaSQSEnvelope)))
     assert_that(messages, has_length(1))
     assert_that(messages[0].consumer, is_(equal_to(graph.sqs_consumer)))
     assert_that(messages[0].receipt_handle, is_(equal_to(RECEIPT_HANDLE)))
