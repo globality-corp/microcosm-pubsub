@@ -9,9 +9,9 @@ process this envelope, depending on the degree of validation and metadata desire
 from abc import ABCMeta, abstractmethod
 from hashlib import md5
 from json import loads
-from marshmallow import ValidationError
 from uuid import uuid4
 
+from marshmallow import ValidationError
 from microcosm.api import defaults
 
 from microcosm_pubsub.codecs import MediaTypeSchema, PubSubMessageCodec
