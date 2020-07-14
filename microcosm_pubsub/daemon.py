@@ -2,8 +2,6 @@
 Consume Daemon main.
 
 """
-from json import loads
-
 from microcosm.loaders import load_each, load_from_dict
 from microcosm_daemon.api import SleepNow
 from microcosm_daemon.daemon import Daemon
