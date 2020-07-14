@@ -3,7 +3,7 @@ from setuptools import find_packages, setup
 
 
 project = "microcosm-pubsub"
-version = "2.21.1"
+version = "2.21.2"
 
 
 setup(
