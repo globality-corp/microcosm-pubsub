@@ -123,7 +123,13 @@ def test_raw_consume():
 def test_json_consume():
     """
     Test that message sent as JSON could be delivered
+    AWS Lambda receives a event through handler parameter
 
+    def handler(event, context):
+        ....
+        process(event)
+
+    Messages should be extracted from event before they can be consumed.
     """
     event = dict(
             messageId=MESSAGE_ID,

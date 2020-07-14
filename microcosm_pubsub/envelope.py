@@ -9,6 +9,7 @@ process this envelope, depending on the degree of validation and metadata desire
 from abc import ABCMeta, abstractmethod
 from hashlib import md5
 from json import loads
+from marshmallow import ValidationError
 from uuid import uuid4
 
 from microcosm.api import defaults
@@ -173,7 +174,7 @@ class SQSEnvelope(MessageBodyParser, MediaTypeAndContentParser):
         expected_md5_of_body = raw_message["MD5OfBody"]
         actual_md5_of_body = md5(body).hexdigest()
         if expected_md5_of_body != actual_md5_of_body:
-            raise Exception("MD5 validation failed. Expected: {} Actual: {}".format(
+            raise ValidationError("MD5 validation failed. Expected: {} Actual: {}".format(
                 expected_md5_of_body,
                 actual_md5_of_body,
             ))
@@ -234,7 +235,7 @@ class LambdaSQSEnvelope(SNSMessageBodyParser, CodecMediaTypeAndContentParser, SQ
         expected_md5_of_body = raw_message["md5OfBody"]
         actual_md5_of_body = md5(body).hexdigest()
         if expected_md5_of_body != actual_md5_of_body:
-            raise Exception("MD5 validation failed. Expected: {} Actual: {}".format(
+            raise ValidationError("MD5 validation failed. Expected: {} Actual: {}".format(
                 expected_md5_of_body,
                 actual_md5_of_body,
             ))
