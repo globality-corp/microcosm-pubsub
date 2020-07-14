@@ -210,6 +210,36 @@ class NaiveSQSEnvelope(RawMessageBodyParser, NaiveMediaTypeAndContentParser, SQS
         return raw_message
 
 
+class LambdaSQSEnvelope(SNSMessageBodyParser, CodecMediaTypeAndContentParser, SQSEnvelope):
+    """
+    Enveloping strategy for AWS Lambda messages
+    Same as Codec, but Lambda receives message in little bit different format.
+    """
+    def parse_message_id(self, raw_message):
+        return raw_message["messageId"]
+
+    def parse_receipt_handle(self, raw_message):
+        return raw_message["receiptHandle"]
+
+    def parse_body(self, raw_message):
+        return raw_message["body"]
+
+    def validate_md5(self, raw_message, body):
+        """
+        Validate the message body.
+
+        Just checks for tampering; schema validation occurs once we know the type of message.
+
+        """
+        expected_md5_of_body = raw_message["md5OfBody"]
+        actual_md5_of_body = md5(body).hexdigest()
+        if expected_md5_of_body != actual_md5_of_body:
+            raise Exception("MD5 validation failed. Expected: {} Actual: {}".format(
+                expected_md5_of_body,
+                actual_md5_of_body,
+            ))
+
+
 @defaults(
     strategy_name="CodecSQSEnvelope",
     validate_md5=False,

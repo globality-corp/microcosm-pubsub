@@ -9,7 +9,7 @@ from microcosm_daemon.api import SleepNow
 from microcosm_daemon.daemon import Daemon
 
 from microcosm_pubsub.consumer import STDIN
-from microcosm_pubsub.envelope import CodecSQSEnvelope, NaiveSQSEnvelope, SQSEnvelope
+from microcosm_pubsub.envelope import LambdaSQSEnvelope, NaiveSQSEnvelope, SQSEnvelope
 
 
 class ConsumerDaemon(Daemon):
@@ -64,15 +64,10 @@ class ConsumerDaemon(Daemon):
             if "warm" in event:
                 return "warming up"
 
-            message = event["Records"][0]["body"]
             # we configure SQS Queue to use batches of 1,
             # so received event contains
             # another stringified json with actual message inside
-            daemon = cls(
-                event=loads(
-                    loads(message)["Message"],
-                )
-            )
+            daemon = cls(event=event["Records"][0])
             daemon.process()
         return handler
 
@@ -116,7 +111,7 @@ class ConsumerDaemon(Daemon):
         if self.sqs_event:
             config.update(
                 sqs_envelope=dict(
-                    strategy_name=CodecSQSEnvelope.__name__,
+                    strategy_name=LambdaSQSEnvelope.__name__,
                 ),
                 sqs_consumer=dict(
                     sqs_event=self.sqs_event,
