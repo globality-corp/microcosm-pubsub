@@ -7,7 +7,7 @@ from microcosm_daemon.api import SleepNow
 from microcosm_daemon.daemon import Daemon
 
 from microcosm_pubsub.consumer import STDIN
-from microcosm_pubsub.envelope import NaiveSQSEnvelope, SQSEnvelope
+from microcosm_pubsub.envelope import LambdaSQSEnvelope, NaiveSQSEnvelope, SQSEnvelope
 
 
 class ConsumerDaemon(Daemon):
@@ -41,6 +41,33 @@ class ConsumerDaemon(Daemon):
             ))
 
         super().run_state_machine()
+
+    def process(self):
+        """
+        Lambda Function method that runs only once
+        """
+        self.initialize()
+        self.graph.logger.info("Local starting daemon {}".format(self.name))
+        with self.graph.error_policy:
+            self.graph.sqs_message_dispatcher.handle_batch(self.bound_handlers)
+
+    @classmethod
+    def make_lambda_handler(cls):
+        def handler(event, context):
+            """
+            AWS Lambda function handler.
+            """
+            # this is for the warmup event.
+            # just return something and don't continue
+            if "warm" in event:
+                return "warming up"
+
+            # we configure SQS Queue to use batches of 1,
+            # so received event contains
+            # another stringified json with actual message inside
+            daemon = cls(event=event["Records"][0])
+            daemon.process()
+        return handler
 
     @property
     def defaults(self):
@@ -82,7 +109,7 @@ class ConsumerDaemon(Daemon):
         if self.sqs_event:
             config.update(
                 sqs_envelope=dict(
-                    strategy_name=NaiveSQSEnvelope.__name__,
+                    strategy_name=LambdaSQSEnvelope.__name__,
                 ),
                 sqs_consumer=dict(
                     sqs_event=self.sqs_event,

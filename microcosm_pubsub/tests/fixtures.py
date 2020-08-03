@@ -2,8 +2,12 @@
 Test fixtures.
 
 """
+from argparse import Namespace
+
 from marshmallow import Schema, fields
 from microcosm.api import binding
+from microcosm.caching import ProcessCache
+from microcosm.loaders import load_each, load_from_dict
 
 from microcosm_pubsub.codecs import PubSubMessageSchema
 from microcosm_pubsub.conventions import created, deleted
@@ -63,3 +67,49 @@ class ExampleDaemon(ConsumerDaemon):
 @binding("noop_handler")
 def configure_noop_handler(graph):
     return noop_handler
+
+
+class SQSReaderExampleDaemon(ConsumerDaemon):
+    """
+    For testing SQSJsonReader(and other real readers)
+    Object needs to be initialized with `event` parameter
+    """
+    @property
+    def name(self):
+        return "example"
+
+    @property
+    def components(self):
+        return super().components + [
+            "noop_handler",
+        ]
+
+    @classmethod
+    def create_for_testing(cls, loader=None, cache=None, **kwargs):
+        mock_config = load_from_dict(
+            sns_producer=dict(
+                mock_sns=False,
+            ),
+        )
+
+        if loader is None:
+            loader = mock_config
+        else:
+            loader = load_each(loader, mock_config)
+
+        if cache is None:
+            scope = cls.__name__
+            cache = ProcessCache(scope=scope)
+        # To test SQS readers we pass event here
+        daemon = cls(event=kwargs.get('event', {}))
+        daemon.args = Namespace(
+            debug=False,
+            testing=True,
+            sqs_queue_url="queue",
+            loader=loader,
+            envelope=None,
+            stdin=False,
+            **kwargs
+        )
+        daemon.graph = daemon.create_object_graph(daemon.args, cache=cache, loader=loader)
+        return daemon
