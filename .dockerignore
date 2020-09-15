@@ -1,6 +1,6 @@
 *
 !microcosm_pubsub
-microcosm_pubsub/test*
+microcosm_pubsub/tests
 !dist/*-none-any.whl
 !entrypoint.sh
 !MANIFEST.in
