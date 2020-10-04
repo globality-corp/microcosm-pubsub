@@ -108,6 +108,9 @@ class SQSConsumer:
             VisibilityTimeout=timeout,
         )
 
+    def set_sqs_event(self, sqs_event):
+        self.sqs_client.message = sqs_event
+
 
 def configure_sqs_client(graph):
     endpoint_url = graph.config.sqs_consumer.endpoint_url
@@ -140,13 +143,13 @@ def configure_sqs_consumer(graph):
 
     """
     sqs_queue_url = graph.config.sqs_consumer.sqs_queue_url
-    sqs_event = graph.config.sqs_consumer.sqs_event
+    enable_lambda_mode = graph.config.sqs_consumer.enable_lambda_mode
 
     if graph.metadata.testing or sqs_queue_url == "test":
         from unittest.mock import MagicMock
         sqs_client = MagicMock()
-    elif sqs_event:  # AWS Lambda invocation
-        sqs_client = SQSJsonReader(sqs_event)
+    elif enable_lambda_mode:  # AWS Lambda invocation
+        sqs_client = SQSJsonReader()
     elif sqs_queue_url == STDIN:
         sqs_client = SQSStdInReader()
     elif is_file(sqs_queue_url):
