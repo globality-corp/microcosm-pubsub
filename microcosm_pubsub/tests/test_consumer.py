@@ -27,12 +27,12 @@ def create_daemon():
     return ExampleDaemon.create_for_testing().graph
 
 
-def create_daemon_with_naive_cache(event):
+def create_daemon_with_naive_cache():
     # Use NaiveCache here to avoid reusing the graph components between tests,
     # as we're modifying the `sqs_consumer.sqs_client` in some tests
     return SQSReaderExampleDaemon.create_for_testing(
         cache=NaiveCache(),
-        event=event,
+        enable_lambda_mode=True,
     ).graph
 
 
@@ -141,7 +141,7 @@ def test_json_consume():
             )),
         )
 
-    graph = create_daemon_with_naive_cache(event)
+    graph = create_daemon_with_naive_cache()
     # simulate the response structure
     # replacing MagicMock with real reader
     graph.sqs_consumer.sqs_client = SQSJsonReader(event)
