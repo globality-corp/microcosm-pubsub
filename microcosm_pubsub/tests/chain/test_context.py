@@ -1,7 +1,7 @@
 from hamcrest import (
     assert_that,
     calling,
-    contains,
+    contains_exactly,
     has_length,
     is_,
     raises,
@@ -66,7 +66,7 @@ class TestScopedSafeContext:
         )
         assert_that(
             list(self.context),
-            contains(
+            contains_exactly(
                 "arg2",
                 "arg",
             ),
