@@ -72,7 +72,7 @@ class SQSJsonReader:
     Accepts single message, but appended to list for backward compatibility
 
     """
-    def __init__(self, message=None):
+    def __init__(self, message):
         self.message = message
 
     def receive_message(self, **kwargs):

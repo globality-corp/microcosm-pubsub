@@ -101,7 +101,7 @@ class SQSReaderExampleDaemon(ConsumerDaemon):
             scope = cls.__name__
             cache = ProcessCache(scope=scope)
         # To test SQS readers we pass event here
-        daemon = cls(enable_lambda_mode=kwargs.get("enable_lambda_mode", False))
+        daemon = cls(event=kwargs.get('event', {}))
         daemon.args = Namespace(
             debug=False,
             testing=True,
