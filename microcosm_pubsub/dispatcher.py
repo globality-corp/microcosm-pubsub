@@ -39,6 +39,7 @@ from microcosm_logging.timing import elapsed_time
 from microcosm_pubsub.constants import PUBLISHED_KEY, TTL_KEY
 from microcosm_pubsub.errors import IgnoreMessage, SkipMessage, TTLExpired
 from microcosm_pubsub.result import MessageHandlingResult, MessageHandlingResultType
+from microcosm_pubsub.tracing import trace_incoming_message_process
 
 
 @logger
@@ -104,10 +105,11 @@ class SQSMessageDispatcher:
         """
         with self.opaque.initialize(self.sqs_message_context, message):
             handler = None
-
             start_handle_time = time()
 
-            with elapsed_time(self.opaque):
+            queue_url = self.sqs_consumer.sqs_queue_url
+            with trace_incoming_message_process(self.opaque, message, queue_url), \
+                    elapsed_time(self.opaque):
                 try:
                     self.validate_message(message)
                     handler = self.find_handler(message, bound_handlers)

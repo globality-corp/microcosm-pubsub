@@ -53,7 +53,7 @@ class IgnoreMessage(Exception):
 
 class TTLExpired(Exception):
     """
-    Control-flow exception to skip messages in infinte loop.
+    Control-flow exception to skip messages in infinite loop.
 
     """
     def __init__(self, reason=None, extra=None):
