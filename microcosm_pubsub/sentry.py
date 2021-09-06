@@ -99,7 +99,7 @@ def configure_sentry_pubsub(graph: ObjectGraph) -> SentryConfigPubsub:
             sentry = MagicMock(**sentry_kwargs)
         else:
             try:
-                sentry = sentry_sdk.init(**sentry_kwargs)
+                sentry = sentry_sdk.init(**sentry_kwargs)  # type: ignore
             except BadDsn:
                 enabled, dsn, sentry = False, None, None
                 configure_sentry_pubsub.logger.error("Bad DSN value set")

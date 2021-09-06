@@ -5,7 +5,7 @@ Message consumer.
 from os.path import exists
 from urllib.parse import urlparse
 
-from boto3 import Session
+from boto3.session import Session
 from microcosm.api import defaults, typed
 from microcosm_logging.decorators import logger
 

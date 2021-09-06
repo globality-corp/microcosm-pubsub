@@ -10,7 +10,7 @@ from logging import Logger
 from time import time
 from typing import Dict, List
 
-from boto3 import Session
+from boto3.session import Session
 from botocore.client import Config
 from microcosm.api import defaults, typed
 from microcosm.errors import NotBoundError
@@ -21,6 +21,7 @@ from microcosm_pubsub.batch import MessageBatchSchema
 from microcosm_pubsub.constants import PUBLISHED_KEY
 from microcosm_pubsub.conventions.naming import make_media_type
 from microcosm_pubsub.errors import TopicNotDefinedError
+from microcosm_pubsub.tracing import add_trace_to_message, trace_outgoing_message
 
 
 @dataclass
@@ -113,13 +114,18 @@ class SNSProducer:
         publish_result = "SUCCESS"
         publish_exception = None
 
-        with elapsed_time(extra):
+        with trace_outgoing_message(pubsub_message.topic_arn) as tracer, elapsed_time(extra):
             try:
+                add_trace_to_message(tracer, pubsub_message)
                 result = self.sns_client.publish(
                     TopicArn=pubsub_message.topic_arn,
                     Message=pubsub_message.message,
                     MessageAttributes=pubsub_message.message_attributes,
                 )
+                tracer.set_vendor_message_id(result["MessageId"])
+                request_id = pubsub_message.opaque_data.get("X-Request-Id")
+                if request_id:
+                    tracer.set_correlation_id(request_id)
             except Exception as e:
                 publish_exception = e
                 publish_result = "FAILURE"
@@ -130,7 +136,9 @@ class SNSProducer:
         )
 
         if publish_exception:
-            raise Exception(f"Could not publish message, SNS producer error: {publish_exception}")
+            raise Exception(
+                f"Could not publish message, SNS producer error: {publish_exception}"
+            ) from publish_exception
 
         self.logger.debug("Published message with media type {media_type}", extra=extra)
 
