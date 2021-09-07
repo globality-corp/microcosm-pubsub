@@ -28,6 +28,7 @@ Flow diagram:
 
 """
 from logging import Logger
+from pathlib import Path
 from time import time
 from typing import List
 
@@ -103,7 +104,12 @@ class SQSMessageDispatcher:
         Handle a message.
 
         """
+        # SPIKE: Could emit a heartbeat here. We've consumed messages off the queue at this point but have not started
+        # handling them yet.
         with self.opaque.initialize(self.sqs_message_context, message):
+            # Where does this actually create a file on disk...?
+            Path('./heartbeat').touch()
+
             handler = None
             start_handle_time = time()
 

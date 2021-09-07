@@ -54,6 +54,7 @@ class SQSConsumer:
         return [
             self.sqs_envelope.parse_raw_message(self, raw_message)
             for raw_message in self.sqs_client.receive_message(
+                # SPIKE: Could emit a heartbeat here, this is kind of where consuming messages starts
                 AttributeNames=[
                     "ApproximateReceiveCount",
                 ],

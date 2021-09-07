@@ -49,6 +49,7 @@ class ConsumerDaemon(Daemon):
         self.initialize()
         self.graph.logger.info("Local starting daemon {}".format(self.name))
         with self.graph.error_policy:
+            # SPIKE: This doesn't seem suitable, because we'd be emitting a heartbeat only for a batch of messages.
             self.graph.sqs_message_dispatcher.handle_batch(self.bound_handlers)
 
     @classmethod
@@ -145,11 +146,7 @@ class ConsumerDaemon(Daemon):
             ),
         )
 
-        if loader is None:
-            loader = mock_config
-        else:
-            loader = load_each(loader, mock_config)
-
+        loader = mock_config if loader is None else load_each(loader, mock_config)
         return super().create_for_testing(
             sqs_queue_url="queue",
             loader=loader,

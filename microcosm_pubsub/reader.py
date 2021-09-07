@@ -23,6 +23,7 @@ class SQSFileReader:
         messages = []
         for _ in range(limit):
             try:
+                # SPIKE: Could emit a heartbeat here, technically this is where it's consuming the messages "first"
                 message = next(self.iter_)
             except StopIteration:
                 break
@@ -50,6 +51,7 @@ class SQSStdInReader:
 
         messages = []
         for _ in range(limit):
+            # SPIKE: Could emit a heartbeat here, technically this is where it's consuming the messages "first"
             message = stdin.readline()
             if message == "":
                 break

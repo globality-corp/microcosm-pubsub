@@ -110,6 +110,8 @@ def read(args):
     graph.lock()
 
     for message in graph.sqs_consumer.consume():
+        # SPIKE: What is this doing? Is this a necessary place to add the heartbeat in case someone calls this from
+        # main?
         print("Read SQS message: {} ({})".format(  # noqa
             message.message_id,
             message.approximate_receive_count,
