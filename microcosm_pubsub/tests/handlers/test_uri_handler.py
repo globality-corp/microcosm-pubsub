@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 from hamcrest import (
     assert_that,
@@ -12,6 +12,7 @@ from hamcrest import (
 from microcosm.api import create_object_graph
 from microcosm.loaders import load_from_dict
 from nose.plugins.attrib import attr
+from requests.exceptions import InvalidSchema
 
 from microcosm_pubsub.constants import DEFAULT_RESOURCE_CACHE_TTL
 from microcosm_pubsub.errors import Nack
@@ -451,3 +452,33 @@ class TestURIHandler:
                 calling(handler.get_resource).with_args(message, uri),
                 not_(raises(Nack)),
             )
+
+    def test_error_raised_when_invalid_uri_schema_used(self):
+        """
+        Test to make sure we're catching and logging errors when invalid uri schemas are used inside handlers
+
+        """
+        graph = create_object_graph("microcosm")
+        graph.use(
+            "opaque",
+            "sqs_message_context",
+        )
+        graph.lock()
+
+        uri = "xyz://localhost"
+        message = dict(
+            uri=uri,
+        )
+
+        handler = URIHandler(graph)
+        handler.logger = Mock()
+
+        assert_that(
+            calling(handler.get_resource).with_args(message=message, uri=uri),
+            raises(InvalidSchema),
+        )
+
+        handler.logger.error.assert_called_once_with(
+            "Error was found when trying to process uri. Check schema",
+            extra=dict(handler="Uri Handler", uri="xyz://localhost"),
+        )
