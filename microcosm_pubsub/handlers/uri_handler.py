@@ -7,7 +7,9 @@ from re import search
 
 from inflection import titleize
 from microcosm.errors import LockedGraphError, NotBoundError
+from microcosm_logging.decorators import logger
 from requests import codes, get
+from requests.exceptions import InvalidSchema
 
 from microcosm_pubsub.constants import DEFAULT_RESOURCE_CACHE_TTL
 from microcosm_pubsub.conventions.lifecycle import LifecycleChange
@@ -33,6 +35,7 @@ def resource_cache_whitelist_callable(media_type, uri):
     ))
 
 
+@logger
 class URIHandler(metaclass=ABCMeta):
     """
     Base handler for URI-driven events.
@@ -180,7 +183,17 @@ class URIHandler(metaclass=ABCMeta):
                 return response
 
         headers = self.get_headers(message)
-        response = get(uri, headers=headers)
+        try:
+            response = get(uri, headers=headers)
+        except InvalidSchema:
+            self.logger.error(
+                "Error was found when trying to process uri. Check schema",
+                extra=dict(
+                    handler=self.name,
+                    uri=uri,
+                ),
+            )
+            raise
         if response.status_code == codes.not_found and self.nack_if_not_found:
             raise Nack(self.resource_nack_timeout)
         response.raise_for_status()
