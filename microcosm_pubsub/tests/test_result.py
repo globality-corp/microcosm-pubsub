@@ -130,7 +130,7 @@ class TestMessageHandlingResult:
             ReceiptHandle=RECEIPT_HANDLE,
         )
 
-    def test_retried_nack(self):
+    def test_retried_nack_no_reason_given(self):
         def handler(message):
             raise Nack(3)
 
@@ -144,6 +144,32 @@ class TestMessageHandlingResult:
             has_properties(
                 media_type="application/vnd.microcosm.derived",
                 result=MessageHandlingResultType.RETRIED,
+            ),
+        )
+        # nack with custom retry visibility timeout
+        self.graph.sqs_consumer.sqs_client.change_message_visibility.assert_called_with(
+            QueueUrl="queue",
+            ReceiptHandle=RECEIPT_HANDLE,
+            VisibilityTimeout=3,
+        )
+
+    def test_retried_nack_with_reason(self):
+        def handler(message):
+            raise Nack(3, reason="hello world")
+
+        result = MessageHandlingResult.invoke(
+            handler=handler,
+            message=self.message,
+        ).resolve(self.message)
+
+        assert_that(
+            result,
+            has_properties(
+                media_type="application/vnd.microcosm.derived",
+                result=MessageHandlingResultType.RETRIED,
+                extra=has_entries(
+                    reason="hello world",
+                ),
             ),
         )
         # nack with custom retry visibility timeout

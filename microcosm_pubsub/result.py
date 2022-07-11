@@ -128,6 +128,10 @@ class MessageHandlingResult:
 
         if isinstance(error, Nack):
             return cls(
+                extra=dict(
+                    reason=str(error),
+                    **error.extra
+                ),
                 media_type=message.media_type,
                 result=MessageHandlingResultType.RETRIED,
                 retry_timeout_seconds=error.visibility_timeout_seconds,
