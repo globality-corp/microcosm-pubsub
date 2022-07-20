@@ -79,6 +79,7 @@ nosetests.xml
 coverage.xml
 *,cover
 cover
+microcosm_pubsub/tests/test-results/
 
 # Translations
 *.mo
