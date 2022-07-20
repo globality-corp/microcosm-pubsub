@@ -26,7 +26,7 @@ class TestSQSMessageContext:
             ),
             media_type=None,
             message_id=MESSAGE_ID,
-            receipt_handle=None,
+            receipt_handle="receipt",
         )
 
     def test_includes_opaque_data(self):
@@ -53,6 +53,15 @@ class TestSQSMessageContext:
                 self.graph.opaque.as_dict(),
                 has_entries(
                     uri=MESSAGE_URI,
+                ),
+            )
+
+    def test_includes_receipt_handle(self):
+        with self.graph.opaque.initialize(self.graph.sqs_message_context, self.message):
+            assert_that(
+                self.graph.opaque.as_dict(),
+                has_entries(
+                    receipt_handle="receipt",
                 ),
             )
 
