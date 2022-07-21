@@ -1,10 +1,19 @@
 {
   "params": {
+    "docker": {
+      "docker_tag": "python:3.7-slim-bullseye"
+    },
+    "entrypoint": {
+      "pre_typehinting_commands": [
+        "pip install types-requests"
+      ]
+    },
     "name": "microcosm-pubsub",
     "pypi": {
       "repository": "pypi"
-    }
+    },
+    "test_command": "pytest"
   },
   "type": "python-library",
-  "version": "2020.51.0"
+  "version": "2022.23.1"
 }

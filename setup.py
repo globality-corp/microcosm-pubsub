@@ -3,7 +3,7 @@ from setuptools import find_packages, setup
 
 
 project = "microcosm-pubsub"
-version = "2.25.1"
+version = "2.26.0"
 
 
 setup(
@@ -30,11 +30,14 @@ setup(
         "metrics": "microcosm-metrics>=2.5.0",
         "sentry": "sentry-sdk>=0.14.4",
         "test": [
+            "pytest",
+            "pytest-cov",
             "sentry-sdk>=0.14.4",
             "PyHamcrest",
-            "coverage",
-            "parameterized",
         ],
+        "lint": [
+            "flake8",
+        ]
     },
     setup_requires=[
         "nose>=1.3.6",
@@ -62,10 +65,4 @@ setup(
             "sentry_logging_pubsub = microcosm_pubsub.sentry:configure_sentry_pubsub",
         ],
     },
-    tests_require=[
-        "coverage>=3.7.1",
-        "parameterized>=0.7.0",
-        "PyHamcrest>=1.8.5",
-        "parameterized>=0.7.4",
-    ],
 )
