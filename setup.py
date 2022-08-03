@@ -20,7 +20,6 @@ setup(
     install_requires=[
         "boto3>=1.5.8",
         "dataclasses;python_version<'3.7'",
-        "flake8<5"
         "marshmallow>=3.0.0",
         "microcosm>=3.0.0",
         "microcosm-caching>=0.2.0",
@@ -28,6 +27,12 @@ setup(
         "microcosm-logging>=1.3.0",
     ],
     extras_require={
+        "lint": [
+            "isort",
+            "flake8<5.0.0",
+            "flake8-print",
+            "flake8-isort",
+        ],
         "metrics": "microcosm-metrics>=2.5.0",
         "sentry": "sentry-sdk>=0.14.4",
         "test": [
