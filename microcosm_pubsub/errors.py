@@ -20,13 +20,17 @@ class Nack(Exception):
     and the SQS dead letter queue (DLQ) configuration, if any.
 
     """
-    def __init__(self, visibility_timeout_seconds, reason="", extra=None):
+    def __init__(self, visibility_timeout_seconds, reason=None, extra=None):
         super().__init__(reason)
         self.visibility_timeout_seconds = visibility_timeout_seconds
         self.extra = extra or dict()
 
     def __repr__(self):
-        return "Nack({})".format(self.visibility_timeout_seconds)
+        return "Nack(visibility_timeout_seconds={timeout}, reason={reason}, extra={extra})".format(
+            timeout=self.visibility_timeout_seconds,
+            reason=str(self),
+            extra=self.extra,
+        )
 
 
 class SkipMessage(Exception):
