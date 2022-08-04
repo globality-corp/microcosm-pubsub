@@ -20,7 +20,6 @@ setup(
     install_requires=[
         "boto3>=1.5.8",
         "dataclasses;python_version<'3.7'",
-        "flake8<=4.0.1"
         "marshmallow>=3.0.0",
         "microcosm>=3.0.0",
         "microcosm-caching>=0.2.0",
@@ -35,6 +34,9 @@ setup(
             "PyHamcrest",
             "coverage",
             "parameterized",
+        ],
+        "lint": [
+            "flake8<=4.0.1"
         ],
     },
     setup_requires=[
