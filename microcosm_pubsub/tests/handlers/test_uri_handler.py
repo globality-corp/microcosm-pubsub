@@ -11,7 +11,6 @@ from hamcrest import (
 )
 from microcosm.api import create_object_graph
 from microcosm.loaders import load_from_dict
-from nose.plugins.attrib import attr
 from requests.exceptions import InvalidSchema
 
 from microcosm_pubsub.constants import DEFAULT_RESOURCE_CACHE_TTL
@@ -109,7 +108,6 @@ class TestURIHandler:
             is_(equal_to("bar")),
         )
 
-    @attr("caching")
     def test_get_resource_with_cache_disabled_on_instance(self):
         config = dict(
             resource_cache=dict(
@@ -145,7 +143,6 @@ class TestURIHandler:
             headers=dict(),
         )
 
-    @attr("caching")
     def test_get_non_whitelisted_resource_with_cache_enabled(self):
         config = dict(
             resource_cache=dict(
@@ -189,7 +186,6 @@ class TestURIHandler:
         assert_that(mocked_cache_get.called, is_(equal_to(False)))
         assert_that(mocked_cache_set.called, is_(equal_to(False)))
 
-    @attr("caching")
     def test_get_whitelisted_resource_with_cache_enabled_and_cache_miss(self):
         config = dict(
             resource_cache=dict(
@@ -239,7 +235,6 @@ class TestURIHandler:
             ttl=DEFAULT_RESOURCE_CACHE_TTL,
         )
 
-    @attr("caching")
     def test_get_whitelisted_resource_with_cache_enabled_and_cache_miss_and_custom_ttl(self):
         config = dict(
             resource_cache=dict(
@@ -289,7 +284,6 @@ class TestURIHandler:
             ttl=100,
         )
 
-    @attr("caching")
     def test_get_whitelisted_resource_with_cache_enabled_and_cache_hit(self):
         config = dict(
             resource_cache=dict(

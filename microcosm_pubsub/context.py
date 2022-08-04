@@ -8,7 +8,7 @@ from microcosm.api import defaults, typed
 from microcosm.config.types import boolean
 from microcosm_logging.decorators import logger
 
-from microcosm_pubsub.constants import TTL_KEY, URI_KEY
+from microcosm_pubsub.constants import RECEIPT_HANDLE_KEY, TTL_KEY, URI_KEY
 from microcosm_pubsub.message import SQSMessage
 
 
@@ -50,5 +50,9 @@ class SQSMessageContext:
         # include the URI (if there is one)
         if message.uri:
             context[URI_KEY] = message.uri
+
+        # include the receipt handle (if there is one)
+        if message.receipt_handle:
+            context[RECEIPT_HANDLE_KEY] = message.receipt_handle
 
         return context
