@@ -2,8 +2,7 @@
 
 PubSub with SNS/SQS
 
-[![Circle CI](https://circleci.com/gh/globality-corp/microcosm-pubsub/tree/develop.svg?style=svg)](https://circleci.com/gh/globality-corp/microcosm-pubsub/tree/develop)
-
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/globality-corp/microcosm-pubsub/tree/master.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/globality-corp/microcosm-pubsub/tree/master)
 
 ## Conventions
 
