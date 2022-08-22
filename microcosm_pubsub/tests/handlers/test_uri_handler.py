@@ -398,7 +398,10 @@ class TestURIHandler:
             handler = URIHandler(graph)
             assert_that(
                 calling(handler.get_resource).with_args(message, uri),
-                raises(Nack),
+                raises(
+                    Nack,
+                    "URI resource not found",
+                ),
             )
 
     def test_nack_when_changed_field_not_equal(self):
@@ -421,7 +424,10 @@ class TestURIHandler:
             handler = URIHandler(graph)
             assert_that(
                 calling(handler.get_resource).with_args(message, uri),
-                raises(Nack),
+                raises(
+                    Nack,
+                    "Resource field value does not match message",
+                ),
             )
 
     def test_handle_when_changed_field_is_equal(self):

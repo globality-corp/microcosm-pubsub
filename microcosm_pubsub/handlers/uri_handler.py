@@ -161,11 +161,14 @@ class URIHandler(metaclass=ABCMeta):
         return None
 
     def validate_changed_field(self, message, resource):
-        if message.get('field_name') and self.nack_if_not_found:
+        if message.get("field_name") and self.nack_if_not_found:
             field_name = message["field_name"]
             new_value = message["new_value"]
             if resource.get(field_name) != new_value:
-                raise Nack(self.resource_nack_timeout)
+                raise Nack(
+                    self.resource_nack_timeout,
+                    reason="Resource field value does not match message",
+                )
 
     def get_resource(self, message, uri):
         """
@@ -195,7 +198,10 @@ class URIHandler(metaclass=ABCMeta):
             )
             raise
         if response.status_code == codes.not_found and self.nack_if_not_found:
-            raise Nack(self.resource_nack_timeout)
+            raise Nack(
+                self.resource_nack_timeout,
+                reason="URI resource not found",
+            )
         response.raise_for_status()
         response_json = response.json()
 
