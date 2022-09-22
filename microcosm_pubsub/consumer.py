@@ -133,6 +133,8 @@ def configure_sqs_client(graph):
     wait_seconds=typed(int, default_value=1),
     # On error, change the visibility timeout when nacking
     message_retry_visibility_timeout_seconds=typed(int, default_value=5),
+    # For ExponentialBackoffStrategy include a number as a factor
+    message_exponential_backoff_factor=typed(float, default_value=2.0),
 )
 def configure_sqs_consumer(graph):
     """
@@ -160,6 +162,7 @@ def configure_sqs_consumer(graph):
 
     backoff_policy = backoff_policy_class(
         message_retry_visibility_timeout_seconds=graph.config.sqs_consumer.message_retry_visibility_timeout_seconds,
+        message_exponential_backoff_factor=graph.config.sqs_consumer.message_exponential_backoff_factor,
     )
 
     return SQSConsumer(
