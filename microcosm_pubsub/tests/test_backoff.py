@@ -65,7 +65,7 @@ def test_scaled_exponential_timeout():
 
         mocked.assert_called_with(1, 3)
 
-def test_scaled_exponential_timeout():
+def test_scaled_exponential_timeout_with_configurable_backoff():
     message = SQSMessage(
         None, None, None, None, None,
         approximate_receive_count=2.5,
@@ -80,3 +80,4 @@ def test_scaled_exponential_timeout():
         )
 
         mocked.assert_called_with(1, 14)
+
