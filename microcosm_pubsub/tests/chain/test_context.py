@@ -29,7 +29,7 @@ class TestSafeContext:
 
 class TestScopedSafeContext:
 
-    def setup(self):
+    def setup_method(self):
         self.parent = SafeContext()
         self.parent["arg"] = 20
 

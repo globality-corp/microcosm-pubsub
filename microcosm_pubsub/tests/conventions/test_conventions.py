@@ -20,7 +20,7 @@ def borked(resource, **kwargs):
 
 class TestConventions:
 
-    def setup(self):
+    def setup_method(self):
         self.graph = create_object_graph("test")
         self.graph.use(
             "pubsub_message_schema_registry",

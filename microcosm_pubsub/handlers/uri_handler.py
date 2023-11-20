@@ -8,8 +8,8 @@ from re import search
 from inflection import titleize
 from microcosm.errors import LockedGraphError, NotBoundError
 from microcosm_logging.decorators import logger
-from requests import codes, get
-from requests.exceptions import InvalidSchema
+from requests import codes, get  # type: ignore[import-untyped]
+from requests.exceptions import InvalidSchema  # type: ignore[import-untyped]
 
 from microcosm_pubsub.constants import DEFAULT_RESOURCE_CACHE_TTL
 from microcosm_pubsub.conventions.lifecycle import LifecycleChange

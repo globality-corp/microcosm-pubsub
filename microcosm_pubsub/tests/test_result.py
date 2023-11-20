@@ -27,7 +27,7 @@ RECEIPT_HANDLE = "receipt-handle"
 @logger
 class TestMessageHandlingResult:
 
-    def setup(self):
+    def setup_method(self):
         self.graph = ExampleDaemon.create_for_testing().graph
         self.opaque = self.graph.opaque
         self.message = SQSMessage(

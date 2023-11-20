@@ -8,6 +8,7 @@ import json
 from contextlib import contextmanager
 
 from microcosm.opaque import Opaque
+from microcosm_pubsub.constants import AWS_SNS, AWS_SQS, OPAQUE_TAG_KEY, REQUEST_ID_KEY
 
 from microcosm_pubsub.message import SQSMessage
 
@@ -21,11 +22,6 @@ except ImportError:
     ChannelType = None
     MessagingDestinationType = None
     Channel = None
-
-
-AWS_SNS = "SNS"
-AWS_SQS = "SQS"
-OPAQUE_TAG_KEY = "x-dynatrace"
 
 
 class StubOutgoingTracer:
@@ -87,8 +83,9 @@ def trace_incoming_message_process(opaque: Opaque, message: SQSMessage, queue_ur
             MessagingDestinationType.QUEUE,
             Channel(ChannelType.TCP_IP, None),
         )
+
         tag = opaque.get(OPAQUE_TAG_KEY)
-        request_id = opaque.get("X-Request-Id")
+        request_id = opaque.get(REQUEST_ID_KEY)
         with sdk.trace_incoming_message_process(messaging_system, str_tag=tag) as tracer:
             tracer.set_vendor_message_id(message.message_id)
             if request_id:

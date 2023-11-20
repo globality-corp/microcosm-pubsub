@@ -13,12 +13,13 @@ from typing import Dict, List
 from boto3.session import Session
 from botocore.client import Config
 from microcosm.api import defaults, typed
+from microcosm.opaque import NormalizedDict
 from microcosm.errors import NotBoundError
 from microcosm_logging.decorators import logger
 from microcosm_logging.timing import elapsed_time
 
 from microcosm_pubsub.batch import MessageBatchSchema
-from microcosm_pubsub.constants import PUBLISHED_KEY
+from microcosm_pubsub.constants import PUBLISHED_KEY, REQUEST_ID_KEY
 from microcosm_pubsub.conventions.naming import make_media_type
 from microcosm_pubsub.errors import TopicNotDefinedError
 from microcosm_pubsub.tracing import add_trace_to_message, trace_outgoing_message
@@ -78,8 +79,7 @@ class SNSProducer:
         return self.publish_message(pubsub_message)
 
     def create_message(self, media_type, dct, uri=None, opaque_data=None, **kwargs) -> PubsubMessage:
-        if opaque_data is None:
-            opaque_data = dict()
+        opaque_data = NormalizedDict() if opaque_data is None else NormalizedDict(**opaque_data)
 
         if self.opaque is not None:
             opaque_data.update(self.opaque.as_dict())
@@ -123,7 +123,7 @@ class SNSProducer:
                     MessageAttributes=pubsub_message.message_attributes,
                 )
                 tracer.set_vendor_message_id(result["MessageId"])
-                request_id = pubsub_message.opaque_data.get("X-Request-Id")
+                request_id = pubsub_message.opaque_data.get(REQUEST_ID_KEY)
                 if request_id:
                     tracer.set_correlation_id(request_id)
             except Exception as e:

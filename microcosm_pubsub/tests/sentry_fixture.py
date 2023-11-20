@@ -62,7 +62,7 @@ sample_event = {
          'message': 'Result for media type: application/vnd.globality.pubsub._.created.do_something was : FAILED ',
          'timestamp': '2020-05-16T11:01:35.983545Z',
          'data': {'media_type': 'application/vnd.globality.pubsub._.created.do_something',
-                  'message_id': 'message-id-b7fa5993-a966-4390-a6b1-ed9eb5026134', 'X-Request-Ttl': '31',
+                  'message_id': 'message-id-b7fa5993-a966-4390-a6b1-ed9eb5026134', 'x-request-ttl': '31',
                   'uri': 'http://localhost:5452/api/v2/message/6dee4da6-8af1-4636-93b6-7770bc6990bc',
                   'handler': 'Handler Test', 'elapsed_time': 47.17707633972168}, 'type': 'default'}
     ],

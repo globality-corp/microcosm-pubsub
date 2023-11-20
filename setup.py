@@ -3,7 +3,7 @@ from setuptools import find_packages, setup
 
 
 project = "microcosm-pubsub"
-version = "2.28.0"
+version = "2.29.0"
 
 
 setup(
@@ -16,34 +16,29 @@ setup(
     packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
     include_package_data=True,
     zip_safe=False,
-    python_requires=">=3.6",
+    python_requires=">=3.9",
     install_requires=[
         "boto3>=1.5.8",
         "dataclasses;python_version<'3.7'",
         "marshmallow>=3.0.0",
-        "microcosm>=3.0.0",
+        "microcosm>=3.4.0",
         "microcosm-caching>=0.2.0",
         "microcosm-daemon>=1.2.0",
         "microcosm-logging>=1.3.0",
+        "requests>=2.31.0"
     ],
     extras_require={
         "metrics": "microcosm-metrics>=2.5.0",
         "sentry": "sentry-sdk>=0.14.4",
-        "test": [
-            "pytest",
-            "pytest-cov",
-            "sentry-sdk>=0.14.4",
-            "PyHamcrest",
-        ],
-        "lint": [
+        "build": [
             "flake8",
+            "mypy",
+            "PyHamcrest",
+            "pytest-cov",
+            "pytest",
+            "sentry-sdk",
         ]
     },
-    setup_requires=[
-        "nose>=1.3.6",
-    ],
-    dependency_links=[
-    ],
     entry_points={
         "console_scripts": [
             "publish-naive = microcosm_pubsub.main:make_naive_message",

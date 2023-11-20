@@ -14,7 +14,7 @@ MESSAGE_URI = "message_uri"
 
 class TestSQSMessageContext:
 
-    def setup(self):
+    def setup_method(self):
         self.graph = ExampleDaemon.create_for_testing().graph
         self.message = SQSMessage(
             consumer=self.graph.sqs_consumer,
@@ -70,18 +70,18 @@ class TestSQSMessageContext:
             assert_that(
                 self.graph.opaque.as_dict(),
                 has_entries({
-                    "X-Request-Ttl": "31",
+                    "x-request-ttl": "31",
                 }),
             )
 
     def test_updates_existing_ttl(self):
-        self.message.opaque_data["X-Request-Ttl"] = "10"
+        self.message.opaque_data["x-request-ttl"] = "10"
 
         with self.graph.opaque.initialize(self.graph.sqs_message_context, self.message):
             assert_that(
                 self.graph.opaque.as_dict(),
                 has_entries({
-                    "X-Request-Ttl": "9",
+                    "x-request-ttl": "9",
                 }),
             )
 

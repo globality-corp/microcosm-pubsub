@@ -60,7 +60,7 @@ class WildcardSchema(PubSubMessageSchema):
 
 class TestDerivedPubSubMessageCodecRegistry:
 
-    def setup(self):
+    def setup_method(self):
         self.graph = create_object_graph("test")
         self.registry = self.graph.pubsub_message_schema_registry
 
@@ -150,7 +150,7 @@ class TestDerivedPubSubMessageCodecRegistry:
 
 class TestDerivedSQSMessageHandlerRegistry:
 
-    def setup(self):
+    def setup_method(self):
         self.daemon = ExampleDaemon.create_for_testing()
         self.graph = self.daemon.graph
         self.registry = self.graph.sqs_message_handler_registry

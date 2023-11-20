@@ -31,7 +31,7 @@ class Foo:
     pass
 
 
-class TestEnum(Enum):
+class FooEnum(Enum):
     key = auto()
 
     def __str__(self):
@@ -80,7 +80,7 @@ class CustomMessageSchema(URIMessageSchema):
 
     """
     MEDIA_TYPE = created("Resource")
-    enumField = EnumField(TestEnum, attribute="enum_field", required=True)
+    enumField = EnumField(FooEnum, attribute="enum_field", required=True)
 
 
 def test_encode_uri_message_schema():
@@ -116,7 +116,7 @@ def test_encode_custom_message():
     codec = PubSubMessageCodec(custom_schema)
     assert_that(
         loads(codec.encode(
-            enum_field=TestEnum.key,
+            enum_field=FooEnum.key,
             media_type=CustomMessageSchema.MEDIA_TYPE,
             opaque_data=dict(foo="bar"),
             uri="http://example.com",
@@ -222,7 +222,7 @@ def test_publish_by_uri_convention():
         "mediaType": "application/vnd.globality.pubsub._.created.foo",
         "uri": "http://example.com",
         "opaqueData": {
-            "X-Request-Published": published_time,
+            "x-request-published": published_time,
         },
     })))
     assert_that(graph.sns_producer.sns_client.publish.call_args[1]["MessageAttributes"], is_(equal_to({
@@ -258,7 +258,7 @@ def test_publish_by_identity_convention():
         "mediaType": "application/vnd.globality.pubsub._.deleted.foo",
         "id": "1",
         "opaqueData": {
-            "X-Request-Published": str(published_time),
+            "x-request-published": str(published_time),
         },
     })))
     assert_that(graph.sns_producer.sns_client.publish.call_args[1]["MessageAttributes"], is_(equal_to({

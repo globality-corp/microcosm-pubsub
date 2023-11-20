@@ -11,7 +11,7 @@ from hamcrest import (
 )
 from microcosm.api import create_object_graph
 from microcosm.loaders import load_from_dict
-from requests.exceptions import InvalidSchema
+from requests.exceptions import InvalidSchema  # type: ignore[import-untyped]
 
 from microcosm_pubsub.constants import DEFAULT_RESOURCE_CACHE_TTL
 from microcosm_pubsub.errors import Nack
@@ -376,7 +376,7 @@ class TestURIHandler:
         mocked_get.assert_called_with(
             uri,
             headers={
-                "X-Request-Id": "request-id",
+                "x-request-id": "request-id",
             },
         )
 
