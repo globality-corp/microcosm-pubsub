@@ -17,7 +17,7 @@ MESSAGE_ID = "message-id"
 
 class TestDispatcher:
 
-    def setup(self):
+    def setup_method(self):
         self.daemon = ExampleDaemon.create_for_testing()
         self.graph = self.daemon.graph
 
@@ -71,7 +71,7 @@ class TestDispatcher:
         """
         self.message.content = dict(
             opaque_data={
-                "X-Request-Ttl": "0",
+                "x-request-ttl": "0",
             },
         )
         assert_that(

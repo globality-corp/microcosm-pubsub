@@ -33,7 +33,10 @@ def test_trace_message_publish():
         message_id = graph.sns_producer.produce(
             DerivedSchema.MEDIA_TYPE,
             data="data",
-            opaque_data={"X-Request-Id": "req-id-1234"}
+            opaque_data={
+                "X-Request-Id": "req-id-1234",
+                "x-rerquest-service": "foo",
+            }
         )
         assert_that(message_id, equal_to("message-id-1234"))
 
@@ -48,7 +51,8 @@ def test_trace_message_publish():
             TopicArn='topic-name'
         )
         message = json.loads(graph.sns_producer.sns_client.publish.call_args[1]['Message'])
-        assert_that(message["opaqueData"]["X-Request-Id"], equal_to("req-id-1234"))
+        assert_that(message["opaqueData"]["x-request-id"], equal_to("req-id-1234"))
+        assert_that(message["opaqueData"]["x-rerquest-service"], equal_to("foo"))
         assert_that(message["opaqueData"]["x-dynatrace"], equal_to("tag-1234"))
 
         sdk.create_messaging_system_info.assert_called_once_with(

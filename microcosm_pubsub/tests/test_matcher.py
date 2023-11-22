@@ -17,7 +17,7 @@ from microcosm_pubsub.matchers import (
 
 class TestPublishingMatcherWithMockedSNS:
 
-    def setup(self):
+    def setup_method(self):
         loader = load_from_dict(
             sns_producer=dict(
                 # NB: mock the boto SNS client (default)
@@ -85,7 +85,7 @@ class TestPublishingMatcherWithMockedSNS:
 
 class TestPublishingMatcherWithoutMockedSNS:
 
-    def setup(self):
+    def setup_method(self):
         loader = load_from_dict(
             sns_producer=dict(
                 # NB: mock the SNS producer itself (non-default, except for daemons)

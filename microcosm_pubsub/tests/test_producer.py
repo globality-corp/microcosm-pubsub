@@ -112,7 +112,7 @@ def test_produce_default_topic():
         "data": "data",
         "mediaType": DerivedSchema.MEDIA_TYPE,
         "opaqueData": {
-            "X-Request-Published": published_time,
+            "x-request-published": published_time,
         },
     })))
     assert_that(message_id, is_(equal_to(MESSAGE_ID)))
@@ -150,7 +150,7 @@ def test_produce_custom_topic():
         "data": "data",
         "mediaType": DerivedSchema.MEDIA_TYPE,
         "opaqueData": {
-            "X-Request-Published": published_time,
+            "x-request-published": published_time,
         },
     })))
     assert_that(message_id, is_(equal_to(MESSAGE_ID)))

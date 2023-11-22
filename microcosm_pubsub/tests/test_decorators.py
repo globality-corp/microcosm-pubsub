@@ -14,7 +14,7 @@ from microcosm_pubsub.tests.fixtures import DuckTypeSchema, ExampleDaemon, noop_
 
 class TestDecorators:
 
-    def setup(self):
+    def setup_method(self):
         self.daemon = ExampleDaemon.create_for_testing()
         self.graph = self.daemon.graph
 
