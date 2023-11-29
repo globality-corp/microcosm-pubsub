@@ -3,7 +3,7 @@ from setuptools import find_packages, setup
 
 
 project = "microcosm-pubsub"
-version = "2.29.0"
+version = "2.30.0"
 
 
 setup(
@@ -19,9 +19,8 @@ setup(
     python_requires=">=3.9",
     install_requires=[
         "boto3>=1.5.8",
-        "dataclasses;python_version<'3.7'",
         "marshmallow>=3.0.0",
-        "microcosm>=3.4.0",
+        "microcosm>=3.5.0",
         "microcosm-caching>=0.2.0",
         "microcosm-daemon>=1.2.0",
         "microcosm-logging>=1.3.0",
