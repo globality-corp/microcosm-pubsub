@@ -31,3 +31,4 @@ class PublishBatchMessage:
             )
 
             self.sns_producer.publish_message(pubsub_message)
+            return True
