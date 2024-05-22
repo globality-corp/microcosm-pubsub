@@ -65,3 +65,31 @@ class ExponentialBackoffPolicy(BackoffPolicy):
 
         """
         return randint(lower, upper)
+
+
+class ExponentialBackoffBaseJitterPolicy(ExponentialBackoffPolicy):
+    """
+    Exponential backoff jitter with base policy.
+
+    Uses a timeout scaled between number or retry and an exponential limit.
+
+    """
+    def __init__(self, **kwargs):
+        pass
+
+    def compute_backoff_timeout(self, message, message_timeout):
+        # Slow down exponentially, but add a random equal jitter to avoid thundering herd
+        # we use the base as the number of times the message has been received (1 second for each minimum wait)
+        # the time we wait is between half the base + random number between 0 and half the scaling factor
+        # this means we wait:
+        #   0-1 second on the original message (this never happens),
+        #   1-2 second for the first retry,
+        #   2-4 seconds for the second retry,
+        #   3-7 seconds for the third retry,
+        #   4-12 seconds for the fourth retry,
+        #   5-21 seconds for the fifth retry, etc.
+        base = message.approximate_receive_count
+        upper = int(2**base)
+        scaling_factor = self.randint(base, upper)
+
+        return min(int(base + self.randint(0, int(scaling_factor/2))), MAX_BACKOFF_TIMEOUT)
