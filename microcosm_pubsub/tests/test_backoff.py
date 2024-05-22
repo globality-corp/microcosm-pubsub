@@ -6,7 +6,12 @@ from unittest.mock import patch
 
 from hamcrest import assert_that, equal_to, is_
 
-from microcosm_pubsub.backoff import ExponentialBackoffPolicy, NaiveBackoffPolicy
+from microcosm_pubsub.backoff import (
+    ExponentialBackoffPolicy,
+    ExponentialBackoffBaseJitterPolicy,
+    NaiveBackoffPolicy,
+    MAX_BACKOFF_TIMEOUT,
+)
 from microcosm_pubsub.message import SQSMessage
 
 
@@ -64,3 +69,19 @@ def test_scaled_exponential_timeout():
         )
 
         mocked.assert_called_with(1, 3)
+
+
+def test_scaled_exponential_base_jitter_timeout():
+    for i in range(0, 30):
+        message = SQSMessage(
+            None, None, None, None, None,
+            approximate_receive_count=i,
+        )
+        backoff_policy = ExponentialBackoffBaseJitterPolicy()
+
+        time = backoff_policy.compute_backoff_timeout(message, None)
+
+        # once we reach max -> we should always return max
+        assert time <= MAX_BACKOFF_TIMEOUT
+        assert i <= time
+        assert time <= i + 2**i/2
