@@ -55,19 +55,12 @@ class ExponentialBackoffPolicy(BackoffPolicy):
         upper = 2**message.approximate_receive_count - 1
 
         # randomly select a timeout between 1..N; note that proper exponential backoff uses 0..N
-        scaling_factor = self.randint(1, upper)
+        scaling_factor = randint(1, upper)
 
         return min(scaling_factor, MAX_BACKOFF_TIMEOUT)
 
-    def randint(self, lower, upper):
-        """
-        Test friendly randomization.
 
-        """
-        return randint(lower, upper)
-
-
-class ExponentialBackoffBaseJitterPolicy(ExponentialBackoffPolicy):
+class ExponentialBackoffBaseJitterPolicy(BackoffPolicy):
     """
     Exponential backoff jitter with base policy.
 
@@ -90,6 +83,6 @@ class ExponentialBackoffBaseJitterPolicy(ExponentialBackoffPolicy):
         #   5-21 seconds for the fifth retry, etc.
         base = message.approximate_receive_count
         upper = int(2**base)
-        scaling_factor = self.randint(base, upper)
+        scaling_factor = randint(base, upper)
 
-        return min(int(base + self.randint(0, int(scaling_factor/2))), MAX_BACKOFF_TIMEOUT)
+        return min(int(base + randint(0, int(scaling_factor/2))), MAX_BACKOFF_TIMEOUT)

@@ -2,8 +2,6 @@
 Test backoff policies.
 
 """
-from unittest.mock import patch
-
 from hamcrest import assert_that, equal_to, is_
 
 from microcosm_pubsub.backoff import (
@@ -61,14 +59,11 @@ def test_scaled_exponential_timeout():
     )
     backoff_policy = ExponentialBackoffPolicy()
 
-    with patch.object(backoff_policy, "randint") as mocked:
-        mocked.return_value = 2
-        assert_that(
-            backoff_policy.compute_backoff_timeout(message, None),
-            is_(equal_to(2)),
-        )
+    time = backoff_policy.compute_backoff_timeout(message, None)
 
-        mocked.assert_called_with(1, 3)
+    assert time <= MAX_BACKOFF_TIMEOUT
+    assert 1 <= time
+    assert time <= 1 + 2**2
 
 
 def test_scaled_exponential_base_jitter_timeout():
