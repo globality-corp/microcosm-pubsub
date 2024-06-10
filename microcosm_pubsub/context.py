@@ -2,8 +2,6 @@
 Message context.
 
 """
-from typing import Dict
-
 from microcosm.api import defaults, typed
 from microcosm.config.types import boolean
 from microcosm_logging.decorators import logger
@@ -26,7 +24,7 @@ class SQSMessageContext:
         self.enable_ttl = graph.config.sqs_message_context.enable_ttl
         self.initial_ttl = graph.config.sqs_message_context.initial_ttl
 
-    def __call__(self, context: SQSMessage, **kwargs) -> Dict[str, str]:
+    def __call__(self, context: SQSMessage, **kwargs) -> dict[str, str]:
         """
         Create a new context from a message.
 
@@ -34,7 +32,7 @@ class SQSMessageContext:
         return self.from_sqs_message(context, **kwargs)
 
     def from_sqs_message(self, message: SQSMessage, **kwargs):
-        context: Dict = dict(message.opaque_data)
+        context: dict = dict(message.opaque_data)
 
         context.update(
             # include the message id

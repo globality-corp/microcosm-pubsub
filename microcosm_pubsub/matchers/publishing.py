@@ -2,8 +2,6 @@
 Matchers for message publishing.
 
 """
-from typing import List
-
 from hamcrest.core.helpers.wrap_matcher import wrap_matcher
 from hamcrest.library.collection.issequence_containinginanyorder import (
     IsSequenceContainingInAnyOrder,
@@ -13,7 +11,7 @@ from hamcrest.library.collection.issequence_containinginorder import IsSequenceC
 from microcosm_pubsub.matchers.message import PublishedMessage
 
 
-def published_messages_for(sns_producer) -> List[PublishedMessage]:
+def published_messages_for(sns_producer) -> list[PublishedMessage]:
     return list(PublishedMessage.iter_from_sns_producer(sns_producer))
 
 

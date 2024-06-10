@@ -90,7 +90,7 @@ class PubSubMessageSchemaRegistry:
                 # When using convention-based media types, we may need to auto-register
                 self._media_types.add(media_type)
             else:
-                raise KeyError("Unregistered media type: {}".format(media_type))
+                raise KeyError(f"Unregistered media type: {media_type}")
 
         try:
             # use a concrete schema class if any
@@ -186,4 +186,4 @@ def media_type_for(schema_cls):
         return schema_cls.infer_media_type()
     if isinstance(schema_cls, str):
         return schema_cls
-    raise Exception("Cannot infer media type for schema class: {}".format(schema_cls))
+    raise Exception(f"Cannot infer media type for schema class: {schema_cls}")

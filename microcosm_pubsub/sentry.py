@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from os import environ
-from typing import Any, Dict, Optional
+from typing import Any
 from unittest.mock import MagicMock
 
 from microcosm.decorators import defaults
@@ -29,14 +29,14 @@ DEFAULT_USER_ID_KEY = "X-Request-User"
 
 @dataclass
 class SentryConfigPubsub:
-    dsn: Optional[str] = None
+    dsn: str | None = None
     enabled: bool = False
-    client: Optional[Any] = None
-    tag_mapping: Dict[str, str] = field(default_factory=dict)
-    user_id_key: Optional[str] = None
+    client: Any | None = None
+    tag_mapping: dict[str, str] = field(default_factory=dict)
+    user_id_key: str | None = None
 
 
-def default_before_send(event: Dict[str, Any], hint) -> Dict[str, Any]:
+def default_before_send(event: dict[str, Any], hint) -> dict[str, Any]:
     """
     Before sending a event to sentry scrub all values that are non-uuid data from the event.
     Allow python internals such as <method >, <func > etc. and self, cls.
