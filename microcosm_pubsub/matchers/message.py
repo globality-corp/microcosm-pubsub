@@ -1,6 +1,7 @@
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from json import loads
-from typing import Iterable, Mapping, Optional
+from typing import Optional
 from unittest.mock import Mock
 
 from hamcrest import not_none
@@ -18,11 +19,11 @@ class PublishedMessage:
     message: Mapping[str, str]
 
     @property
-    def media_type(self) -> Optional[str]:
+    def media_type(self) -> str | None:
         return self.message.get("mediaType")
 
     @property
-    def uri(self) -> Optional[str]:
+    def uri(self) -> str | None:
         return self.message.get("uri")
 
     @classmethod

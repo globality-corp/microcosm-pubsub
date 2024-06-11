@@ -3,7 +3,7 @@ from setuptools import find_packages, setup
 
 
 project = "microcosm-pubsub"
-version = "2.30.5"
+version = "3.0.0"
 
 
 setup(
@@ -20,14 +20,14 @@ setup(
     install_requires=[
         "boto3>=1.5.8",
         "marshmallow>=3.0.0",
-        "microcosm>=3.5.0",
-        "microcosm-caching>=0.2.0",
-        "microcosm-daemon>=1.2.0",
-        "microcosm-logging>=1.3.0",
+        "microcosm>=4.0.0",
+        "microcosm-caching>=1.0.0",
+        "microcosm-daemon>=3.0.0",
+        "microcosm-logging>=2.0.0",
         "requests>=2.31.0"
     ],
     extras_require={
-        "metrics": "microcosm-metrics>=2.5.0",
+        "metrics": "microcosm-metrics>=3.0.0",
         "sentry": "sentry-sdk>=0.14.4",
         "build": [
             "flake8",

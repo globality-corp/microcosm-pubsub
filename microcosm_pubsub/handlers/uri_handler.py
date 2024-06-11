@@ -31,7 +31,7 @@ def resource_cache_whitelist_callable(media_type, uri):
 
     return all((
         search(r"/[a-z]+_event/", uri),
-        search(r".{}.".format(LifecycleChange.Created), media_type),
+        search(fr".{LifecycleChange.Created}.", media_type),
     ))
 
 

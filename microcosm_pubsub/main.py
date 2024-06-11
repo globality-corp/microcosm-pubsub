@@ -2,7 +2,6 @@
 PubSub CLI
 
 """
-from __future__ import print_function
 
 from argparse import ArgumentParser
 from json import dumps
@@ -94,7 +93,7 @@ def write(args):
         media_type=media_type,
         uri=args.uri,
     )
-    print("Wrote SNS message: {}".format(message_id))  # noqa
+    print(f"Wrote SNS message: {message_id}")  # noqa
 
 
 def read(args):

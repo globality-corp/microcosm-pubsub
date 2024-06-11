@@ -3,7 +3,7 @@ Message encoding and decoding.
 
 """
 from json import dumps, loads
-from typing import Any, Dict, Optional
+from typing import Any
 
 from marshmallow import (
     EXCLUDE,
@@ -69,7 +69,7 @@ class PubSubMessageCodec:
     def __init__(self, schema: PubSubMessageSchema):
         self.schema = schema
 
-    def encode(self, dct: Optional[Dict[str, Any]] = None, **kwargs) -> str:
+    def encode(self, dct: dict[str, Any] | None = None, **kwargs) -> str:
         """
         Encode a message.
 

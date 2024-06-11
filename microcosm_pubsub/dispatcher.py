@@ -29,7 +29,6 @@ Flow diagram:
 """
 from logging import Logger
 from time import time
-from typing import List
 
 from inflection import titleize
 from microcosm.api import defaults, typed
@@ -64,7 +63,7 @@ class SQSMessageDispatcher:
         self.max_processing_attempts = graph.config.sqs_message_dispatcher.message_max_processing_attempts
         self.sentry_config = graph.sentry_logging_pubsub
 
-    def handle_batch(self, bound_handlers) -> List[MessageHandlingResult]:
+    def handle_batch(self, bound_handlers) -> list[MessageHandlingResult]:
         """
         Send a batch of messages to a function.
 

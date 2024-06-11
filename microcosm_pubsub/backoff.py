@@ -21,7 +21,7 @@ class BackoffPolicy(metaclass=ABCMeta):
         for subclass in cls.__subclasses__():
             if subclass.__name__ == name:
                 return subclass
-        raise Exception("No backoff policy configured with class name: {}".format(name))
+        raise Exception(f"No backoff policy configured with class name: {name}")
 
 
 class NaiveBackoffPolicy(BackoffPolicy):
@@ -51,6 +51,9 @@ class ExponentialBackoffPolicy(BackoffPolicy):
         pass
 
     def compute_backoff_timeout(self, message, message_timeout):
+        if message_timeout is not None:
+            return message_timeout
+
         # exponential backoff means that on the Cth failure, timeout is maximized at N=2^C - 1
         upper = 2**message.approximate_receive_count - 1
 
@@ -71,6 +74,9 @@ class ExponentialBackoffBaseJitterPolicy(BackoffPolicy):
         pass
 
     def compute_backoff_timeout(self, message, message_timeout):
+        if message_timeout is not None:
+            return message_timeout
+
         # Slow down exponentially, but add a random equal jitter to avoid thundering herd
         # we use the base as the number of times the message has been received (1 second for each minimum wait)
         # the time we wait is between half the base + random number between 0 and half the scaling factor

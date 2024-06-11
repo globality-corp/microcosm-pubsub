@@ -6,12 +6,7 @@ from dataclasses import dataclass, field
 from enum import Enum, unique
 from logging import DEBUG, INFO, WARNING
 from sys import exc_info
-from typing import (
-    Any,
-    Dict,
-    Optional,
-    Tuple,
-)
+from typing import Any
 
 from microcosm.opaque import Opaque
 
@@ -74,11 +69,11 @@ class MessageHandlingResultType(Enum):
 class MessageHandlingResult:
     media_type: str
     result: MessageHandlingResultType
-    exc_info: Optional[Tuple[Any, Any, Any]] = None
-    extra: Dict[str, str] = field(default_factory=dict)
-    elapsed_time: Optional[float] = None
-    handle_start_time: Optional[float] = None
-    retry_timeout_seconds: Optional[int] = None
+    exc_info: tuple[Any, Any, Any] | None = None
+    extra: dict[str, str] = field(default_factory=dict)
+    elapsed_time: float | None = None
+    handle_start_time: float | None = None
+    retry_timeout_seconds: int | None = None
 
     @classmethod
     def invoke(cls, handler, message: SQSMessage):
@@ -173,8 +168,7 @@ class MessageHandlingResult:
         self._report_error(opaque, sentry_config.tag_mapping, sentry_config.user_id_key)
 
     def _report_error(self, opaque, tag_mapping, user_id_key):
-        from sentry_sdk import capture_exception
-        from sentry_sdk import configure_scope
+        from sentry_sdk import capture_exception, configure_scope
         opaque = opaque.as_dict()
         with configure_scope() as scope:
             scope.user = {"id": opaque.get(user_id_key)}

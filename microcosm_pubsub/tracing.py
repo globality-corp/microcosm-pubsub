@@ -8,8 +8,13 @@ import json
 from contextlib import contextmanager
 
 from microcosm.opaque import Opaque
-from microcosm_pubsub.constants import AWS_SNS, AWS_SQS, OPAQUE_TAG_KEY, REQUEST_ID_KEY
 
+from microcosm_pubsub.constants import (
+    AWS_SNS,
+    AWS_SQS,
+    OPAQUE_TAG_KEY,
+    REQUEST_ID_KEY,
+)
 from microcosm_pubsub.message import SQSMessage
 
 

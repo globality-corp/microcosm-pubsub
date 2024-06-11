@@ -8,13 +8,12 @@ from distutils.util import strtobool
 from functools import wraps
 from logging import Logger
 from time import time
-from typing import Dict, List
 
 from boto3.session import Session
 from botocore.client import Config
 from microcosm.api import defaults, typed
-from microcosm.opaque import NormalizedDict
 from microcosm.errors import NotBoundError
+from microcosm.opaque import NormalizedDict
 from microcosm_logging.decorators import logger
 from microcosm_logging.timing import elapsed_time
 
@@ -34,7 +33,7 @@ class PubsubMessage:
     """
     media_type: str
     message: str
-    message_attributes: Dict[str, Dict[str, str]]
+    message_attributes: dict[str, dict[str, str]]
     opaque_data: dict
     topic_arn: str
 
@@ -162,7 +161,7 @@ class SNSProducer:
             ))
         return topic_arn
 
-    def choose_message_attributes(self, media_type: str) -> Dict[str, Dict[str, str]]:
+    def choose_message_attributes(self, media_type: str) -> dict[str, dict[str, str]]:
         """
         Choose message attributes for this message
 
@@ -209,7 +208,7 @@ class DeferredBatchProducer(DeferredProducer):
         for i in range(0, len(messages), deferred_batch_size):
             yield messages[i:i + deferred_batch_size]
 
-    def construct_batch_pubsub_message(self, message_batch: List[PubsubMessage]):
+    def construct_batch_pubsub_message(self, message_batch: list[PubsubMessage]):
         return [
             dict(
                 media_type=pubsub_message.media_type,
@@ -302,8 +301,7 @@ def iter_topic_mappings(dct):
         if isinstance(value, str):
             yield key, value
         else:
-            for nested_key, nested_value in collapse_dict(value, key):
-                yield nested_key, nested_value
+            yield from collapse_dict(value, key)
 
 
 @defaults(

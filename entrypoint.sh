@@ -24,15 +24,14 @@
 
 
 if [ "$1" = "test" ]; then
-   pip install --no-cache-dir --upgrade --extra-index-url ${EXTRA_INDEX_URL} .\[build\]
-   shift
-   exec pytest "$@"
+   pip install --no-cache-dir --upgrade .\[build\]
+   pytest ${NAME}
 elif [ "$1" = "lint" ]; then
-   pip install --no-cache-dir --upgrade --extra-index-url ${EXTRA_INDEX_URL} .\[build\]
-   exec flake8 ${NAME}
+   pip install --no-cache-dir --upgrade .\[build\]
+   flake8 ${NAME}
 elif [ "$1" = "typehinting" ]; then
-   pip install --no-cache-dir --upgrade --extra-index-url ${EXTRA_INDEX_URL} .\[build\]
-   exec mypy ${NAME}
+   pip install --no-cache-dir --upgrade .\[build\]
+   mypy ${NAME}
 else
    echo "Cannot execute $@"
    exit 3

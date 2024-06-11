@@ -101,7 +101,7 @@ class SNSMessageBodyParser(MessageBodyParser):
 class CodecMediaTypeAndContentParser(MediaTypeAndContentParser):
 
     def __init__(self, graph):
-        super(CodecMediaTypeAndContentParser, self).__init__(graph)
+        super().__init__(graph)
         self.media_type_codec = PubSubMessageCodec(MediaTypeSchema())
         self.pubsub_message_schema_registry = graph.pubsub_message_schema_registry
 
@@ -202,10 +202,10 @@ class NaiveSQSEnvelope(RawMessageBodyParser, NaiveMediaTypeAndContentParser, SQS
 
     """
     def parse_message_id(self, raw_message):
-        return "message-id-{}".format(uuid4())
+        return f"message-id-{uuid4()}"
 
     def parse_receipt_handle(self, raw_message):
-        return "receipt-handle-{}".format(uuid4())
+        return f"receipt-handle-{uuid4()}"
 
     def parse_body(self, raw_message):
         return raw_message

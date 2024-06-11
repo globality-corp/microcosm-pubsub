@@ -1,7 +1,7 @@
 {
   "params": {
     "docker": {
-      "docker_tag": "python:3.7-slim-bullseye"
+      "docker_tag": "python:3.11-slim-bullseye"
     },
     "entrypoint": {
       "pre_typehinting_commands": [
@@ -15,5 +15,5 @@
     "test_command": "pytest"
   },
   "type": "python-library",
-  "version": "2022.23.1"
+  "version": "2024.52.0"
 }
