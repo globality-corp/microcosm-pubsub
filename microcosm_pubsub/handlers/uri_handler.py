@@ -2,6 +2,7 @@
 Uri Handler base classes.
 
 """
+
 from abc import ABCMeta
 from re import search
 
@@ -29,10 +30,12 @@ def resource_cache_whitelist_callable(media_type, uri):
         # Nb. likely to happen with mocks and tests.
         return False
 
-    return all((
-        search(r"/[a-z]+_event/", uri),
-        search(fr".{LifecycleChange.Created}.", media_type),
-    ))
+    return all(
+        (
+            search(r"/[a-z]+_event/", uri),
+            search(rf".{LifecycleChange.Created}.", media_type),
+        )
+    )
 
 
 @logger
@@ -56,11 +59,12 @@ class URIHandler(metaclass=ABCMeta):
     log per message processed (unless an error/nack is raised).
 
     """
+
     def __init__(
         self,
         graph,
         retry_nack_timeout=1,
-        resource_nack_timeout=1,
+        resource_nack_timeout=3,
         resource_cache_enabled=True,
         resource_cache_ttl=DEFAULT_RESOURCE_CACHE_TTL,
         resource_cache_whitelist_callable=resource_cache_whitelist_callable,
@@ -69,7 +73,9 @@ class URIHandler(metaclass=ABCMeta):
         self.retry_nack_timeout = retry_nack_timeout
         self.resource_nack_timeout = resource_nack_timeout
         self.resource_cache_ttl = resource_cache_ttl
-        self.resource_cache = self.get_resource_cache(graph) if resource_cache_enabled else None
+        self.resource_cache = (
+            self.get_resource_cache(graph) if resource_cache_enabled else None
+        )
         self.resource_cache_whitelist_callable = resource_cache_whitelist_callable
 
     @property
@@ -178,8 +184,7 @@ class URIHandler(metaclass=ABCMeta):
 
         """
         if self.resource_cache and self.resource_cache_whitelist_callable(
-            media_type=message.get("mediaType"),
-            uri=uri
+            media_type=message.get("mediaType"), uri=uri
         ):
             response = self.resource_cache.get(uri)
             if response:
@@ -223,7 +228,9 @@ class URIHandler(metaclass=ABCMeta):
         return self.opaque.as_dict()
 
     def convert_resource(self, resource):
-        if isinstance(self.resource_type, type) and isinstance(resource, self.resource_type):
+        if isinstance(self.resource_type, type) and isinstance(
+            resource, self.resource_type
+        ):
             return resource
         return self.resource_type(**resource)
 
